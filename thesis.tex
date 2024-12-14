@@ -1,4 +1,4 @@
-\documentclass[12pt]{jreport}
+\documentclass[12pt]{ujreport}
 \usepackage{comment}
 \usepackage{./sty/eclepsf}
 \usepackage{tascmac}
@@ -13,7 +13,8 @@
 \usepackage{here}
 \usepackage{afterpage}
 \usepackage{./sty/ncodeline}
-\usepackage{url}
+\usepackage{url}  
+
 %\usepackage[dvipdfmx, colorlinks, breaklinks,%
 \usepackage[dvipdfmx, breaklinks,%
 bookmarks=true, bookmarksnumbered=true,%
@@ -98,6 +99,7 @@ pdftitle={RG},%
 % 学部・研究科(英語)
 \def\edept{Keio University Bachelor of Arts in Environment and Information Studies}
 
+\usepackage{hyperref} 
 \begin{document}
 
 \pagenumbering{roman}
@@ -122,6 +124,7 @@ pdftitle={RG},%
 
 \pagenumbering{arabic}
 \input{src/01_introduction.ja}
+
 \input{src/02_prerequisite_knowledge.ja}
 \input{src/03_related_works.ja}
 \input{src/04_design_and_impl.ja}
@@ -132,6 +135,8 @@ pdftitle={RG},%
 \renewcommand{\thechapter}{\Alph{chapter}}
 \setcounter{chapter}{0}
 \vspace{-5mm}
+\bibliographystyle{plain}
+\bibliography{bib/thesis}
 
 
 %\input{bib/biblio}\thispagestyle{plain}%bibtex
