@@ -1,31 +1,26 @@
-\chapter{宇宙におけるコンタクト情報に関連した研究と標準化動向}
+\chapter{DTNのルーティングとContact Planのアップデートにおける課題}
 
-\label{chap:related_works}
+\label{chap:03}
+\ref{chap:宇宙インターネットにおけるDTN技術とそのルーティング}では、宇宙開発の進展に伴う宇宙のインターネットの必要性と、
+そこで用いられることが構想されているDTN技術について説明した。
+しかしDTN技術は今まで実際に宇宙空間で使用された実績・及び使用される計画が少なかったこともあり、
+実際の運用においては\ref{chap:02}で述べた通り、未だ多くの課題が残されている。CGRはそれらの課題の多い分野の一つであり、
+大きく分けて、Contact Planから経路計算を行う際のアルゴリズムと、それに必要なContact Planの配布手法についてが課題となる。
+本章ではこの2つの課題についてそれぞれ先行研究をまとめるとともに、本研究のテーマとしているContact Planのアップデートについての課題について説明する。
+
 \section{宇宙インターネットにおけるルーティングのアルゴリズム}
-\subsection{CGRのアルゴリズム}
-先行研究1: Routing in the Space Internet: A contact graph routing tutorial
-CGRについて定義した論文
-DTNでのrouting schemeの管理方法については、Centralized,Distributed,Source routingがあるとした上で、「in-depth quantitative comparison of the centralized, source routing and distributed routing approach remains a topic for future research.」として、配送方法についての検討の必要性が提唱されている
+現状DTNでのルーティングは基本的にCGRが用いられており、CGRでは経路計算の際には基本的にダイクストラが用いられている。しかし他のアルゴリズムの使用や、パラメータを変更することによる改善方法が複数研究されており、本セクションではその内容についてまとめる。
 \subsection{Yen routing algorithm}
+Fraireらはルーティングテーブルの管理手法について研究を行い、これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
 
-\section{宇宙ネットワークのシミュレーション}
-宇宙ネットワークの立ち位置
-既存研究・関連研究
-
-先行研究2: Tracking Lunar Ring Road Communication
-先行研究1で述べられた、DTNにおけるrouting schemeのうち、Source routingによって配送を行う、月のcubesat コンステレーションを想定。
-経路を多く把握するノードを決めておき、各ノードは最低限の経路情報のみを把握
-評価には配送成功率と平均配送時間のみを使用し、
-上記で述べた「宇宙環境下で最も適した」かどうかについては定性的に判断しているのみ
-提案(Approach)
-先行研究では、Centralized,Distributedの手法についての定量的な比較が存在しない。
-Centralized,Distributedの手法のどちらがより想定する宇宙環境におけるコンタクト情報配布方法として適切か、またそのための適切な条件を探索する
-
-\section{宇宙インターネットにおける経路情報管理手法の確立の必要性}
-\section{コンタクト情報から経路計算への処理を行うノード}
-\subsection{Distributed Method}
-コンタクトグラフそのもの
-CCSDSの見本（単純な表形式）に沿って作成。
-
-\subsection{Centralized Method}
-コンタクトグラフから計算された経路情報
+\subsection{CGRに代替するアルゴリズムの研究}
+Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles\cite{DeJonckere2019}
+\section{Contact Planのアップデート}
+既に述べた通り、CGRのアルゴリズム・パラメータについての研究は多く行われているが、これらはContact Planに対しての計算手法であり、
+経路計算を行いたいノードにおいてそもそもContact Planが存在していることが前提となる。
+\subsection{Contact Plan の Planned Update}
+ここでは定時的なContact Planのアップデートについての述べる。
+\subsection{Contact Plan の Unplanned Update}
+ここでは故障時などのContact Planのアップデートについて述べる。
+先行研究として\cite{Bezirgiannidis2013}を用いる。
+\section{本研究の目的と概要}
