@@ -28,7 +28,7 @@
 そこでの通信需要が生まれるという話を記述する。
 メモ:JAXAのイノベーションハブについても述べる
 
-\section{宇宙通信におけるインターネット技術の適用性}
+\section{宇宙通信におけるインターネット技術の適用可能性}
 \label{section:宇宙通信におけるインターネット技術の適用性}
 これらの宇宙開発計画に伴い、 月・火星の地表及びその近傍の空間に多くの人や宇宙機、その他機材が存在するようになり、
 天体内・天体間での通信需要が大きくなることが予想される。 
@@ -58,8 +58,8 @@ End-to-EndでTCPを用いた通信を行う際には、 3-way-handshakeなどを
 これらのノードは当然ながら宇宙空間での位置が常に変化しており、
  天体の影に入るなどで断絶が頻繁に起こる。 
 
-\section{宇宙通信におけるインターネット技術の適用性とDTN}
-これらの宇宙特有の環境におけるインターネットのコンセプトとして、Delay and Disruption Tolerant Networking（DTN）の
+\section{Delay and Disruption Tolerant Networking（DTN）}
+これらの宇宙環境におけるインターネットのコンセプトとして、Delay and Disruption Tolerant Networking（DTN）が
 が構想されている。DTNの中心となる技術の一つにRFC9171\cite{rfc9171}で標準化されたBundle Protocol（BP）があり、 
 BPでは通信されるデータはバンドルという可変長のデータとして転送される。 
 中間ノードでは経路上の次のノードへ転送可能なタイミングまでバンドルを蓄積することが可能になっているため、 
@@ -75,13 +75,13 @@ End-to-Endの通信疎通性が確保できていない場合でも、 この蓄
     \label{fig:dtnprotocolstack}
     \begin{minipage}{\textwidth}
         \raggedright
-        参考文献\cite{bundle_protocol_architecture}Figure1より引用。図中のConvergence Layer（CL）については2章で説明する.
+        参考文献\cite{bundle_protocol_architecture}Figure1より引用。図中のConvergence Layer（CL）については\ref{subsection:Convergence LayerとLTP}で説明する.
     \end{minipage}
 \end{figure}
 
-\section{DTNを構成する技術}
-\label{section:DTNを構成する技術}
-本章ではDTNを構成する技術について述べる。
+\subsection{宇宙におけるDTN}
+DTNは当初惑星間インターネットのアーキテクチャのコンセプトとして構想された。しかしRFC 4838\cite{rfc4838}において、
+Delay Tolerant Networkingという言葉を使用した頃から、地上無線ネットワークへの適用も構想されるようになった。
 
 
 \subsection{Bundle Protocol}
