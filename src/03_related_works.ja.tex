@@ -1,26 +1,54 @@
-\chapter{DTNのルーティングとContact Planのアップデートにおける課題}
+\chapter{DTNのルーティングにおける研究の分類と課題}
 
-\label{chap:03}
+\label{chap:related_works}
 \ref{chap:宇宙インターネットにおけるDTN技術とそのルーティング}では、宇宙開発の進展に伴う宇宙のインターネットの必要性と、
 そこで用いられることが構想されているDTN技術について説明した。
 しかしDTN技術は今まで実際に宇宙空間で使用された実績・及び使用される計画が少なかったこともあり、
-実際の運用においては\ref{chap:02}で述べた通り、未だ多くの課題が残されている。CGRはそれらの課題の多い分野の一つであり、
+実際の運用においては\ref{chap:prerequisite_knowledge}で述べた通り、未だ多くの課題が残されている。CGRはそれらの課題の多い分野の一つであり、
 大きく分けて、Contact Planから経路計算を行う際のアルゴリズムと、それに必要なContact Planの配布手法についてが課題となる。
 本章ではこの2つの課題についてそれぞれ先行研究をまとめるとともに、本研究のテーマとしているContact Planのアップデートについての課題について説明する。
 
 \section{宇宙インターネットにおけるルーティングのアルゴリズム}
+\label{sec:宇宙インターネットにおけるルーティングのアルゴリズム}    
 現状DTNでのルーティングは基本的にCGRが用いられており、CGRでは経路計算の際には基本的にダイクストラが用いられている。しかし他のアルゴリズムの使用や、パラメータを変更することによる改善方法が複数研究されており、本セクションではその内容についてまとめる。
 \subsection{Yen routing algorithm}
+\label{sec:Yen routing algorithm}
 Fraireらはルーティングテーブルの管理手法について研究を行い、これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
 
 \subsection{CGRに代替するアルゴリズムの研究}
-Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles\cite{DeJonckere2019}
-\section{Contact Planのアップデート}
-既に述べた通り、CGRのアルゴリズム・パラメータについての研究は多く行われているが、これらはContact Planに対しての計算手法であり、
+\label{sec:CGRに代替するアルゴリズムの研究}
+Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles
+\cite{DeJonckere2019}
+
+
+\section{Contact Planの更新}
+\label{sec:ContactPlanの更新}
+このようにCGRのアルゴリズム・パラメータについての研究は多く行われているが、
+これらはContact Planをもとに経路を計算手法の研究であり、
 経路計算を行いたいノードにおいてそもそもContact Planが存在していることが前提となる。
-\subsection{Contact Plan の Planned Update}
-ここでは定時的なContact Planのアップデートについての述べる。
-\subsection{Contact Plan の Unplanned Update}
-ここでは故障時などのContact Planのアップデートについて述べる。
+そのため、Contact Planをノードに配送する手法が必要となるが、
+Contact Planはその性質上、更新が必要であり、定期更新と臨時更新に分けて考えることができる。
+
+\subsection{Contact Planの定期更新}
+\label{sec:ContactPlanの定期更新}
+Contact Planは有限時間内でのContactについて記述したものであり、
+その時間以降のContact Planに関しては定期的に更新する必要がある。
+ただし、Contact Planに記載されるノードの全てが周期的な運動のみを行う場合には
+Contact Planを繰り返し使える可能性がある。
+
+\subsection{Contact Plan の臨時更新}
+\label{sec:ContactPlanの臨時更新}
+ここでは故障時などのContact Planの臨時更新について述べる。
 先行研究として\cite{Bezirgiannidis2013}を用いる。
-\section{Contact PlanのUnplanned Updateの問題点}
+
+\section{Contact Planの臨時更新の課題}
+\label{sec:ContactPlanの臨時更新の課題}
+\ref{sec:ContactPlanの臨時更新}で述べたように、想定されたContactに失敗が発生した場合、
+その情報をDTNの他のノードに拡散しContact Planを更新することで、より遅延を抑えたルーティングが可能になる。
+しかしこの情報を拡散することで、DTNにおけるトラフィックは増加し、更新情報を受け取ったノードは
+Contact PlanからContact Graphへの再計算を必要とする。宇宙においてノードの計算能力や
+ストレージは限定的であり、近年は大きさ、発電能力、演算能力などが限られたCubesatも
+多く宇宙空間に展開されている。そのため地上での運用に比較した場合、
+無駄なリソースの使用をさけることがより望まれる。
+そのためContact Planの臨時更新においては、
+必要なノードにのみ効率よくその情報を拡散し遅延を抑えることを達成することが求められる。
