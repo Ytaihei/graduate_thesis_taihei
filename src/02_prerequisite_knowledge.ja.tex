@@ -138,6 +138,9 @@ BPでは通信されるデータはバンドルという可変長のデータと
 End-to-Endの通信疎通性が確保できていない場合でも、 この蓄積による転送を行うことにより断絶に強い通信ができる。
 またトランスポートレイヤにUDPなどのプロトコルを用いることで、 比較的遅延を抑えて通信することもできる。\cite{bundle_protocol_architecture}
 
+\subsection{通信機会の非対称性}
+\label{subsection:通信機会の非対称性}
+
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.7\textheight]{img/dtnprotocolstack.pdf}
@@ -220,82 +223,3 @@ Convergence Layerが対応しているトランスポートレイヤプロトコ
         参考文献\cite{dtn_implementations}figure1より引用
     \end{minipage}
 \end{table}
-
-
-
-\section{DTNにおけるルーティング}
-\label{section:宇宙インターネットにおけるルーティング}
-\ref{subsection:ネットワークトポロジーの変動と間欠的接続}節で述べた通り、宇宙のネットワークにおけるノードの多くは衛星であり、その位置は常に変動し、
-ネットワークのトポロジーは時間によって大きく変化する。そのため地球のネットワークとは前提となる環境が大きく異なるため、これに合わせたルーティングが必要となる。
-本章では、そのようなDTNでのルーティングにおいて中心的な構想であるContact Graph Routing（CGR）\cite{Fraire2021}について説明する。
-
-
-\subsection{衛星間のContact}
-\label{subsection:衛星間のContact}
-上記のようにDTNの環境では、ノード間の通信は特定の時間にのみ可能なものであり、この間欠的なリンクを順に転送していくことでEnd-to-Endのデータグラムの転送を行う。
-DTNにおいては、特定の2つのノード間の通信が可能なこの時間やタイミングをContactと呼び、
-Contactを正確に把握することが、 効率的なデータ転送やネットワークの最適化において極めて重要な要素となっている。
-
-
-\subsection{Contact Graph Routing}
-\label{subsection:Contact Graph Routing}
-宇宙におけるノードの物理的な軌道は計算により予測可能であり、
-2ノード間のContactも事前に計算することが可能である。 
-そのため、CGRは管理する宇宙ネットワーク内の自ノードと
-他のノードのContactが書かれたContact Planを種々のアルゴリズムによる計算を行い、
-最適な経路を決定し、それを元にBundleの転送を行う。
-
-既に述べた通り既存のDTN実装は複数あるが、これらのDTN実装における
-ルーティング手法でも主にCGRが用いられ、宇宙データ通信システムに関わる国際標準化検討委員会である
-宇宙データシステム諮問委員会（CCSDS : Consultative Committee 
-for Space Data System）ではSCHEDULE-AWARE BUNDLE ROUTING
-\cite{schedule_aware_bundle_routing}として標準化されている。
-
-CGRの例として、\ref{fig:contact_example_topology}のようなAからDの4つのノードからなるトポロジーのDTNを仮定する。
-このネットワークにおいて、各ノード間のContact Planが\ref{fig:contact_example_contactplan}と\ref{fig:contact_example_contactrange}のようである場合、
-ノードAからノードDに向けたBundleを配送する場合、これらのContact PlanからBundleの配送の状態遷移について\ref{fig:contact_example_contactgraph}を得られる。
-CGRではDTNの経路途中のノードはContact Planを保持しており、この一連の計算によって各Bundleの転送先を決定する。
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_topology.pdf}
-    \caption{4つのノードからなるDTNの例}
-    \label{fig:contact_example_topology}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-1より引用
-    \end{minipage}
-\end{figure}
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactplan.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Planの例（Contactに関する表記）}
-    \label{fig:contact_example_contactplan}
-    \begin{minipage}{\textwidth}
-        \raggedright
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-2より引用。Senderは送信元のノードの識別子、Receiverは受信元のノードの識別子、FromはContactの開始時刻、Untilは終了時刻、Rateは転送速度を示す。
-    \end{minipage}
-\end{figure}
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactrange.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Planの例（Rangeに関する表記）}
-    \label{fig:contact_example_contactrange}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-3より引用。
-    \end{minipage}
-\end{figure}
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactgraph.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Graphの例}
-    \label{fig:contact_example_contactgraph}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-4より引用。
-    \end{minipage}
-\end{figure}
