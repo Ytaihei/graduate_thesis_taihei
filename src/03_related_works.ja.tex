@@ -1,4 +1,4 @@
-\chapter{DTNにおけるルーティングの研究と課題}
+\chapter{DTNの運用におけるルーティングと研究}
 \label{chap:DTNにおけるルーティングの研究と課題}
 
 \ref{subsection:ネットワークトポロジーの変動と間欠的接続}項で述べた通り、
@@ -13,20 +13,16 @@ Contact Graph Routing（CGR）\cite{Fraire2021}というコンセプトが構想
 宇宙データシステム諮問委員会（CCSDS : Consultative Committee 
 for Space Data System）ではSCHEDULE-AWARE BUNDLE ROUTING
 \cite{schedule_aware_bundle_routing}として標準化されている。
-
-本章ではDTNにおけるCGRとその研究について分類し、現状の課題について説明する。
-
-\section{CGRを用いたルーティングの運用}
 DTNでCGRを用いたルーティングを運用する場合、その運用プロセスは以下の3つの段階に大別できる。
 1つ目の段階は運用計画の決定、2つ目はルート決定、3つ目は実際のバンドルの転送である。
-
-\subsection{運用計画の決定}
-\label{subsection:運用計画の決定}
+本章ではそれぞれの段階ごとにDTNにおけるCGRとその研究について分類し、現状の課題について説明する。
+\section{運用計画の決定}
+\label{section:運用計画の決定}
 1つ目の段階では、ミッションコントロールなどを担う地上局など（以後、マスターノードとする）が、
 各ノードの軌道計算やその他の情報に基づいてContact Planを作成する。
 宇宙におけるノードの物理的な軌道は計算により予測可能であり、
 2ノード間のContactも事前に計算することが可能である。 
-CGRの例として、\ref{fig:contact_example_topology}のようなAからDの4つのノードからなるトポロジーのDTNを考える。
+CGRの例として、図\ref{fig:contact_example_topology}のようなAからDの4つのノードからなるトポロジーのDTNを考える。
 マスターノードは軌道計算によるこれらのノードの位置や、搭載する機材の性能等をもとにContact Planを作成する。
 Contact Planには、Contactについての記述とRangeについての記述が含まれ、
 Contactについての記述では、特定の2ノードの通信機会についての通信開始・終了時間、データレートなどが記載され
@@ -35,7 +31,6 @@ Contactについての記述では、特定の2ノードの通信機会につい
 ただし\ref{subsection:通信機会の非対称性}項で述べた通り、宇宙における特定の2ノード間の通信機会は非対称であるため、
 Contact Planに記載される通信機会は、特定の2ノードについての両方のリンクの通信可能機会ではなく、
 片方向のリンクについての通信機会である。
-
 
 \begin{figure}[tbh]
     \centering
@@ -48,17 +43,10 @@ Contact Planに記載される通信機会は、特定の2ノードについて�
         参考文献\cite{schedule_aware_bundle_routing}figure3-1より引用
     \end{minipage}
 \end{figure}
-
-ノードAからノードDに向けたBundleを配送する場合、これらのContact PlanからBundleの配送の状態遷移について\ref{fig:contact_example_contactgraph}を得られる。
-CGRではDTNの経路途中のノードはContact Planを保持しており、この一連の計算によって各Bundleの転送先を決定する。
-
-
-
-
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.5\textheight]{img/contact_example_contactplan.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Planの例（Contactに関する表記）}
+    \caption{図\ref{fig:contact_example_topology}のトポロジーにおけるContact Planの例（Contactに関する表記）}
     \label{fig:contact_example_contactplan}
     \begin{minipage}{\textwidth}
         \raggedright
@@ -69,7 +57,7 @@ CGRではDTNの経路途中のノードはContact Planを保持しており、�
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.5\textheight]{img/contact_example_contactrange.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Planの例（Rangeに関する表記）}
+    \caption{図\ref{fig:contact_example_topology}のトポロジーにおけるContact Planの例（Rangeに関する表記）}
     \label{fig:contact_example_contactrange}
     \begin{minipage}{\textwidth}
         \centering
@@ -77,13 +65,26 @@ CGRではDTNの経路途中のノードはContact Planを保持しており、�
         参考文献\cite{schedule_aware_bundle_routing}figure3-3より引用。
     \end{minipage}
 \end{figure}
-\subsection{Contact Graph Routing}
-\label{subsection:Contact Graph Routing}
+ノードAからノードDに向けたBundleを配送する場合、
+これらのContact PlanからBundleの配送の状態遷移について図\ref{fig:contact_example_contactgraph}を得られる。
+CGRではDTNの経路途中のノードはContact Planを保持しており、この一連の計算によって各Bundleの転送先を決定する。
+
+\section{経路決定}
+\label{subsection:経路決定}
+
+\ref{section:運用計画の決定}節で決定されたContact Planは、
+衛星どうしのContactを記載したものであり、実際のDTNの運用においては
+Contact Planに基づいて転送すべき経路を決定する必要がある。
+この経路の決定においては、図\ref{fig:contact_example_contactplan}
+及び図\ref{fig:contact_example_contactrange}からなるContact Planに対し、
+\ref{subsection:宇宙インターネットにおけるルーティングのアルゴリズム}項で述べるアルゴリズムを用いることにより
+図\ref{fig:contact_example_contactgraph}のようなContact Graphを得ることができる。
 
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.5\textheight]{img/contact_example_contactgraph.pdf}
-    \caption{\ref{fig:contact_example_topology}におけるContact Graphの例}
+    \caption{図\ref{fig:contact_example_contactplan}及び
+    図\ref{fig:contact_example_contactrange}のContact Planから計算されるContact Graphの例}
     \label{fig:contact_example_contactgraph}
     \begin{minipage}{\textwidth}
         \centering
@@ -92,27 +93,25 @@ CGRではDTNの経路途中のノードはContact Planを保持しており、�
     \end{minipage}
 \end{figure}
 \label{chap:related_works}
-\ref{chap:prerequisite_knowledge}章では、宇宙開発の進展に伴う宇宙のインターネットの必要性と、
-そこで用いられることが構想されているDTN技術について説明した。
-しかしDTN技術は今まで実際に宇宙空間で使用された実績・及び使用される計画が少なかったこともあり、
-実際の運用においては未だ多くの課題が残されている。CGRはその分野の一つであり、
-大きく分けて、Contact Planから経路計算を行う際のアルゴリズムと、それに必要なContact Planの配布手法についてが課題となる。
-本章ではこの2つの課題についてそれぞれ先行研究をまとめるとともに、本研究のテーマとしているContact Planのアップデートについての課題について説明する。
 
-\section{CGRにおけるルーティングのアルゴリズム}
-\label{sec:宇宙インターネットにおけるルーティングのアルゴリズム}    
+
+\subsection{CGRにおけるルーティングのアルゴリズム}
+\label{subsection:宇宙インターネットにおけるルーティングのアルゴリズム}    
 現状DTNでのルーティングは基本的にCGRが用いられており、
 CGRでは経路計算の際には基本的にダイクストラが用いられている。
 しかし他のアルゴリズムの使用や、パラメータを変更することによる改善方法が複数研究されており、
 本セクションではその内容についてまとめる。
 \subsection{Yen routing algorithm}
-\label{sec:Yen routing algorithm}
+\label{subsection:Yen routing algorithm}
 Fraireらはルーティングテーブルの管理手法について研究を行い、これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
 
 \subsection{CGRに代替するアルゴリズム}
-\label{sec:CGRに代替するアルゴリズムの研究}
+\label{subsection:CGRに代替するアルゴリズムの研究}
 Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles
 \cite{DeJonckere2019}
+
+\section{バンドルの転送}
+\label{section:バンドルの転送}
 
 
 \section{Contact Planの更新}
