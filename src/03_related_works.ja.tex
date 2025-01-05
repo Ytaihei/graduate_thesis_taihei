@@ -1,4 +1,4 @@
-\chapter{DTNの運用におけるルーティングと研究}
+\chapter{Contact Graph Routingによる運用とその研究}
 \label{chap:DTNにおけるルーティングの研究と課題}
 
 \ref{subsection:ネットワークトポロジーの変動と間欠的接続}項で述べた通り、
@@ -65,9 +65,7 @@ Contact Planに記載される通信機会は、特定の2ノードについて�
         参考文献\cite{schedule_aware_bundle_routing}figure3-3より引用。
     \end{minipage}
 \end{figure}
-ノードAからノードDに向けたBundleを配送する場合、
-これらのContact PlanからBundleの配送の状態遷移について図\ref{fig:contact_example_contactgraph}を得られる。
-CGRではDTNの経路途中のノードはContact Planを保持しており、この一連の計算によって各Bundleの転送先を決定する。
+
 
 \section{経路決定}
 \label{subsection:経路決定}
@@ -75,10 +73,13 @@ CGRではDTNの経路途中のノードはContact Planを保持しており、�
 \ref{section:運用計画の決定}節で決定されたContact Planは、
 衛星どうしのContactを記載したものであり、実際のDTNの運用においては
 Contact Planに基づいて転送すべき経路を決定する必要がある。
-この経路の決定においては、図\ref{fig:contact_example_contactplan}
+ノードAからノードDに向けたBundleを配送する場合、
+図\ref{fig:contact_example_contactplan}
 及び図\ref{fig:contact_example_contactrange}からなるContact Planに対し、
 \ref{subsection:宇宙インターネットにおけるルーティングのアルゴリズム}項で述べるアルゴリズムを用いることにより
-図\ref{fig:contact_example_contactgraph}のようなContact Graphを得ることができる。
+図\ref{fig:contact_example_contactgraph}のようなContact Graphを得る。
+ただしContact Graphにおける頂点はDTNにおける各ノードではなく単一のContactであるため、
+Contact GraphはDTNのトポロジーを示すものではなく、データ転送が可能な経路を計算するためのグラフである。
 
 \begin{figure}[tbh]
     \centering
@@ -95,15 +96,38 @@ Contact Planに基づいて転送すべき経路を決定する必要がある�
 \label{chap:related_works}
 
 
-\subsection{CGRにおけるルーティングのアルゴリズム}
+\subsection{初期のCGRにおけるルーティングのアルゴリズム}
 \label{subsection:宇宙インターネットにおけるルーティングのアルゴリズム}    
-現状DTNでのルーティングは基本的にCGRが用いられており、
-CGRでは経路計算の際には基本的にダイクストラが用いられている。
-しかし他のアルゴリズムの使用や、パラメータを変更することによる改善方法が複数研究されており、
-本セクションではその内容についてまとめる。
+CGRでは図\ref{fig:contact_example_contactgraph}に対してアルゴリズムによる
+計算を行うことで最適な転送経路を決定している。
+CGRは\cite{Burleigh2008}において、基本的なパラメータとコンタクトグラフの利用や、
+これらを用いた転送先の近接ノードの決定などの基本的な概念が提案された。
+しかしこの提案ではルーティングアルゴリズムについては、静的な経路計算に関する
+アルゴリズムは規定されず、ルーティングループ防止の必要性、デフォルトルートを用いた動的
+ルーティングの想定などに触れられるのみにとどまった。
+
+\subsection{CGR-EF}
+\label{subsection:CGR-EF}
+Burleighは2010年に\cite{burleigh-dtnrg-cgr-01}において、
+earliest forfeit time、すなわちエンドツーエンドの転送が
+可能なパスにおける、そのパスの最短失効時間に注目し、その時間が短いパスから優先して
+利用することで、リンク利用の効率化を図るCGR-EFを提案した。CGR-EFは
+2009年10月から11月にかけて行われたディープインパクトネットワーク実験（DINET）
+\cite{JPL2009}に用いられ、NASAのジェット推進研究所と宇宙船の間の約300枚の画像転送に成功した。
+
+\subsection{ECGR}
+その後Seguiらは、earliest-forfeit-timeではなくearliest-arrival-time、すなわち
+エンドツーエンドの最短到達遅延を指標とするECGRを提案した\cite{6134460}。
+ECGRはearliest-arrival-timeを指標とすることでより計算コストの小さい
+ダイクストラアルゴリズムを用いることを可能にしており、
+またルーティングループが発生しない、経路が時間とともに単調に収束することもメリットである。
+これ以後、CGRにおけるアルゴリズムとしては基本的にダイクストラが用いられている。
+
+
 \subsection{Yen routing algorithm}
 \label{subsection:Yen routing algorithm}
-Fraireらはルーティングテーブルの管理手法について研究を行い、これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
+Fraireらはルーティングテーブルの管理手法について研究を行い、
+これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
 
 \subsection{CGRに代替するアルゴリズム}
 \label{subsection:CGRに代替するアルゴリズムの研究}
