@@ -13,10 +13,18 @@ Contact Graph Routing（CGR）\cite{Fraire2021}というコンセプトが構想
 宇宙データシステム諮問委員会（CCSDS : Consultative Committee 
 for Space Data System）ではSCHEDULE-AWARE BUNDLE ROUTING
 \cite{schedule_aware_bundle_routing}として標準化されている。
-DTNでCGRを用いたルーティングを運用する場合、その運用プロセスは以下の3つの段階に大別できる。
-1つ目の段階は運用計画の決定、2つ目はルート決定、3つ目は実際のバンドルの転送である。
-本章ではそれぞれの段階ごとにDTNにおけるCGRとその研究について分類し、現状の課題について説明する。
-\section{運用計画の決定}
+DTNでCGRを用いたルーティングを運用する場合、その運用プロセスは
+\ref{section:運用計画の決定}節で述べる運用計画の決定、
+\ref{section:経路決定}節で述べる経路計算、
+\ref{section:バンドルの転送}節で述べる実際のバンドルの転送
+の3つの段階に大別できる。本章ではそれぞれの段階ごとに
+DTNにおけるCGRとその研究について分類し、現状の課題について説明する。
+さらに実際の運用においてはこの3段階を
+継続的に実施する必要があり、そのために必要なコンタクトプランの更新について
+\ref{section:ContactPlanの更新}で述べる。
+
+
+\section{DTNの運用計画の決定}
 \label{section:運用計画の決定}
 1つ目の段階では、ミッションコントロールなどを担う地上局など（以後、マスターノードとする）が、
 各ノードの軌道計算やその他の情報に基づいてContact Planを作成する。
@@ -67,12 +75,12 @@ Contact Planに記載される通信機会は、特定の2ノードについて�
 \end{figure}
 
 
-\section{経路決定}
-\label{subsection:経路決定}
+\section{転送可能な経路の計算}
+\label{section:経路決定}
 
 \ref{section:運用計画の決定}節で決定されたContact Planは、
 衛星どうしのContactを記載したものであり、実際のDTNの運用においては
-Contact Planに基づいて転送すべき経路を決定する必要がある。
+Contact Planに基づいて転送可能な経路を計算する必要がある。
 ノードAからノードDに向けたBundleを配送する場合、
 図\ref{fig:contact_example_contactplan}
 及び図\ref{fig:contact_example_contactrange}からなるContact Planに対し、
@@ -119,39 +127,58 @@ earliest forfeit time、すなわちエンドツーエンドの転送が
 その後Seguiらは、earliest-forfeit-timeではなくearliest-arrival-time、すなわち
 エンドツーエンドの最短到達遅延を指標とするECGRを提案した\cite{6134460}。
 ECGRはearliest-arrival-timeを指標とすることでより計算コストの小さい
-ダイクストラアルゴリズムを用いることを可能にしており、
+ダイクストラアルゴリズムを用いるた経路計算を可能にしており、
 またルーティングループが発生しない、経路が時間とともに単調に収束することもメリットである。
 これ以後、CGRにおけるアルゴリズムとしては基本的にダイクストラが用いられている。
 
-
-\subsection{Yen routing algorithm}
-\label{subsection:Yen routing algorithm}
-Fraireらはルーティングテーブルの管理手法について研究を行い、
-これに基づき現状のCGRは基本的にYen Routing Algorithmを用いている。\cite{FRAIRE2018}
-
-\subsection{CGRに代替するアルゴリズム}
-\label{subsection:CGRに代替するアルゴリズムの研究}
-Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles
-\cite{DeJonckere2019}
-
-\section{バンドルの転送}
+\section{最適な経路の決定とバンドルの転送}
 \label{section:バンドルの転送}
+
+\ref{section:経路決定} 節で転送が可能な経路が計算されると、
+これらの計算された経路から最適と考えられる経路が決定され実際にバンドルが転送される。
+転送可能な経路が複数存在する場合、\cite{schedule_aware_bundle_routing}では
+最適な経路の決定には以下の3点が検証される。
+\begin{itemize}
+    \item Earliest transmission opportunity（ETO）
+    \item Effective volume limit
+    \item Projected arrival time
+\end{itemize}
+Earliest transmission opportunity（ETO）は、転送したいバンドル（B-object）がネクストホップとなる
+隣接ノード（N-next）に転送される最初の時間である。
+現在この転送したいバンドルが保持されているノード（N-current）において、
+B-otherが既にキューイングに入っており、B-Xと比較して優先的に転送が行われる場合、
+B-otherがN-currentに存在しない場合と比較してB_objectの
+Earliest transmission opportunity（ETO）は遅くなる。
+候補となる経路によって、B-objectのETOは異なるため、最適な経路の決定の際には考慮される。
+
+Projected arrival time（PAT）は、B-objectの宛先ノード（N-dest）にB-objectが到着すると予想される時間であり、
+B_objectのTime-to-live（TTL）がこれよりも小さい場合、B_objectは破棄される。
+B_objectのTime-to-live（TTL）がこれよりも大きい場合、転送可能な経路のうち
+最もPATが小さい経路が最適な経路として決定される。
+
+Effective volume limit（EVL）は選定された経路において、転送が可能なバンドルのサイズの最大値
+を示す値であり、この値がB-objectの値よりも小さい場合、B-objectはフラグメンテーションされる。
+
 
 
 \section{Contact Planの更新}
-\label{sec:ContactPlanの更新}
-このようにCGRのアルゴリズム・パラメータについての研究は多く行われているが、
-これらはContact Planをもとに経路を計算手法の研究であり、
-経路計算を行いたいノードにおいてそもそもContact Planが存在していることが前提となる。
-そのため、Contact Planをノードに配送する手法が必要となるが、
+\label{section:ContactPlanの更新}
+
+上記\ref{section:運用計画の決定}節、\ref{section:経路決定}節、\ref{section:バンドルの転送}節
+を順に実施することでDTNにおけるCGRが運用されることが想定され、
+これらの手法についての研究がなされている。
+しかし実際の運用の際に\ref{section:運用計画の決定}節において
+マスターノードで決定されたContact Planを元に、
+\ref{section:経路決定}節における経路の計算をノードにおいて行うには、
+マスターノードからContact Planを配布する必要がある。
+Contact Planは
 Contact Planはその性質上、更新が必要であり、定期更新と臨時更新に分けて考えることができる。
 
 \subsection{Contact Planの定期更新}
 \label{sec:ContactPlanの定期更新}
 Contact Planは有限時間内でのContactについて記述したものであり、
 その時間以降のContact Planに関しては定期的に更新する必要がある。
-ただし、Contact Planに記載されるノードの全てが周期的な運動のみを行う場合には
-Contact Planを繰り返し使える可能性がある。
+現在の
 
 \subsection{Contact Plan の臨時更新}
 \label{sec:ContactPlanの臨時更新}
@@ -160,7 +187,7 @@ Contact Planを繰り返し使える可能性がある。
 
 \section{問題提起}
 \label{sec:ContactPlanの臨時更新の課題}
-\ref{sec:ContactPlanの臨時更新}で述べたように、想定されたContactに失敗が発生した場合、
+\ref{section:ContactPlanの臨時更新}で述べたように、想定されたContactに失敗が発生した場合、
 その情報をDTNの他のノードに拡散しContact Planを更新することで、
 DTNの各ノードはその時点におけるネットワークの最新のトポロジーと一致するContact Planを
 保持することができ、これによりより適する経路がある場合これを選択することが可能になる。
