@@ -167,12 +167,13 @@ Effective volume limit（EVL）は選定された経路において、転送が�
 上記\ref{section:運用計画の決定}節、\ref{section:経路決定}節、\ref{section:バンドルの転送}節
 を順に実施することでDTNにおけるCGRが運用されることが想定され、
 これらの手法についての研究がなされている。
-しかし実際の運用の際に\ref{section:運用計画の決定}節において
-マスターノードで決定されたContact Planを元に、
-\ref{section:経路決定}節における経路の計算をノードにおいて行うには、
-マスターノードからContact Planを配布する必要がある。
-Contact Planは
-Contact Planはその性質上、更新が必要であり、定期更新と臨時更新に分けて考えることができる。
+しかし実際の運用においてDTNの各ノードで経路の計算、決定を行うには、
+さらに\ref{section:運用計画の決定}節で決定されたContact Planを、
+マスターノードからDTNの各ノードに配布する必要がある。
+さらにContact Planは有限時間の分しか配布ができないため、
+運用時は1度配布するだけでなく継続的な更新が必要となる。
+
+定期更新と臨時更新に分けて考えることができる。
 
 \subsection{Contact Planの定期更新}
 \label{sec:ContactPlanの定期更新}
