@@ -1,0 +1,47 @@
+file 27841 1736837084                                           
+version 2
+run General-0-20250114-06:44:30-6006
+attr configname General
+attr datetime 20250114-06:44:30
+attr experiment General
+attr inifile shaw.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network src.dtnsim
+attr processid 6006
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param dtnsim.central.contactsFile "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_A "\"contactPlan/Contacts_A.txt\""
+param dtnsim.central.contactsFile_B "\"contactPlan/Contacts_B.txt\""
+param dtnsim.central.contactIdsToDelete_from_celestialA "\"1 4 10 27 30 35 42 43 63 66 87 110 121 129 135 140 141 143 151 171 179 211 216 230 243 250 279 283 292 309 317 318 325 326 344 352 353 356 379 386 389 391 399 416 437 438 447 456 466 467 473 474 482\""
+param dtnsim.central.contactIdsToDelete_from_celestialB "\"14 15 36 46 53 62 71 83 84 111 113 114 115 120 156 157 167 186 187 194 207 210 213 231 262 276 284 286 303 320 323 334 340 355 357 365 366 373 404 409 412 433 445 471 477 493 496\""
+param dtnsim.central.celestialA_nodes "\"1 2 3\""
+param dtnsim.central.celestialB_nodes "\"4 5 6\""
+param dtnsim.central.locallyfaultsAware true
+param dtnsim.central.mode_two_celestial true
+param dtnsim.nodesNumber 6
+param dtnsim.node[1].icon "\"receiverdish\""
+param dtnsim.node[2..5].icon "\"satellite\""
+param dtnsim.node[6].icon "\"receiverdish\""
+param dtnsim.node[*].dtn.routing "\"cgrModel350\""
+param dtnsim.node[*].dtn.routingType "\"routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global\""
+param dtnsim.node[1].app.enable true
+param dtnsim.node[*].app.custodyTransfer true
+param dtnsim.node[1].app.bundlesNumber "\"2000\""
+param dtnsim.node[1].app.start "\"0\""
+param dtnsim.node[1].app.destinationEid "\"6\""
+param dtnsim.node[1].app.size "\"1500\""
+param dtnsim.node[1].app.interval 1
+
+vector 0 dtnsim.node[6].app appBundleReceivedDelayvec:vector ETV
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, vector"
+0	2071 25769 9683 38390 309.4 682.2 1315 1.5 409.4 268281.7 68557829.81
+
+

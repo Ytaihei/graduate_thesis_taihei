@@ -1,0 +1,153 @@
+version 2
+run General-0-20250114-17:23:37-87488
+attr configname General
+attr datetime 20250114-17:23:37
+attr experiment General
+attr inifile shaw.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network src.dtnsim
+attr processid 87488
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param dtnsim.central.contactsFile "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_A "\"contactPlan/Contacts_A.txt\""
+param dtnsim.central.contactsFile_B "\"contactPlan/Contacts_B.txt\""
+param dtnsim.central.contactIdsToDelete_from_celestialA "\"2 4 5 7 8 10 12 14 15 18 19 21 23 25 26 27 29 30 31 33 36 38 39 42 44 45 52 53 54 56 58 59 64 65 66 71 74 76 78 81 82 84 86 87 90 91 93 95 97 101 106 107 108 109 110 112 114 115 120 121 122 123 125 127 129 130 132 135 136 137 138 141 143 148 153 157 158 162 163 166 167 169 171 172 174 175 176 179 186 187 188 189 191 193 197 198 200 201 202 208 209 210 211 213 217 219 220 222 223 226 227 232 233 238 239 240 241 242 245 248 251 254 255 257 263 265 268 271 274 275 280 281 284 285 290 292 293 296 297 298\""
+param dtnsim.central.contactIdsToDelete_from_celestialB "\"20 51 55 72 116 142 177 229 230 246\""
+param dtnsim.central.celestialA_nodes "\"1 2 3\""
+param dtnsim.central.celestialB_nodes "\"4 5 6\""
+param dtnsim.central.locallyfaultsAware true
+param dtnsim.central.mode_two_celestial true
+param dtnsim.nodesNumber 6
+param dtnsim.node[1].icon "\"receiverdish\""
+param dtnsim.node[2..5].icon "\"satellite\""
+param dtnsim.node[6].icon "\"receiverdish\""
+param dtnsim.node[*].dtn.routing "\"cgrModel350\""
+param dtnsim.node[*].dtn.routingType "\"routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global\""
+param dtnsim.node[1].app.enable true
+param dtnsim.node[*].app.custodyTransfer true
+param dtnsim.node[1].app.bundlesNumber "\"3600\""
+param dtnsim.node[1].app.start "\"0\""
+param dtnsim.node[1].app.destinationEid "\"6\""
+param dtnsim.node[1].app.size "\"1500\""
+param dtnsim.node[1].app.interval 1
+
+scalar dtnsim.node[0].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[0].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[0].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[0].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[1].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[1].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[1].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[1].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[2].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[2].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[2].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[2].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[3].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[3].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[3].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[3].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[4].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[4].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[4].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[4].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[5].app appBundleReceivedDelayvec:timeavg -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[5].app appBundleReceivedDelayvec:mean -nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[5].app appBundleReceivedDelayvec:max nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[5].app appBundleReceivedDelayvec:min nan
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+scalar dtnsim.node[6].app appBundleReceivedDelayvec:timeavg 286.06107878749
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, timeavg"
+scalar dtnsim.node[6].app appBundleReceivedDelayvec:mean 1468.9162570058
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, mean"
+scalar dtnsim.node[6].app appBundleReceivedDelayvec:max 3584.3
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, max"
+scalar dtnsim.node[6].app appBundleReceivedDelayvec:min 1.2
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, min"
+
+

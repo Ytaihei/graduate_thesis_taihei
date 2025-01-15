@@ -1,0 +1,49 @@
+network = src.dtnsim										
+repeat = 1
+
+# Simulation end time
+sim-time-limit = 1000s
+simtime-resolution = 10ms
+#dtnsim.node[4..5].com.packetLoss = 0.1
+
+
+######## Central Module ########
+dtnsim.central.contactsFile = "contactPlan/shaw_contact1.txt"
+#dtnsim.central.contactIdsToDelete="1 3 4 6 7"
+dtnsim.central.contactIdsToDelete_from_celestialA="2 8 59 67 70 85 90 91 122 127 136 137 145 161 172 173 178 194 241 246 255 279 286 287 291 292 295"
+dtnsim.central.contactIdsToDelete_from_celestialB="14 29 42 51 56 65 74 75 78 86 93 110 123 159 175 200 203 224 233 248 258 293 300"#dtnsim.central.faultsAwareNodes="1 2 4 5 6"
+#dtnsim.central.celestialA_nodes="1 2 3"
+#dtnsim.central.celestialB_nodes="4 5 6"
+#dtnsim.central.partlyfaultsAware = true
+#dtnsim.central.locallyfaultsAware = false
+#dtnsim.central.deleteNContacts= 1
+#dtnsim.central.faultsAware = true
+
+# Nodes quantity (identifiers (EiDs) matches their index, EiD=0 is ignored)			
+dtnsim.nodesNumber = 6
+
+# Node's icons (satellite, receiverdish, server2, antennatower)
+dtnsim.node[1].icon = "receiverdish"
+dtnsim.node[2..5].icon = "satellite"
+dtnsim.node[6].icon = "receiverdish"
+
+#dtnsim.node[*].dtn.saveBundleMap = true
+#dtnsim.central.saveTopology = true
+#dtnsim.central.saveFlows = true
+#dtnsim.central.saveLpFlows = false
+#dtnsim.node[*].**.result-recording-modes = -vector 
+#dtnsim.node[*].dtn.printRoutingDebug = true
+
+# Net Layer (available routing: direct, cgrModel350, cgrModelRev17, cgrModel350_Hops, cgrModel350_2Copies)
+dtnsim.node[*].dtn.routing = "cgrModel350"
+dtnsim.node[*].dtn.routingType = "routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global"
+
+# App Layer (comma separeted strings for different traffic generators)			
+dtnsim.node[1].app.enable=true
+dtnsim.node[*].app.custodyTransfer=true
+dtnsim.node[1].app.bundlesNumber="10000"
+dtnsim.node[1].app.start="0"			 
+dtnsim.node[1].app.destinationEid="6"
+dtnsim.node[1].app.size="1500"
+dtnsim.node[1].app.interval=0.1
+

@@ -18,16 +18,16 @@
 加盟国はその後増加し、2024年時点で40カ国である。\cite{artemis_agreement3}
 このように近年宇宙開発は急激に進展しており、
 その進展について以下の
-\ref{subsection:月・火星の探査計画}、
-\ref{subsection:その他の月・火星探査計画}、
-\ref{subsection:深宇宙の探査計画}、
-\ref{subsection:民間事業者の宇宙事業への参画}
+\ref{section:月・火星の探査計画}、
+\ref{section:その他の月・火星探査計画}、
+\ref{section:深宇宙の探査計画}、
+\ref{section:民間事業者の宇宙事業への参画}
 の視点からそれぞれ詳述する。
 
 
 
 \subsection{アルテミス計画}
-\label{subsection:月・火星の探査計画}
+\label{section:月・火星の探査計画}
 アルテミス計画はアルテミス1~4の4段階に分かれた計画がされている。
 アルテミス1では無人の計画であり、NASAが新たに開発した大型ロケットである
 Space Launch System（SLS） と 有人ミッションの際に人を収容する部分である
@@ -83,11 +83,11 @@ JAXAはこの中でも珍しく火星の衛星に着目しており、
 
 
 \subsection{深宇宙の探査計画}
-\label{subsection:深宇宙の探査計画}
+\label{section:深宇宙の探査計画}
 このセクションでは、火星以遠の探査計画、特に小惑星探査やそのほか木星土星の衛星探査についても詳述する。
 
 \subsection{民間事業者の宇宙事業への参画}
-\label{subsection:民間事業者の宇宙事業への参画}
+\label{section:民間事業者の宇宙事業への参画}
 このセクションでは、2000年代の民間事業者の宇宙事業への参入について詳述する。
 特に、スペースX、ブルーオリジン、ヴァージンギャラクティックなどの宇宙への輸送能力をもつ企業の成長について述べる。
 宇宙ビジネスの事業規模の拡大を示すとともに、今後地球軌道でのビジネスだけでなく、月・火星でのビジネスも進展し、
@@ -106,13 +106,13 @@ JAXAはこの中でも珍しく火星の衛星に着目しており、
 \section{通信における宇宙の環境}
 \label{section:通信における宇宙の環境}
 宇宙環境は地球環境とは多くの点において異なるが、
-通信やネットワークに関しては\ref{subsection:大きな遅延のある通信環境}や
-\ref{subsection:ネットワークトポロジーの変動と間欠的接続}のような違いが
+通信やネットワークに関しては\ref{section:大きな遅延のある通信環境}や
+\ref{section:ネットワークトポロジーの変動と間欠的接続}のような違いが
 重要となる。
 
 
 \subsection{大きな遅延のある通信環境}
-\label{subsection:大きな遅延のある通信環境}
+\label{section:大きな遅延のある通信環境}
 宇宙での通信は既存のインターネットにおける通信の遅延に比較して非常に大きい。
 東京-ニューヨーク間であれば、伝搬遅延のみを考慮した場合、片道50ms以内で通信が可能である一方、宇宙における通信の際には地球月間でも片道1。3秒、
 地球火星間では太陽に対する2天体の公転の状況によって変動するが最大20分程度の遅延が想定されている。
@@ -125,7 +125,7 @@ End-to-EndでTCPを用いた通信を行う際には、 3-way-handshakeなどを
 
 
 \subsection{ネットワークトポロジーの変動と間欠的接続}
-\label{subsection:ネットワークトポロジーの変動と間欠的接続}
+\label{section:ネットワークトポロジーの変動と間欠的接続}
 宇宙のインターネットにおいて、ネットワークを構成するノードには多くの宇宙機が含まれている。
 これらのノードは当然ながら宇宙空間での位置が常に変化しており、
  天体の影に入るなどで断絶が頻繁に起こる。 
@@ -138,8 +138,8 @@ BPでは通信されるデータはバンドルという可変長のデータと
 End-to-Endの通信疎通性が確保できていない場合でも、 この蓄積による転送を行うことにより断絶に強い通信ができる。
 またトランスポートレイヤにUDPなどのプロトコルを用いることで、 比較的遅延を抑えて通信することもできる。\cite{bundle_protocol_architecture}
 
-\subsection{通信機会の非対称性}
-\label{subsection:通信機会の非対称性}
+% \subsection{通信機会の非対称性}
+% \label{subsection:通信機会の非対称性}
 
 \begin{figure}[tbh]
     \centering
@@ -151,7 +151,7 @@ End-to-Endの通信疎通性が確保できていない場合でも、 この蓄
         \vspace{3mm}
         参考文献\cite{bundle_protocol_architecture}Figure1より引用。
         図中のConvergence Layer（CL）については
-        \ref{subsection:Convergence LayerとLTP}で説明する.
+        \ref{section:Convergence LayerとLTP}で説明する.
     \end{minipage}
 \end{figure}
 
@@ -159,7 +159,7 @@ End-to-Endの通信疎通性が確保できていない場合でも、 この蓄
 DTNは当初惑星間インターネットのアーキテクチャのコンセプトとして構想された。しかしRFC 4838\cite{rfc4838}において、
 Delay Tolerant Networkingという言葉を使用した頃から、地上無線ネットワークへの適用も構想されるようになった。
 これらの環境と宇宙環境でのDTNの大きな違いとして、通信機会のタイミングが挙げられる。
-\ref{subsection:Contact Graph Routing}でも述べるが、
+\ref{section:Contact Graph Routing}でも述べるが、
 宇宙環境でのDTNにおいてはノード間の通信機会は全て予測可能なものである一方、
 地上無線ネットワークでの通信機会は予測が難しいものであり、そのためルーティングの手法なども異なる。
 本研究では宇宙のインターネットにおけるルーティング手法に注目しているため、以後は地上無線ネットワークにおけるDTNではなく、
@@ -199,6 +199,7 @@ LTP\cite{rfc5326}はコンバージェンスレイヤのプロトコルの一つ
 LTPをコンバージェンスレイヤに用いる場合、 トランスポートレイヤにUDPを用いることがあるほか、 
 宇宙での通信においてLTPが直接リンク層にアクセスすることも想定されている。
 \subsection{既存のDTN実装}
+\label{section:既存のDTN実装}
 既にいくつかの研究機関などによりDTN技術を実装したソフトウェアがリリースされている。 いくつかの例を以下に示す。 
 \begin{itemize}
     \item Interplanetary Overlay Network DTN（ION-DTN）: NASA/JPL
@@ -215,7 +216,7 @@ Convergence Layerが対応しているトランスポートレイヤプロトコ
 \begin{table}[tbh]
     \centering
     \includegraphics[width=0.7\textheight]{img/chart_dtn_implementations.pdf}
-    \caption{DTN実装とその機能の比較 }
+    \caption{DTN実装とその機能の比較}
     \label{fig:chart_dtn_implementations}
     \begin{minipage}{\textwidth}
         \centering

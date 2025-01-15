@@ -1,0 +1,54 @@
+file 4939924 1736847360                                         
+version 2
+run General-0-20250114-09:05:23-40020
+attr configname General
+attr datetime 20250114-09:05:23
+attr experiment General
+attr inifile shaw.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network src.dtnsim
+attr processid 40020
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param dtnsim.central.contactsFile "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_A "\"contactPlan/Contacts_A.txt\""
+param dtnsim.central.contactsFile_B "\"contactPlan/Contacts_B.txt\""
+param dtnsim.central.contactIdsToDelete_from_celestialA "\"22 28 32 33 38 62 65 68 70 77 79 84 88 92 94\""
+param dtnsim.central.contactIdsToDelete_from_celestialB "\"5 8 9 11 26 34 39 41 46 48 57 59 67 90 95\""
+param dtnsim.central.celestialA_nodes "\"1 2 3\""
+param dtnsim.central.celestialB_nodes "\"4 5 6\""
+param dtnsim.central.locallyfaultsAware true
+param dtnsim.central.mode_two_celestial true
+param dtnsim.nodesNumber 6
+param dtnsim.node[1].icon "\"receiverdish\""
+param dtnsim.node[2..5].icon "\"satellite\""
+param dtnsim.node[6].icon "\"receiverdish\""
+param dtnsim.node[*].dtn.routing "\"cgrModel350\""
+param dtnsim.node[*].dtn.routingType "\"routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global\""
+param dtnsim.node[1].app.enable true
+param dtnsim.node[*].app.custodyTransfer true
+param dtnsim.node[1].app.bundlesNumber "\"10000\""
+param dtnsim.node[1].app.start "\"0\""
+param dtnsim.node[1].app.destinationEid "\"6\""
+param dtnsim.node[1].app.size "\"1500\""
+param dtnsim.node[1].app.interval 1
+
+vector 0 dtnsim.node[6].app appBundleReceivedDelayvec:vector ETV
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, vector"
+0	1783 615246 277511 941407 3780 4052 32768 1 4052 66745586 173912296302
+0	617029 645455 941420 1644078 4052 4552 32768 1 4552 73180690 210705345550
+0	1262484 646523 1644089 2396831 4552 5430 32768 1 5430 78700053 264789216459
+0	1909007 651179 2396842 3032113 5430 6202 32768 175 6102 99898116 387777671584
+0	2560186 655357 3032126 3653942 6202 6802 32768 994 6802 128658420 584133430396
+0	3215543 655360 3653956 4273987 6802 7541 32768 1605 7469 141875978 695789750246
+0	3870903 655360 4273999 5159194 7541 8069 32768 2276 8069 165357262 920635576002
+0	4526263 413660 5159215 5969851 8069 8956 20683 2872 8956 112584897 675120116621
+
+
