@@ -1,0 +1,46 @@
+file 165098 1737029555                                          
+version 2
+run General-0-20250116-12:12:10-162365
+attr configname General
+attr datetime 20250116-12:12:10
+attr experiment General
+attr inifile shaw.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network src.dtnsim
+attr processid 162365
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param dtnsim.central.contactsFile "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_A "\"contactPlan/Contacts_A.txt\""
+param dtnsim.central.contactsFile_B "\"contactPlan/Contacts_B.txt\""
+param dtnsim.central.contactIdsToDelete_from_celestialA "\"2 26 31 47 53 82 85 88 91 98 99 104 154 155 160 163 179 191 196 198 199 215 217 235 237 282 298 299 307 308 313 318 326 358 362 366 369 370 383 386 393 404 406 409 414 417 423 424 426 429 432 433 439 446 460\""
+param dtnsim.central.contactIdsToDelete_from_celestialB "\"5 22 36 48 62 71 79 81 87 89 105 116 130 133 142 147 165 174 183 202 211 221 222 226 229 234 248 266 293 294 296 317 325 329 340 354 376 379 387 394 399 427 435 454 459\""
+param dtnsim.central.celestialA_nodes "\"1 2 3\""
+param dtnsim.central.celestialB_nodes "\"4 5 6\""
+param dtnsim.central.locallyfaultsAware true
+param dtnsim.central.mode_two_celestial true
+param dtnsim.nodesNumber 6
+param dtnsim.node[1].icon "\"receiverdish\""
+param dtnsim.node[2..5].icon "\"satellite\""
+param dtnsim.node[6].icon "\"receiverdish\""
+param dtnsim.node[*].dtn.routing "\"cgrModel350\""
+param dtnsim.node[*].dtn.routingType "\"routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global\""
+param dtnsim.node[1].app.enable true
+param dtnsim.node[1].app.bundlesNumber "\"8640\""
+param dtnsim.node[1].app.start "\"0\""
+param dtnsim.node[1].app.destinationEid "\"6\""
+param dtnsim.node[1].app.size "\"1500\""
+param dtnsim.node[1].app.interval 10
+
+vector 0 dtnsim.node[6].app appBundleReceivedDelayvec:vector ETV
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, vector"
+0	2029 163068 24273 226498 13597 85873 8421 833 13597 31119761 202910807517
+
+

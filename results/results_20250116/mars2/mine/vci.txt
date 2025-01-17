@@ -1,0 +1,46 @@
+file 164886 1737056382                                          
+version 2
+run General-0-20250117-04:36:24-185894
+attr configname General
+attr datetime 20250117-04:36:24
+attr experiment General
+attr inifile shaw_mine.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network src.dtnsim
+attr processid 185894
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param dtnsim.central.contactsFile "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_A "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactsFile_B "\"contactPlan/Contacts.txt\""
+param dtnsim.central.contactIdsToDelete_from_celestialA "\"1 8 11 17 25 26 31 33 39 43 46 51 52 60 62 68 69 71 75 78 79 96 97 102 119 123 131 135 139 143 144 150 154 157 158 160 169 170 175 180 182 183 185 187 190 199 203 206 219 244 245 246 257 259 268 279 283 284 288 291 296 311 313 318 327 333 338 351 361 372 374 389 391 396 405 408 414 415 422 437 446 453 455 463 465 466 470 474 476 478 479\""
+param dtnsim.central.contactIdsToDelete_from_celestialB "\"5 9 10 19 27 32 40 44 48 56 66 67 70 74 76 81 83 93 100 109 110 120 121 124 128 130 134 142 145 163 165 167 168 177 181 184 189 194 196 204 207 208 210 214 218 221 226 227 228 241 248 250 252 254 255 266 267 269 272 275 277 287 295 299 300 301 302 303 305 321 324 329 334 339 354 355 357 358 359 366 368 370 384 385 394 397 400 404 406 410 412 417 418 419 420 425 428 431 439 440 441 442 449 450 456 458 460 468 469\""
+param dtnsim.central.celestialA_nodes "\"1 2 3\""
+param dtnsim.central.celestialB_nodes "\"4 5 6\""
+param dtnsim.central.locallyfaultsAware true
+param dtnsim.central.mode_two_celestial true
+param dtnsim.nodesNumber 6
+param dtnsim.node[1].icon "\"receiverdish\""
+param dtnsim.node[2..5].icon "\"satellite\""
+param dtnsim.node[6].icon "\"receiverdish\""
+param dtnsim.node[*].dtn.routing "\"cgrModel350\""
+param dtnsim.node[*].dtn.routingType "\"routeListType:allPaths-firstEnding,volumeAware:allContacts,extensionBlock:on,contactPlan:global\""
+param dtnsim.node[1].app.enable true
+param dtnsim.node[1].app.bundlesNumber "\"8000\""
+param dtnsim.node[1].app.start "\"0\""
+param dtnsim.node[1].app.destinationEid "\"6\""
+param dtnsim.node[1].app.size "\"1500\""
+param dtnsim.node[1].app.interval 10
+
+vector 0 dtnsim.node[6].app appBundleReceivedDelayvec:vector ETV
+attr interpolationmode none
+attr source appBundleReceivedDelay
+attr title "appBundleReceivedDelayvec, vector"
+0	2408 162477 89175 205717 64098 80163 7934 833 64098 220328314 9032999561842
+
+
