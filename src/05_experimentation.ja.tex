@@ -2,6 +2,7 @@
 \label{chap:implementation_and_experimentation}
 
 \section{Omnet++とDTNsimを用いた評価環境}
+\label{section:Omnet++とDTNsimを用いた評価環境}
 Omnet++はネットワークシミュレータの構築を目的としたオープンソースのプラットフォームであり, 
 既存の通信プロトコルや物理層のシミュレーションを実装しているほか, 
 各ノードにC++でのアプリケーションを実装し拡張することが可能である. 
@@ -11,18 +12,19 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 宇宙で運用されているDTNをシミュレーションを行う. 
 
 \section{2030・2040年代のDTNを想定したシミュレーション}
+\label{section:2030・2040年代のDTNを想定したシミュレーション}
 本実験においては, 2030年代に地球・月間, 2040年代に地球・月・火星間にまたがるDTNを運用していることを想定し, 
 そのうち任意の2天体間について既存手法と本研究の提案手法の実装とシミュレーションを行い, 
 本研究の提案の有効性について検証する. そのため任意の2天体間のDTNネットワークとして, 
 図\ref{fig:experimentation_topology}と同様のトポロジーを想定する. 
 
-\ref{section:2030年代の地球・月間を想定したシミュレーションのシナリオとパラメータ}項では
+\ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}項では
 2030年代の地球・月間のDTNにおけるシナリオ, 
-\ref{section:2040年代の地球・月・火星間を想定したシミュレーションのシナリオとパラメータ}項では
+\ref{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}項では
 2040年代の地球・月・火星間のDTNにおけるシナリオを説明する. 
 
-\subsection{2030年代の地球・月間を想定したシミュレーションのシナリオとパラメータ}
-\label{section:2030年代の地球・月間を想定したシミュレーションのシナリオとパラメータ}
+\subsection{2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}
+\label{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}
 2030年代の人類の月における活動区域は当面月の南極域になることが予想され, 
 図\ref{fig:artemis_moon_station_orbit}に示すように, 
 月南極域との通信可能時間の長いNRHO軌道の利用が検討されている. 
@@ -32,8 +34,10 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c}  \hline
-        図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline\hline
+    \caption{地球・月間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
+    \vspace{3mm} 
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline
         天体A & 地球 \\
         天体B & 月 \\
         ノード1 & 地球の地上DTNノード \\
@@ -43,7 +47,6 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
         ノード5 & 月のNRHO軌道上に存在するDTNノード \\
         ノード6 & 月の地表DTNノード \\ \hline
     \end{tabular}
-    \caption{地球・月間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
     \label{table:earth_moon_scenario_topology}
 \end{table}
 
@@ -55,28 +58,31 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 これらを考慮し, ノード間の距離は以下のように設定した. 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c}  \hline
-        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline\hline
+    \caption{地球・月間シナリオのシナリオにおけるノード間の距離}
+    \vspace{3mm} 
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
         ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
         ノード2 - ノード3 間 & 0.12光秒 \\
         ノード2またはノード3 - ノード4またはノード5  間 & 1.03光秒$\sim$1.38光秒 \\
         ノード4 - ノード5  間 & 0.13光秒 \\
         ノード4またはノード5 - ノード6  間 & 0.13光秒 \\ \hline
     \end{tabular}
-    \caption{地球・月間シナリオのシナリオにおけるノード間の距離}
     \label{table:earth_moon_scenario_distance}
 \end{table}
 
-\subsection{2040年代の地球・月・火星間を想定したシミュレーションのシナリオとパラメータ}
-\label{section:2040年代の地球・月・火星間を想定したシミュレーションのシナリオとパラメータ}
+\subsection{2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}
+\label{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}
 2040年代には活動区域は火星にまで広がっていることが予想される. 
-本実験では\ref{section:2030年代の地球・月間を想定したトポロジー}項で
+本実験では\ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}項で
 述べた地球・月間のDTNネットワークと同様, 以下の構成を用いる. 
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c}  \hline
-        図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline\hline
+    \caption{地球・火星間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
+    \vspace{3mm}
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline
         天体A & 地球 \\
         天体B & 月 \\
         ノード1 & 地球の地上DTNノード \\
@@ -86,7 +92,6 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
         ノード5 & 火星の軌道上に存在するDTNノード \\
         ノード6 & 火星の地表DTNノード \\ \hline
     \end{tabular}
-    \caption{地球・火星間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
     \label{table:earth_mars_scenario_topology}
 \end{table}
 
@@ -98,23 +103,24 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c}  \hline
-        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline\hline
+    \caption{地球・火星間シナリオのシナリオにおけるノード間の距離}
+    \vspace{3mm}
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
         ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
         ノード2 - ノード3 間 & 0.12光秒 \\
-        ノード2またはノード3 - ノード4またはノード5  間 & 480秒, 840秒, 1200秒 \\
+        ノード2またはノード3 - ノード4またはノード5  間 & 480光秒, 840光秒, 1200光秒 \\
         ノード4 - ノード5  間 & 0.13光秒 \\
         ノード4またはノード5 - ノード6  間 & 0.13光秒 \\ \hline
     \end{tabular}
-    \caption{地球・火星間シナリオのシナリオにおけるノード間の距離}
     \label{table:earth_mars_scenario_distance}
 \end{table}
 
-\subsection{シミュレーションで用いるバンドルトラフィック}
-\label{section:シミュレーションで用いるバンドルトラフィック}
+\subsection{シミュレーションで用いるBundleトラフィック}
+\label{section:シミュレーションで用いるBundleトラフィック}
 本実験では図\ref{fig:experimentation_topology}のトポロジーにおいて, 
 ノード1からノード6に向かう, すなわち天体Aの地上DTNネットワークから天体Bの地上DTNネットワークに
-向けてのトラフィックを想定する. DTNsimではトラフィックとして生成するバンドルについて様々な
+向けてのトラフィックを想定する. DTNsimではトラフィックとして生成するBundleについて様々な
 パラメータを設定することが可能である. 本論文におけるシミュレーションではそれぞれ
 表\ref{table:traffic_earth_moon}と表\ref{table:traffic_earth_mars}の値を用いた. 
 また実際の宇宙インターネットにおけるトラフィックの発生状況は当然時刻変動するものであるが, 
@@ -122,28 +128,30 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c|c}  \hline
-        図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline\hline
-        シミュレーション全体におけるバンドルの総生成数 & bundlesNumber & 1800 \\
-        生成したバンドルの送信元ノードのendpoint ID & sourceEid & 1 \\
-        生成したバンドルの宛先ノードのendpoint ID & destinationEid & 6 \\
-        バンドル生成イベントごとのバンドルのサイズ（bytes）& size & 1500\\
-        バンドル生成イベントの間隔（秒）& interval & 1 \\ \hline
-    \end{tabular}
     \caption{地球・月間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
+    \vspace{3mm}
+    \begin{tabular}{ccc}  \hline
+        図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline
+        シミュレーション全体におけるBundleの総生成数 & bundlesNumber & 1800 \\
+        生成したBundleの送信元ノードのendpoint ID & sourceEid & 1 \\
+        生成したBundleの宛先ノードのendpoint ID & destinationEid & 6 \\
+        Bundle生成イベントごとのBundleのサイズ（bytes）& size & 1500\\
+        Bundle生成イベントの間隔（秒）& interval & 1 \\ \hline
+    \end{tabular}
     \label{table:traffic_earth_moon}
 \end{table}
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{c|c|c}  \hline
-        図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline\hline
-        シミュレーション全体におけるバンドルの総生成数 & bundlesNumber & 8000 \\
-        生成したバンドルの送信元ノードのendpoint ID & sourceEid & 1 \\
-        生成したバンドルの宛先ノードのendpoint ID & destinationEid & 6 \\
-        バンドル生成イベントごとのバンドルのサイズ（bytes）& size & 1500\\
-        バンドル生成イベントの間隔（秒）& interval & 10 \\ \hline
-    \end{tabular}
     \caption{地球・火星間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
+    \vspace{3mm}
+    \begin{tabular}{ccc}  \hline
+        図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline
+        シミュレーション全体におけるBundleの総生成数 & bundlesNumber & 8000 \\
+        生成したBundleの送信元ノードのendpoint ID & sourceEid & 1 \\
+        生成したBundleの宛先ノードのendpoint ID & destinationEid & 6 \\
+        Bundle生成イベントごとのBundleのサイズ（bytes）& size & 1500\\
+        Bundle生成イベントの間隔（秒）& interval & 10 \\ \hline
+    \end{tabular}
     \label{table:traffic_earth_mars}
 \end{table}

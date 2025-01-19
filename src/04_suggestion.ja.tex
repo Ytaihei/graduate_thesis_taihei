@@ -8,14 +8,28 @@ Bezirgiannidisらの提案した全てのノードにおいて臨時更新を行
 天体内のノードにのみ拡散し, 他天体のノードには拡散しない手法を提案する. 
 本章ではこの提案が満たすべき要件について整理し, 
 それらに対する既存手法と提案手法の定性的な特性について述べる. 
+また本論文では以降,経路や遅延について次のような表記を用いる.
+\begin{table}[htbp]
+    \centering
+    \caption{本論文で用いる表記と意味の対応関係}
+    \vspace{3mm}
+    \begin{tabular}{cc}  \hline
+        本論文での表記 & 意味 \\ \hline
+        R_{X \rightarrow Y \rightarrow Z} & ノードX\rightarrow ノードY \rightarrow ノードZの順の経路 \\ 
+        D^{X}_{Y} & ノードXからノードYへのエンドツーエンドの遅延 \\ 
+        \hline
+    \end{tabular}
+    \label{table:how_to_use_words}
+\end{table}
+
 
 \section{要件1:臨時更新による配送遅延の低下}
 \label{section:要件1}
-\ref{section:ContactPlanの臨時更新}で述べたように, 
+\ref{section:ContactPlanの臨時更新}節で述べたように, 
 Contact Planの臨時更新の目的は, 想定されたContactに失敗した場合にその
 情報をDTNの他のノードに拡散しContact Planを更新することで,
 DTNの各ノードが最新のトポロジーを認識し配送遅延の増加を抑えることである. 
-既存手法と提案手法の効果について表\ref{fig:experimentation_topology}の例を用いて考える.
+既存手法と提案手法の効果について図\ref{fig:experimentation_topology}のトポロジーを用いて考える.
 
 \begin{figure}[tbh]
     \centering
@@ -25,7 +39,7 @@ DTNの各ノードが最新のトポロジーを認識し配送遅延の増加�
     \begin{minipage}{\textwidth}
         \raggedright
         \vspace{3mm}
-        \fontsize{10pt}{12pt}\selectfont
+        \fontsize{10.5pt}{12pt}\selectfont
         ノード1は天体Aの地上DTNネットワークを代表したノード, ノード2とノード3は
         天体Aの軌道上に存在する宇宙のDTNノード, ノード4とノード5は
         天体Bの軌道上に存在する宇宙のDTNノード, 
@@ -36,57 +50,73 @@ DTNの各ノードが最新のトポロジーを認識し配送遅延の増加�
 ノード1から3は天体A, ノード4から6はそれぞれ天体Bに属するDTNノードであり, 
 ノード1と6はそれぞれの地表DTNのノード, ノード2から5はそれぞれの天体の軌道上にある
 宇宙のDTNノードである. 
-このトポロジーにおいて, 今ベストパスがノード1-2-4-6の経路（経路1）であるとし, 仮に
-ノード4から6のContactが何らかの理由で失敗した場合に, ベストパスはノード1-2-5-6の経路（経路2）となり, 
-ただしこれよりは最適経路ではないもののノード1-2-4-5-6の経路（経路3）でもバンドルの配送が可能であるとする.
-
-既存手法も提案手法も用いず更新を行わない場合, どのノードもそのContactの失敗を知らないため
-すべてのノードはベストパスが経路1のままと認識し, ノード4においてノード6へのバンドルの配送を試み続ける.
-TTLの期限切れまでそれを試み続け, そのContactの復旧が起きた場合にのみBundleの送信が成功する. 
-
-既存手法では, その情報をノード4を起点に発信し, その情報を受け取ったノードは順次Contact Planから
-当該Contactを削除し, Contact Planを更新する. これにより, 失敗発生直後よりノード4は代替経路となる経路3を
-利用することが可能になり, 到達遅延は増加するものの, Bundleの送信には成功する. さらにこの場合, 
-天体間遅延を超えてこの情報が天体Aのノード1・2・3に配信されると, 
-ノード2は経路2が最適経路と認識することができるようになり, 配送遅延を低下させることができる. 
-
-提案手法では, 当初は既存手法同様経路3をすぐに利用できるようになるが, 
-天体間には更新情報を伝搬しないため経路2が利用されることはなく, 
-失敗したContactの終了または復旧まで経路1を利用することができない. 
-
-ただし経路2と経路3の遅延の差はノード2からノード4の遅延とノード2からノード5の遅延の差, 
-すなわち天体Bの2つの衛星の天体Aの衛星との距離の差によるものである. 
-これは天体間の距離に対して基本的には小さいものであると考えられ, 既存手法で途中から経路2を利用できることの
-利点は非常に限定的であり, 配送遅延の低下という点に置いて提案手法の有効性は既存手法に
-対して大きな差異があるとは言えないと予想される. 
+このトポロジーにおいて, 図\ref{fig:example_of_routechange}のように
+今ベストパスが R_{1 \rightarrow 2 \rightarrow 4 \rightarrow 6}（経路1）であるとし, 仮に
+ノード4から6のContactが何らかの理由で失敗した場合に, 
+ベストパスはR_{1 \rightarrow 2 \rightarrow 5 \rightarrow 6}の経路（経路2）となり, 
+ただしこれよりは最適経路ではないものの
+R_{1 \rightarrow 2 \rightarrow 4 \rightarrow 5 \rightarrow 6}（の経路（経路3）でもBundleの配送が可能であるとする.
 
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.7\textheight]{img/example_of_routechange.pdf}
-    \caption{既存手法と提案手法において選択される代替経路の例}
+    \caption{Contact失敗時に既存手法と提案手法において選択される代替経路の例}
     \label{fig:example_of_routechange}
-    \begin{minipage}{\textwidth}
-        \raggedright
-        \vspace{3mm}
-        \fontsize{10pt}{12pt}\selectfont
-    \end{minipage}
 \end{figure}
+
+既存手法も提案手法も用いず更新を行わない場合, どのノードもそのContactの失敗を知らないため
+すべてのノードはベストパスが経路1のままと認識し, ノード4においてノード6へのBundleの配送を試み続ける.
+TTLの期限切れまでそれを試み続けるため, 図\ref{fig:example_of_delaychange}中の黒線のように, 
+障害発生中はBundleが到着せず, そのContactの復旧が起きた場合, もしくは
+最適経路が当該Contactを使用しない経路に切り替わった時にBundleの送信が成功するようになる. 
+
+既存手法では, その情報をノード4を起点に発信し, その情報を受け取ったノードは順次Contact Planから
+当該Contactを削除し, Contact Planを更新する. これにより, 失敗発生直後よりノード4は代替経路となる経路3を
+利用することが可能になり, 経路1と比較して到達遅延は増加するものの, Bundleの送信には成功する. さらにこの場合, 
+天体間遅延を超えてこの情報が天体Aのノード1・2・3に配信されると, 
+ノード2は経路2が最適経路と認識することができるようになり, 経路3よりも配送遅延を低下させることができる. 
+そのため既存手法における障害発生時の到達遅延の推移は図\ref{fig:example_of_delaychange}中の紫線のようになる. 
+
+提案手法では, 当初は既存手法同様経路3をすぐに利用できるようになるが, 
+天体間には更新情報を伝搬しないため経路2が利用されることはなく, 
+そのため提案手法における障害発生時の到達遅延の推移は図\ref{fig:example_of_delaychange}中の黄線のようになる. 
+
+\begin{figure}[tbh]
+    \centering
+    \includegraphics[width=0.7\textheight]{img/example_of_delaychange.pdf}
+    \caption{Contact失敗時の配送遅延変化の予想}
+    \label{fig:example_of_delaychange}
+\end{figure}
+
+既存手法と提案手法の差はすなわち経路2と経路3の遅延の差（図\ref{fig:example_of_delaychange}中の赤い部分）である.
+しかしこれはノード2からノード4の遅延とノード2からノード5の遅延の差, 
+すなわち天体Bの2つの衛星の天体Aの衛星との距離の差によるものである. 
+これは経路全体の長さに比べると比較的短いものであると考えられ, 既存手法で途中から経路2を利用できることの
+利点は限定的である. そのため, 配送遅延の低下という点に置いて当然提案手法の有効性はあるものの, 
+提案手法も既存手法に近しい有効性があると予想される.  
 
 \section{要件2:臨時更新による運用面での効果}
 \label{section:要件2}
-\ref{section:要件1}で述べたように, Contact Planの臨時更新を
+\ref{section:要件1}節で述べたように, Contact Planの臨時更新を
 もし天体間においても行う場合, 貴重な天体間のリンクを消費することになる.
 提案手法はこの点において, 既存手法と違い自天体内のノードにのみ拡散するため, 
 この消費を行わない. 既存手法のCPUPにおける更新メッセージのProtocol Data Unit（PDU）は
-表\ref{table:cpup_pdu_format}のようになっており, このPDU内で示される
-Command Blockのフォーマットは表\ref{table:command_block_format}のようになっている.
+図\ref{figure:cpup_pdu_format}のようになっており, このPDU内で示される
+Command Blockのフォーマットは図\ref{figure:command_block_format}のようになっている.
 このPDUを用いて全てのノードに対して臨時更新を行う場合, そのサイズ分
 天体間のリンクを消費する.
 
-\begin{table}[htbp]
+\begin{figure}[htbp]
     \centering
     \caption{既存手法におけるCPUPのPDUのフォーマット}
-    \label{table:cpup_pdu_format}
+    \label{figure:cpup_pdu_format}
+    \begin{minipage}{\textwidth}
+        \centering
+        \vspace{1mm} 
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{Bezirgiannidis2013}Table1をもとに作成. 
+        \vspace{1mm} 
+    \end{minipage}
     \begin{tabular}{|c|c|c|c|}
       \hline
       Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
@@ -104,16 +134,18 @@ Command Blockのフォーマットは表\ref{table:command_block_format}のよ�
       \multicolumn{4}{|c|}{$n$\textsuperscript{th} Command Block} \\
       \hline
     \end{tabular}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{Bezirgiannidis2013}Table1より引用.  
-    \end{minipage}
-  \end{table}
-\begin{table}[htbp]
+  \end{figure}
+\begin{figure}[htbp]
     \centering
     \caption{既存手法におけるCPUPのCommand Blockのフォーマット}
-    \label{table:command_block_format}
+    \label{figure:command_block_format}
+    \begin{minipage}{\textwidth}
+        \centering
+        \vspace{1mm} 
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{Bezirgiannidis2013}Table2をもとに作成. 
+        \vspace{1mm} 
+    \end{minipage}
     \begin{tabular}{|c|c|c|c|}
       \hline
       Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
@@ -129,10 +161,5 @@ Command Blockのフォーマットは表\ref{table:command_block_format}のよ�
       \multicolumn{2}{|c|}{Command Parameter 1 (SDNV)} & \multicolumn{1}{c|}{...} & Comm. Param. $k$ (SDNV) \\
       \hline
     \end{tabular}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{Bezirgiannidis2013}Table2より引用.  
-    \end{minipage}
-  \end{table}
+  \end{figure}
   

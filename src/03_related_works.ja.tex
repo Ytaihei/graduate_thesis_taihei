@@ -16,11 +16,11 @@ for Space Data System）ではSCHEDULE-AWARE BUNDLE ROUTING
 DTNでCGRを用いたルーティングを運用する場合, その運用プロセスは
 ~\ref{section:運用計画の決定}節で述べる運用計画の決定, 
 ~\ref{section:経路決定}節で述べる経路計算, 
-~\ref{section:バンドルの転送}節で述べる実際のバンドルの転送
+~\ref{section:Bundleの転送}節で述べる実際のBundleの転送
 の3つの段階に大別できる.  本章ではそれぞれの段階ごとに
 DTNにおけるCGRとその研究について分類し, 現状の課題について説明する.  
 さらに実際の運用においてはこの3段階を
-継続的に実施する必要があり, そのために必要なコンタクトプランの更新について
+継続的に実施する必要があり, そのために必要なContact Planの更新について
 ~\ref{section:Contact Planの定期的・継続的な配布}節と~\ref{section:ContactPlanの臨時更新}節で述べる.  
 
 \section{DTNの運用計画の決定}
@@ -33,8 +33,8 @@ CGRの例として, 図\ref{fig:contact_example_topology}のようなAからDの
 マスターノードは軌道計算によるこれらのノードの位置や, 搭載する機材の性能等をもとにContact Planを作成する.  
 Contact Planには, Contactについての記述とRangeについての記述が含まれ, 
 Contactについての記述では, 特定の2ノードの通信機会についての通信開始・終了時間, データレートなどが記載され
-（図\ref{fig:contact_example_contactplan}, Rangeについての記述では特定の2ノードの物理的な距離について記載される
-（図\ref{fig:contact_example_contactrange}）.  
+（表\ref{table:contact_example_contactplan}, Rangeについての記述では特定の2ノードの物理的な距離について記載される
+（表\ref{table:contact_example_contactrange}）.  
 ただし宇宙における特定の2ノード間の通信機会は非対称であるため, 
 Contact Planに記載される通信機会は, 特定の2ノードについての両方のリンクの通信可能機会ではなく, 
 片方向のリンクについての通信機会である. 
@@ -47,33 +47,62 @@ Contact Planに記載される通信機会は, 特定の2ノードについて�
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-1より引用
+        参考文献\cite{schedule_aware_bundle_routing}figure3-1をもとに作成. 
     \end{minipage}
 \end{figure}
-\begin{figure}[tbh]
+\begin{table}[htbp]
     \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactplan.pdf}
     \caption{図\ref{fig:contact_example_topology}のトポロジーにおけるContact Planの例（Contactに関する表記）}
-    \label{fig:contact_example_contactplan}
+    \label{table:contact_example_contactplan}
     \begin{minipage}{\textwidth}
         \raggedright
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-2より引用. 
+        \vspace{2mm}
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{schedule_aware_bundle_routing}figure3-2をもとに作成. 
         Senderは送信元のノードの識別子, Receiverは受信元のノードの識別子, FromはContactの開始時刻, Untilは終了時刻, Rateは転送速度を示す.  
+        \vspace{2mm}
     \end{minipage}
-\end{figure}
-\begin{figure}[tbh]
+    \begin{tabular}{cccccc}
+      \hline
+      Contact & Sender & Recvr & From & Until & Rate \\
+      \hline
+      1 & A & B & 1000 & 1100 & 1000 \\
+      2 & B & A & 1000 & 1100 & 1000 \\
+      3 & B & D & 1100 & 1200 & 1000 \\
+      4 & D & B & 1100 & 1200 & 1000 \\
+      5 & A & C & 1100 & 1200 & 1000 \\
+      6 & C & A & 1100 & 1200 & 1000 \\
+      7 & A & B & 1300 & 1400 & 1000 \\
+      8 & B & A & 1300 & 1400 & 1000 \\
+      9 & B & D & 1400 & 1500 & 1000 \\
+      10 & D & B & 1400 & 1500 & 1000 \\
+      11 & C & D & 1500 & 1600 & 1000 \\
+      12 & D & D & 1500 & 1600 & 1000 \\
+      \hline
+    \end{tabular}
+\end{table}
+\begin{table}[htbp]
     \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactrange.pdf}
     \caption{図\ref{fig:contact_example_topology}のトポロジーにおけるContact Planの例（Rangeに関する表記）}
-    \label{fig:contact_example_contactrange}
+    \label{table:contact_example_contactrange}
     \begin{minipage}{\textwidth}
         \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-3より引用.  
+        \vspace{2mm}
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{schedule_aware_bundle_routing}figure3-3をもとに作成.  
+        \vspace{2mm}
     \end{minipage}
-\end{figure}
-
+    \begin{tabular}{ccccc}
+        \hline
+        Sender & Recvr & From & Until & Range (light seconds) \\
+        \hline
+        A & B & 1000 & 1100 & 1 \\
+        A & C & 1100 & 1200 & 30 \\
+        B & D & 1400 & 1500 & 120 \\
+        C & D & 1500 & 1600 & 90 \\
+        \hline
+    \end{tabular}
+  \end{table}
 
 \section{転送可能な経路の計算}
 \label{section:経路決定}
@@ -82,8 +111,8 @@ Contact Planに記載される通信機会は, 特定の2ノードについて�
 衛星どうしのContactを記載したものであり, 実際のDTNの運用においては
 Contact Planに基づいて転送可能な経路を計算する必要がある.  
 ノードAからノードDに向けたBundleを配送する場合, 
-図\ref{fig:contact_example_contactplan}
-及び図\ref{fig:contact_example_contactrange}からなるContact Planに対し, 
+表\ref{table:contact_example_contactplan}
+及び表\ref{table:contact_example_contactrange}からなるContact Planに対し, 
 \ref{section:宇宙インターネットにおけるルーティングのアルゴリズム}項で述べるアルゴリズムを用いることにより
 図\ref{fig:contact_example_contactgraph}のようなContact Graphを得る.  
 ただしContact Graphにおける頂点はDTNにおける各ノードではなく単一のContactであるため, 
@@ -92,13 +121,13 @@ Contact GraphはDTNのトポロジーを示すものではなく, データ転�
 \begin{figure}[tbh]
     \centering
     \includegraphics[width=0.5\textheight]{img/contact_example_contactgraph.pdf}
-    \caption{図\ref{fig:contact_example_contactplan}及び
-    図\ref{fig:contact_example_contactrange}のContact Planから計算されるContact Graphの例}
+    \caption{表\ref{table:contact_example_contactplan}及び
+    表\ref{table:contact_example_contactrange}のContact Planから計算されるContact Graphの例}
     \label{fig:contact_example_contactgraph}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-4より引用.  
+        参考文献\cite{schedule_aware_bundle_routing}figure3-4をもとに作成.  
     \end{minipage}
 \end{figure}
 \label{chap:related_works}
@@ -108,7 +137,7 @@ Contact GraphはDTNのトポロジーを示すものではなく, データ転�
 \label{section:宇宙インターネットにおけるルーティングのアルゴリズム}    
 CGRでは図\ref{fig:contact_example_contactgraph}に対してアルゴリズムによる
 計算を行うことで最適な転送経路を決定している.  
-CGRは\cite{Burleigh2008}において, 基本的なパラメータとコンタクトグラフの利用や, 
+CGRは\cite{Burleigh2008}において, 基本的なパラメータとContact Graphの利用や, 
 これらを用いた転送先の近接ノードの決定などの基本的な概念が提案された.  
 しかしこの提案ではルーティングアルゴリズムについては, 静的な経路計算に関する
 アルゴリズムは規定されず, ルーティングループ防止の必要性, デフォルトルートを用いた動的
@@ -131,11 +160,11 @@ ECGRはearliest-arrival-timeを指標とすることでより計算コストの�
 またルーティングループが発生しない, 経路が時間とともに単調に収束することもメリットである.  
 これ以後, CGRにおけるアルゴリズムとしては基本的にダイクストラが用いられている.  
 
-\section{最適な経路の決定とバンドルの転送}
-\label{section:バンドルの転送}
+\section{最適な経路の決定とBundleの転送}
+\label{section:Bundleの転送}
 
-\ref{section:経路決定} 節で転送が可能な経路が計算されると, 
-これらの計算された経路から最適と考えられる経路が決定され実際にバンドルが転送される.  
+\ref{section:経路決定}節で転送が可能な経路が計算されると, 
+これらの計算された経路から最適と考えられる経路が決定され実際にBundleが転送される.  
 転送可能な経路が複数存在する場合, \cite{schedule_aware_bundle_routing}では
 最適な経路の決定には以下の3点が検証される.  
 
@@ -145,9 +174,9 @@ ECGRはearliest-arrival-timeを指標とすることでより計算コストの�
     \item Projected arrival time
 \end{itemize}
 
-Earliest transmission opportunity（ETO）は, 転送したいバンドル（B-object）がネクストホップとなる
+Earliest transmission opportunity（ETO）は, 転送したいBundle（B-object）がネクストホップとなる
 隣接ノード（N-next）に転送される最初の時間である.  
-現在この転送したいバンドルが保持されているノード（N-current）において, 
+現在この転送したいBundleが保持されているノード（N-current）において, 
 B-otherが既にキューイングに入っており, B-Xと比較して優先的に転送が行われる場合, 
 B-otherがN-currentに存在しない場合と比較してB_objectの
 Earliest transmission opportunity（ETO）は遅くなる.  
@@ -158,7 +187,7 @@ B_objectのTime-to-live（TTL）がこれよりも小さい場合, B_objectは�
 B_objectのTime-to-live（TTL）がこれよりも大きい場合, 転送可能な経路のうち
 最もPATが小さい経路が最適な経路として決定される.  
 
-Effective volume limit（EVL）は選定された経路において, 転送が可能なバンドルのサイズの最大値
+Effective volume limit（EVL）は選定された経路において, 転送が可能なBundleのサイズの最大値
 を示す値であり, この値がB-objectの値よりも小さい場合, B-objectはフラグメンテーションされる.  
 
 
@@ -166,7 +195,7 @@ Effective volume limit（EVL）は選定された経路において, 転送が�
 \section{Contact Planの定期的・継続的な配布}
 \label{section:Contact Planの定期的・継続的な配布}
 
-上記\ref{section:運用計画の決定}節, \ref{section:経路決定}節, \ref{section:バンドルの転送}節
+上記\ref{section:運用計画の決定}節, \ref{section:経路決定}節, \ref{section:Bundleの転送}節
 を順に実施することでDTNにおけるCGRが運用されることが想定され, 
 これらの手法についての研究がなされている.  
 しかし実際の運用においてDTNの各ノードで経路の計算, 決定を行うには, 
@@ -188,7 +217,7 @@ Bezirgiannidisらは, 予定外の事象によりContactが失敗する可能性
 指摘し, その情報を他のノードに拡散しContact Planをアップデートすることを提案し, 
 Contact Plan Update Protocol（CPUP）を実装した\cite{Bezirgiannidis2013}.  
 CPUPを実装したケースにおいては, そうではないケースと比較して
-DTNの各ノードが最新のトポロジーを認識できるため, バンドルをより正しい経路に
+DTNの各ノードが最新のトポロジーを認識できるため, Bundleをより正しい経路に
 よって配送することが可能になり, 配送遅延がCPUPが実装されていないケースよりも
 低下した. これにより, 想定されていたContactに失敗した場合に, 
 その情報をDTNの他のノードに拡散しContact Planを更新することで
@@ -200,7 +229,7 @@ DTNの各ノードが最新のトポロジーを認識できるため, バンド
 \ref{section:ContactPlanの臨時更新}節で述べたように, Contact Planの臨時更新は
 配送遅延の増加を防ぎネットワークとしての品質を向上することに寄与する. 
 しかし実際にContactが失敗した場合, DTNの各ノードにその情報の拡散が完了する時間は, 
-拡散を開始するノードからCGRによってその情報を格納したバンドルが到達する時間によって決まる.  
+拡散を開始するノードからCGRによってその情報を格納したBundleが到達する時間によって決まる.  
 そのため天体間にまたがるDTNを運用しており, それらの全てノードに通知を行うことを想定した場合, 
 \ref{section:大きな遅延のある通信環境}節で述べた天体間の大きな遅延と, 
 さらにその天体内でのContact Planに応じた時間分, 障害情報の拡散の完了までには大きな時間を要する.  
