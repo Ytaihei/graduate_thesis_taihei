@@ -174,17 +174,17 @@ ECGRはearliest-arrival-timeを指標とすることでより計算コストの�
     \item Projected arrival time
 \end{itemize}
 
-Earliest transmission opportunity（ETO）は, 転送したいBundle（B-object）がネクストホップとなる
+Earliest transmission opportunity (ETO) は, 転送したいBundle（B-object）がネクストホップとなる
 隣接ノード（N-next）に転送される最初の時間である.  
 現在この転送したいBundleが保持されているノード（N-current）において, 
 B-otherが既にキューイングに入っており, B-Xと比較して優先的に転送が行われる場合, 
-B-otherがN-currentに存在しない場合と比較してB_objectの
-Earliest transmission opportunity（ETO）は遅くなる.  
+B-otherがN-currentに存在しない場合と比較してB-objectの
+Earliest transmission opportunity (ETO) は遅くなる.  
 候補となる経路によって, B-objectのETOは異なるため, 最適な経路の決定の際には考慮される.  
 
 Projected arrival time（PAT）は, B-objectの宛先ノード（N-dest）にB-objectが到着すると予想される時間であり, 
-B_objectのTime-to-live（TTL）がこれよりも小さい場合, B_objectは破棄される.  
-B_objectのTime-to-live（TTL）がこれよりも大きい場合, 転送可能な経路のうち
+B-objectのTime-to-live（TTL）がこれよりも小さい場合, B-objectは破棄される.  
+B-objectのTime-to-live（TTL）がこれよりも大きい場合, 転送可能な経路のうち
 最もPATが小さい経路が最適な経路として決定される.  
 
 Effective volume limit（EVL）は選定された経路において, 転送が可能なBundleのサイズの最大値
@@ -241,6 +241,7 @@ Bezirgiannidisらの研究で行われたCPUPの実装でも, DTNの全てのノ
 またContactの障害情報を拡散することは, その通知のために貴重な天体間のリンクに余計な
 Bundleが発生する. またその情報を受け取ったノードでの再計算を伴い, 
 さらにトラフィックが一部のノードに集中することにもなり得るため, 
-DTNの運用におけるこれらの影響についても考慮する必要がある.  
-そのためContact Planの臨時更新の対象は, そのノードに拡散することによる配送遅延の低下度合いと運用面における影響
-に応じて対象を工夫すう必要性が存在する.  
+DTNの運用におけるこれらの影響についても考慮する必要がある. 
+そのためContact Planの臨時更新の対象は,
+そのノードに拡散することによるBundleの配送能力の向上度合いとネットワークへの負荷の変化
+に応じて対象を工夫する必要性が存在する.  

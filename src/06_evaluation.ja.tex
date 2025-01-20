@@ -5,7 +5,7 @@
 述べたシミュレーションにおける結果についてまとめる.
 
 \ref{section:要件1に対するシミュレーション結果}節では
-\ref{section:要件1}節で述べた配送遅延の増加防止の効果について, 
+\ref{section:要件定義}節で述べた配送遅延の増加抑制の効果について, 
 \ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた
 地球-月間のシミュレーション, 
 \ref{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた
@@ -13,58 +13,62 @@
 配送を試みたBundleの到達率とその平均遅延を示す. 
 
 \ref{section:要件2に対する更新メッセージによるリンク消費}節では
-\ref{section:要件2}節で述べた運用面での効果について, 
+\ref{section:要件定義}節で述べた運用面での効果について, 
 上記それぞれのシミュレーションについて, 
-運用上のデメリットとして天体間でCPUPコマンドがどれだけリンク消費をするかを示す. 
+運用上のデメリットとして既存手法における臨時更新メッセージが天体間のリンクを消費するか示す. 
 
 \section{要件1に対するシミュレーションでの到達率・到達遅延の結果}
 \label{section:要件1に対するシミュレーション結果}
-本章では, 要件1に対するシミュレーション結果について述べる. 
 
-\subsection{地球・月間のシミュレーション結果と考察}
-\label{section:地球・月間のシミュレーション結果と考察}
+\subsection{地球・月間のシミュレーション結果}
+\label{section:地球・月間のシミュレーション結果}
 \ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた
 地球-月間のシミュレーションについて, 配送を試みたBundleの到達率とその遅延は
 それぞれ図\ref{fig:graph_bundle_earth_moon}と図\ref{fig:graph_delay_earth_moon}のようになった. 
-
+実験の結果, 図\ref{fig:graph_bundle_earth_moon}に示す通り
+臨時更新を行わない場合にはおよそ70\%のBundleは到達しなかった一方, 
+既存手法と提案手法ではすべてのBundleが到達した.
+また到達遅延に関しても, 図\ref{fig:graph_delay_earth_moon}に示す通り, 
+既存手法とほぼ変わらない値となった. 
 %地球・月間のシミュレーション結果
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/moon/moon_bundle.pdf}
+    \includegraphics[width=0.7\textheight]{img/moon_bundle.pdf}
     \caption{地球・月間シナリオにおけるBundleの到達率}
     \label{fig:graph_bundle_earth_moon}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Contactの失敗情報について, どのノードにも拡散を行わない場合をFault$_$Ignorant, 
-        天体間を超えてすべてのノードに拡散する場合をFault$_$AllnodeAware, 
-        天体内のノードのみに拡散する場合をFault$_$LocallyAwareとして表記した. 
+        Contactの失敗情報について, どのノードにも拡散を行わない場合をFault\_Ignorant, 
+        天体間を超えてすべてのノードに拡散する場合をFault\_AllnodeAware, 
+        天体内のノードのみに拡散する場合をFault\_LocallyAwareとして表記した. 
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/moon/moon_delay.pdf}
+    \includegraphics[width=0.7\textheight]{img/moon_delay.pdf}
     \caption{地球・月間シナリオにおけるBundleの到達遅延}
     \label{fig:graph_delay_earth_moon}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
-実験の結果, 図\ref{fig:graph_bundle_earth_moon}に示す通り提案手法では既存手法と同様すべてのBundleが到達した.
-また到達遅延に関しても, 図\ref{fig:graph_delay_earth_moon}に示す通り, 既存手法とほぼ変わらない数値が出ており, 
-提案手法による遅延増加の防止効果は非常に高かった. また更新を行わない場合において到達遅延が低く計算されているのは, 
+\subsection{地球・月間のシミュレーション結果に対する考察}
+\label{section:地球・月間のシミュレーション結果に対する考察}
+提案手法では既存手法とほぼ同程度の遅延となり要件1に対する効果は非常に高かった. 
+また臨時更新を行わない場合において到達遅延が低く計算されているのは, 
 Contactの失敗に伴い到達できなかったBundleは到達遅延に含めないためである. 既存手法と提案手法ではこれらのBundleは
-別なルートでルーティングされ, 到達遅延は増加するものの, 宛先ノードに到達には成功している. 
+別なルートでルーティングされ, 平均到達遅延を大きく増加させるものの, 宛先ノードへの到達には成功している. 
 
-\subsection{地球・火星間のシミュレーション結果と考察}
-\label{section:地球・月間のシミュレーション結果と考察}
+\subsection{地球・火星間のシミュレーション結果}
+\label{section:地球・火星間のシミュレーション結果}
 \ref{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた
 地球-火星間のシミュレーションについて, 配送を試みたBundleの到達率とその遅延は
 地球-火星間の距離が480光秒の時について
@@ -73,94 +77,101 @@ Contactの失敗に伴い到達できなかったBundleは到達遅延に含め�
 図\ref{fig:graph_bundle_earth_mars_840}と図\ref{fig:graph_delay_earth_mars_840}のように, 
 地球-火星間の距離が1200光秒の時について
 図\ref{fig:graph_bundle_earth_mars_1200}と図\ref{fig:graph_delay_earth_mars_1200}のようになった. 
-%地球・火星間のシミュレーション結果
+
+地球-火星間の距離が480光秒と840光秒のシナリオにおいては, 
+臨時更新を行わない場合には平均6\%程度しか到達しなかったが,
+既存手法・提案手法で臨時更新を行なった場合には95\%を超える非常に多くのBundleが到達し, 
+かつ提案手法と既存手法で到達率が完全に一致した.
+また到達遅延に関しても, 提案手法と既存手法はともに遅延の値自体は大きかったものの, 両者の値は完全に一致した. 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_480/mars_480_bundle.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_480_bundle.pdf}
     \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達率}
     \label{fig:graph_bundle_earth_mars_480}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_480/mars_480_delay.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_480_delay.pdf}
     \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達遅延}
     \label{fig:graph_delay_earth_mars_480}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_840/mars_840_bundle.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_840_bundle.pdf}
     \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達率}
     \label{fig:graph_bundle_earth_mars_840}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_840/mars_840_delay.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_840_delay.pdf}
     \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達遅延}
     \label{fig:graph_delay_earth_mars_840}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_1200/mars_1200_bundle.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_1200_bundle.pdf}
     \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達率}
     \label{fig:graph_bundle_earth_mars_1200}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
 \begin{figure}[tbh]
     \centering
-    \includegraphics[width=0.7\textheight]{results/mars_distance_1200/mars_1200_delay.pdf}
+    \includegraphics[width=0.7\textheight]{img/mars_1200_delay.pdf}
     \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達遅延}
     \label{fig:graph_delay_earth_mars_1200}
     \begin{minipage}{\textwidth}
         \centering
         \vspace{3mm}
         \fontsize{10.5pt}{12pt}\selectfont
-        Fault$_$Ignorant, Fault$_$AllnodeAware, Fault$_$LocallyAwareの表記は
+        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
         図\ref{fig:graph_bundle_earth_moon}と同様である.
     \end{minipage}
 \end{figure}
 
-実験の結果, 図\ref{fig:graph_bundle_earth_moon}に示す通り提案手法では既存手法と同様すべてのBundleが到達した.
-また到達遅延に関しても, 図\ref{fig:graph_delay_earth_moon}に示す通り, 既存手法と完全に一致し,  
-提案手法による遅延増加の防止効果は非常に高かった. 
+\subsection{地球・火星間のシミュレーション結果に対する考察}
+\label{section:地球・火星間のシミュレーション結果に対する考察}
+図\ref{fig:graph_delay_earth_mars_480}, 
+図\ref{fig:graph_delay_earth_mars_600}, 
+図\ref{fig:graph_delay_earth_mars_1200}において
 火星までのシミュレーションにおいて遅延が既存手法と提案手法で完全に一致している理由としては, 
 地球-火星間の距離が遠いため, Contact失敗の発生後に選ばれる最適経路に, 
 それ以前までの最適経路と比較して天体間の経路まで変更する経路が選ばれにくかったことが考えられる. 
@@ -182,16 +193,17 @@ Contactの失敗に伴い到達できなかったBundleは到達遅延に含め�
 よって実際に（B）と（C）となっている場合, 
 
 \begin{align}
-    (A) &= D^{2}_{4} + D^{4}_{5} - D^{2}_{5} \\
+    (A) &= D^{2}_{4} + D^{4}_{5} - D^{2}_{5} \notag \\
     &\fallingdotseq D^{2}_{4} - D^{2}_{5} (\because (B)) \\
-    &> 0 (\because (C))
+    &> 0 \notag (\because (C)\notag)
 \end{align}
 
-となり, 経路2が選択される. これにより既存手法と提案手法において同様の経路が選択され到達率と到達遅延の結果が一致していると考えられる. 
+となり, 経路2が選択される. 
+これにより既存手法と提案手法において同様の経路が選択され到達率と到達遅延の結果が一致していると考えられる. 
 
 \section{要件2に対する更新メッセージによるリンク消費と考察}
 \label{section:要件2に対する更新メッセージによるリンク消費}
-\ref{section:要件2}節で述べたように, 既存手法では天体間での更新メッセージの送信が必要であり, 
+\ref{section:要件定義}節で述べたように, 既存手法では天体間での更新メッセージの送信が必要であり, 
 その際にリンクを消費する. 一方, 本提案手法では自天体内のノードにのみ更新メッセージを送信するため, 
 そのメッセージによる天体間リンクの消費は一切ない. 
 本論文では図\ref{figure:cpup_pdu_format}および図\ref{figure:command_block_format}で示した
@@ -224,22 +236,19 @@ CPUPのPDUは以下のようになることが想定される.
     \caption{既存手法における単一のContactを削除するCPUPのCommand Block}
   \end{figure}
 
-リンク消費量は以下のようになる. 
-
+リンク消費量は以下のようになった. 
 \begin{equation}
     \text{リンク消費量} = \text{CPUPのPDUのサイズ} \times \text{削除するContact数}
 \end{equation}
 
 \ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた地球-月間のシナリオにおいては, 
 生成した600回のContactのうち200回のContactを失敗させるシナリオであるため, リンク消費量は以下のようになる. 
-
 \begin{equation}
     \text{リンク消費量} = 16 \text{Bytes} \times 200 \text{個のContact削除メッセージ} = 3200 {Bytes} 
 \end{equation}
 
 \ref{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}節で述べた地球-火星間のシナリオにおいては, 
 生成した480回のContactのうち100回のContactを失敗させるシナリオであるため, リンク消費量は以下のようになる. 
-
 \begin{equation}
     \text{リンク消費量} = 16 \text{Bytes} \times 100 \text{個のContact削除メッセージ} = 1600 {Bytes} 
 \end{equation}

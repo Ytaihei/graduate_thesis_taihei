@@ -14,6 +14,9 @@
 \usepackage{afterpage}
 \usepackage{./sty/ncodeline}
 \usepackage{url}  
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{glossaries}
 
 %\usepackage[dvipdfmx, colorlinks, breaklinks,%
 \usepackage[dvipdfmx, breaklinks,%
@@ -34,7 +37,7 @@ pdftitle={RG},%
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{multicol}
-\def\lstlistingname{ソースコード}
+\def\lstlistingname{付録}
 
 \lstset{%
  language={C++},
@@ -88,9 +91,9 @@ pdftitle={RG},%
 \makeatother
 
 % タイトル
-\def\title{Contact Planの臨時更新情報伝搬の天体内への限定}
+\def\title{宇宙のDTNにおけるContact Plan臨時更新対象の天体内への限定}
 % 英語タイトル
-\def\etitle{Limit the propagation of temporary updates of Contact Plan to within celestial bodies.}
+\def\etitle{Restriction of Contact Plan in the DTN of the Universe to within celestial bodies subject to temporary updating}
 % 著者(日本語)
 \def\author{鈴木　翔太}
 % 著者(英語)
@@ -99,6 +102,7 @@ pdftitle={RG},%
 \def\dept{慶應義塾大学 環境情報学部}
 % 学部・研究科(英語)
 \def\edept{Keio University Bachelor of Arts in Environment and Information Studies}
+
 
 \usepackage{hyperref} 
 \begin{document}
@@ -123,6 +127,10 @@ pdftitle={RG},%
 \listoftables\thispagestyle{plain} %表目次
 \clearpage
 
+\makeglossaries
+\input{src/glossary}
+\clearpage
+
 \pagenumbering{arabic}
 \input{src/01_introduction.ja}
 
@@ -138,7 +146,7 @@ pdftitle={RG},%
 \setcounter{chapter}{0}
 
 \vspace{-5mm}
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \bibliography{bib/thesis}
 
 \input{src/10_appendix.ja.tex}

@@ -1,13 +1,14 @@
-\chapter{Contact Planの臨時更新の天体内への限定的な拡散の提案}
+\chapter{Contact Planの臨時更新の天体内への限定的な情報拡散の提案}
 \label{chap:suggestion}
 \ref{section:ContactPlanの臨時更新の課題}節で述べたとおり, 
-Contact Planの臨時更新には配送遅延の低下度合いと拡散による運用面における影響によって対象を選定することが必要である. 
-Bezirgiannidisらの提案した全てのノードにおいて臨時更新を行う既存手法に対して, 
-本論文ではこの課題に対して, Contactの失敗が起きた際に, 
-その通知を行いContact Planを更新するノードを
-天体内のノードにのみ拡散し, 他天体のノードには拡散しない手法を提案する. 
-本章ではこの提案が満たすべき要件について整理し, 
-それらに対する既存手法と提案手法の定性的な特性について述べる. 
+Contact Planの臨時更新にはそれによる配送能力の向上度合いと
+ネットワークへの負荷の変化によって対象を選定することが必要である. 
+Contactの失敗が起きた際に全てのノードにその情報を拡散し
+臨時更新を行うBezirgiannidisらの提案した既存手法に対して, 
+本論文では, 情報を拡散しContact Planを更新するノードを
+当該天体内のノードのみに限定し, 他天体のノードには拡散しない手法を提案する. 
+本章では臨時更新におけるこれらの手法が満たすべき要件について整理し, 
+その要件の観点における既存手法と提案手法の定性的な特性について述べる. 
 また本論文では以降,経路や遅延について次のような表記を用いる.
 \begin{table}[htbp]
     \centering
@@ -22,14 +23,120 @@ Bezirgiannidisらの提案した全てのノードにおいて臨時更新を行
     \label{table:how_to_use_words}
 \end{table}
 
-
-\section{要件1:臨時更新による配送遅延の低下}
-\label{section:要件1}
+\section{臨時更新の情報拡散の手法に求められる要件}
+\label{section:要件定義}
 \ref{section:ContactPlanの臨時更新}節で述べたように, 
 Contact Planの臨時更新の目的は, 想定されたContactに失敗した場合にその
 情報をDTNの他のノードに拡散しContact Planを更新することで,
-DTNの各ノードが最新のトポロジーを認識し配送遅延の増加を抑えることである. 
-既存手法と提案手法の効果について図\ref{fig:experimentation_topology}のトポロジーを用いて考える.
+DTNの各ノードが最新のトポロジーを認識し配送能力を向上することである. 
+配送能力は流れているトラフィックの到達の状況によって判定されるものであり,
+そのため臨時更新の手法にはまずBundleの到達率の向上と到達遅延の抑制が求められる. 
+
+また\ref{section:ContactPlanの臨時更新の課題}節で述べたように,
+Contact Planの臨時更新を行う場合, 運用するDTNへの負荷の変化を考える必要がある. 
+特にDTNの運用上においては, 天体内のリンクに比べて天体間のリンクは
+消費するエネルギーリソースが大きくまたContactが貴重であるため, 
+この天体間のリンクの消費をできるだけ抑えることを
+より優れた臨時更新手法の指標として考えることができる. 
+
+以上より, 本論文では臨時更新手法として以下の2つを要件とする. 
+
+\begin{center}
+    \raggedright
+    \begin{itemize}
+        \item 要件1: Bundleの到達率の向上と到達遅延の抑制する \\
+        \item 要件2: 臨時更新に伴う天体間リンクの消費しない
+    \end{itemize}
+\end{center}
+
+\section{既存手法における問題点}
+\label{section:既存手法における問題点}
+既存手法では天体間においても臨時更新を行うため, そのメッセージにより
+貴重な天体間のリンクを消費することになる.
+そのため要件2において既存手法は劣ると考えられる.
+既存手法のCPUPにおける更新メッセージのProtocol Data Unit（PDU）は
+図\ref{figure:cpup_pdu_format}のようになっており, このPDU内で示される
+Command Blockのフォーマットは図\ref{figure:command_block_format}のようになっている.
+このPDUを用いて全てのノードに対して臨時更新を行う場合, そのサイズ分
+天体間のリンクを消費する.
+
+\begin{figure}[htbp]
+    \centering
+    \caption{既存手法におけるCPUPのPDUのフォーマット}
+    \label{figure:cpup_pdu_format}
+    \begin{minipage}{\textwidth}
+        \centering
+        \vspace{1mm} 
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{Bezirgiannidis2013}Table1をもとに作成. 
+        \vspace{1mm} 
+    \end{minipage}
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+      Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
+      \hline
+      \multicolumn{1}{|c|}{Version num.} & \multicolumn{3}{c|}{Number of Command Blocks (SDNV)} \\
+      \hline
+      Byte 4 & Byte 5 & Byte 6 & Byte 7 \\
+      \hline
+      \multicolumn{4}{|c|}{1\textsuperscript{st} Command Block} \\
+      \hline
+      \multicolumn{4}{|c|}{...} \\
+      \hline
+      Byte $4\times n$ & Byte $4\times n+1$ & Byte $4\times n+2$ & Byte $4\times n+3$ \\
+      \hline
+      \multicolumn{4}{|c|}{$n$\textsuperscript{th} Command Block} \\
+      \hline
+    \end{tabular}
+  \end{figure}
+\begin{figure}[htbp]
+    \centering
+    \caption{既存手法におけるCPUPのCommand Blockのフォーマット}
+    \label{figure:command_block_format}
+    \begin{minipage}{\textwidth}
+        \centering
+        \vspace{1mm} 
+        \fontsize{10.5pt}{12pt}\selectfont
+        参考文献\cite{Bezirgiannidis2013}Table2をもとに作成. 
+        \vspace{1mm} 
+    \end{minipage}
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+      Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
+      \hline
+      \multicolumn{2}{|c|}{Creation Timestamp (SDNV)} & \multicolumn{2}{c|}{Command Expiry (SDNV)} \\
+      \hline
+      Byte 4 & Byte 5 & Byte 6 & Byte 7 \\
+      \hline
+      \multicolumn{3}{|c|}{Command Originator (SDNV)} & Command Type \\
+      \hline
+      Byte 8 & Byte 9 & ... & Byte $n$ \\
+      \hline
+      \multicolumn{2}{|c|}{Command Parameter 1 (SDNV)} & \multicolumn{1}{c|}{...} & Comm. Param. $k$ (SDNV) \\
+      \hline
+    \end{tabular}
+\end{figure}
+
+\section{本研究の提案手法}
+\label{section:要件1における既存手法と提案手法の比較}
+\ref{section:既存手法における問題点}節で述べたように, 既存の手法ではDTNのすべてのノードに情報を拡散し
+Contact Planを更新するため天体間リンクが消費されることを問題である.   
+本研究ではこれに対し, 対象を当該天体内のノードのみに限定することで, 天体間でのメッセージの転送を行わない手法を提案する.
+
+一方要件1については, 既存手法も提案手法もどちらもDTNの各ノードに最新の
+トポロジーを認識させることが目的であるため,
+どちらの手法も用いず更新を行わない場合に比べると
+配達率の増加と遅延の抑制に寄与することが期待される.
+しかし既存手法は提案手法よりもより多くのノードに更新情報を拡散するため,
+より到達率の向上と遅延の抑制への寄与する, 
+すなわち要件1において提案手法よりも基本的には優れていると考えられる. 
+ただし既存手法における拡散はその更新メッセージを天体間の遅延を超えて
+届ける必要があり, それ以前においては提案手法と
+同様に天体内のノードにのみ拡散されるため, 
+要件1について提案手法は既存手法には劣るものの, その差異は小さいことが予想できる. 
+
+以下では具体的な例として図\ref{fig:experimentation_topology}のトポロジーを用いて
+要件1における既存手法と提案手法の効果について考える.
 
 \begin{figure}[tbh]
     \centering
@@ -94,72 +201,4 @@ TTLの期限切れまでそれを試み続けるため, 図\ref{fig:example_of_d
 これは経路全体の長さに比べると比較的短いものであると考えられ, 既存手法で途中から経路2を利用できることの
 利点は限定的である. そのため, 配送遅延の低下という点に置いて当然提案手法の有効性はあるものの, 
 提案手法も既存手法に近しい有効性があると予想される.  
-
-\section{要件2:臨時更新による運用面での効果}
-\label{section:要件2}
-\ref{section:要件1}節で述べたように, Contact Planの臨時更新を
-もし天体間においても行う場合, 貴重な天体間のリンクを消費することになる.
-提案手法はこの点において, 既存手法と違い自天体内のノードにのみ拡散するため, 
-この消費を行わない. 既存手法のCPUPにおける更新メッセージのProtocol Data Unit（PDU）は
-図\ref{figure:cpup_pdu_format}のようになっており, このPDU内で示される
-Command Blockのフォーマットは図\ref{figure:command_block_format}のようになっている.
-このPDUを用いて全てのノードに対して臨時更新を行う場合, そのサイズ分
-天体間のリンクを消費する.
-
-\begin{figure}[htbp]
-    \centering
-    \caption{既存手法におけるCPUPのPDUのフォーマット}
-    \label{figure:cpup_pdu_format}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{1mm} 
-        \fontsize{10.5pt}{12pt}\selectfont
-        参考文献\cite{Bezirgiannidis2013}Table1をもとに作成. 
-        \vspace{1mm} 
-    \end{minipage}
-    \begin{tabular}{|c|c|c|c|}
-      \hline
-      Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
-      \hline
-      \multicolumn{1}{|c|}{Version num.} & \multicolumn{3}{c|}{Number of Command Blocks (SDNV)} \\
-      \hline
-      Byte 4 & Byte 5 & Byte 6 & Byte 7 \\
-      \hline
-      \multicolumn{4}{|c|}{1\textsuperscript{st} Command Block} \\
-      \hline
-      \multicolumn{4}{|c|}{...} \\
-      \hline
-      Byte $4\times n$ & Byte $4\times n+1$ & Byte $4\times n+2$ & Byte $4\times n+3$ \\
-      \hline
-      \multicolumn{4}{|c|}{$n$\textsuperscript{th} Command Block} \\
-      \hline
-    \end{tabular}
-  \end{figure}
-\begin{figure}[htbp]
-    \centering
-    \caption{既存手法におけるCPUPのCommand Blockのフォーマット}
-    \label{figure:command_block_format}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{1mm} 
-        \fontsize{10.5pt}{12pt}\selectfont
-        参考文献\cite{Bezirgiannidis2013}Table2をもとに作成. 
-        \vspace{1mm} 
-    \end{minipage}
-    \begin{tabular}{|c|c|c|c|}
-      \hline
-      Byte 0 & Byte 1 & Byte 2 & Byte 3 \\
-      \hline
-      \multicolumn{2}{|c|}{Creation Timestamp (SDNV)} & \multicolumn{2}{c|}{Command Expiry (SDNV)} \\
-      \hline
-      Byte 4 & Byte 5 & Byte 6 & Byte 7 \\
-      \hline
-      \multicolumn{3}{|c|}{Command Originator (SDNV)} & Command Type \\
-      \hline
-      Byte 8 & Byte 9 & ... & Byte $n$ \\
-      \hline
-      \multicolumn{2}{|c|}{Command Parameter 1 (SDNV)} & \multicolumn{1}{c|}{...} & Comm. Param. $k$ (SDNV) \\
-      \hline
-    \end{tabular}
-  \end{figure}
   
