@@ -35,7 +35,6 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 \begin{table}[htbp]
     \centering
     \caption{地球・月間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
-    \vspace{3mm} 
     \begin{tabular}{cc}  \hline
         図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline
         天体A & 地球 \\
@@ -52,21 +51,28 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 
 地球の静止軌道上に存在するDTNノードは地球に対してほぼ円軌道を描き, 
 地表からおよそ36,000km（およそ0.12光秒）の高度を飛行する. 
-また月のNRHO軌道上に存在するDTNノードは,  月面から4,000km$\sim$75,000km程度を極端な楕円軌道を描いて飛行する. 
-この時地球の静止軌道上に存在するDTNノードと月のNRHO軌道上に存在するDTNノードの距離は
-308,000km（およそ1.03光秒）$\sim$415,000km程度（およそ1.38光秒）になる. 
-これらを考慮し, ノード間の距離は以下のように設定した. 
+また月のNRHO軌道上に存在するDTNノードは,  
+月面から4,000km（およそ0.01光秒）$\sim$75,000km（およそ0.25光秒）程度を極端な楕円軌道を描いて飛行する. 
+そのため地球の静止軌道上に存在するDTNノードと月のNRHO軌道上に存在するDTNノードの距離について
+図\ref{fig:distance_earth_moon}のように考えられる. 
+これらを考慮し, シミュレーションにおけるノード間の距離は表\ref{table:earth_moon_scenario_distance}のように設定した. 
+\begin{figure}[tbh]
+    \centering
+    \includegraphics[width=0.7\textheight]{img/simulation_params_earth_moon.pdf}
+    \caption{地球・月間シナリオにおけるノード間の距離の概要}
+    \label{fig:distance_earth_moon}
+\end{figure}
+
 \begin{table}[htbp]
     \centering
-    \caption{地球・月間シナリオのシナリオにおけるノード間の距離}
-    \vspace{3mm} 
+    \caption{地球・月間シナリオのシミュレーションに用いる各ノード間の距離}
     \begin{tabular}{cc}  \hline
         図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
         ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
-        ノード2 - ノード3 間 & 0.12光秒 \\
-        ノード2またはノード3 - ノード4またはノード5  間 & 1.03光秒$\sim$1.38光秒 \\
-        ノード4 - ノード5  間 & 0.13光秒 \\
-        ノード4またはノード5 - ノード6  間 & 0.13光秒 \\ \hline
+        ノード2 - ノード3 間 & 0.37光秒 \\
+        ノード2またはノード3 - ノード4またはノード5  間 & 1.29光秒 \pm15\% \\
+        ノード4 - ノード5  間 & 0.14光秒 \pm 50\% \\
+        ノード4またはノード5 - ノード6  間 & 0.13光秒 \pm 92\% \\ \hline
     \end{tabular}
     \label{table:earth_moon_scenario_distance}
 \end{table}
@@ -74,13 +80,14 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 \subsection{2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}
 \label{section:2040年代の地球・月・火星間のDTNを想定したシミュレーションのシナリオとパラメータ}
 2040年代には活動区域は火星にまで広がっていることが予想される. 
-本実験では\ref{section:2030年代の地球・月間のDTNを想定したシミュレーションのシナリオとパラメータ}項で
-述べた地球・月間のDTNネットワークと同様, 以下の構成を用いる. 
+火星における運用計画等は現時点では未定ではあるものの, 
+PhobosとDeimosを利用した軌道上の基地の設置なども構想されている.
+そのため本実験では表\ref{table:earth_mars_scenario_topology}のように
+地球・火星間のDTNネットワークを想定する. 
 
 \begin{table}[htbp]
     \centering
     \caption{地球・火星間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
-    \vspace{3mm}
     \begin{tabular}{cc}  \hline
         図\ref{fig:experimentation_topology}での表示 & 本シナリオにおける対応 \\ \hline
         天体A & 地球 \\
@@ -88,34 +95,76 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
         ノード1 & 地球の地上DTNノード \\
         ノード2 & 地球の静止軌道上に存在するDTNノード \\
         ノード3 & 地球の静止軌道上に存在するDTNノード \\
-        ノード4 & 火星の軌道上に存在するDTNノード \\
-        ノード5 & 火星の軌道上に存在するDTNノード \\
+        ノード4 & Phobosの近傍に存在するDTNノード \\
+        ノード5 & Deimosの近傍に存在するDTNノード \\
         ノード6 & 火星の地表DTNノード \\ \hline
     \end{tabular}
     \label{table:earth_mars_scenario_topology}
 \end{table}
 
-火星における運用は現時点では未定ではあるものの, 
-火星の開発初期においてはおおよそ月における運用と同様のものになると考えられる. 
-そのためノード間の距離は以下のように設定した. ただし「ノード2またはノード3 - ノード4またはノード5  間」
-すなわち地球軌道と火星軌道との距離については, 約480光秒$\sim$1200光秒と大きな変動が存在するものの, 
-これらの変動周期が非常に長いため, 480秒, 840秒, 1200秒の3つの値を用いてそれぞれ別にシミュレーションを行った.
+この時, 地球・火星・Phobos・Deimos間の距離は図\ref{fig:distance_earth_mars}のような値を用いることでおおよその値が推定ができる. 
+また地球と火星間の距離の変動周期が非常に長いため, 200光秒・750光秒・1300光秒の3つの値を用いてそれぞれ別にシミュレーションを行った.
+地球と火星間の距離が200光秒の時のシミュレーションにおけるノード間の距離を表\ref{table:earth_mars_scenario_distance_200}のように, 
+750光秒の時のシミュレーションにおけるノード間の距離を表\ref{table:earth_mars_scenario_distance_750}のように, 
+1300光秒の時のシミュレーションにおけるノード間の距離を表\ref{table:earth_mars_scenario_distance_1300}のように設定した.
+
+
+\begin{figure}[tbh]
+    \centering
+    \includegraphics[width=0.7\textheight]{img/simulation_params_earth_mars.pdf}
+    \caption{地球・月・火星間シナリオにおけるノード間の距離の概要}
+    \label{fig:distance_earth_mars}
+    \begin{minipage}{\textwidth}
+        \raggedright
+        \fontsize{10.5pt}\selectfont
+    \end{minipage}
+\end{figure}
 
 \begin{table}[htbp]
     \centering
-    \caption{地球・火星間シナリオのシナリオにおけるノード間の距離}
-    \vspace{3mm}
+        \caption{地球・月・火星間シナリオのシミュレーションに用いる各ノード間の距離 \\（地球・火星間の距離が200光秒のシナリオ）}
     \begin{tabular}{cc}  \hline
         図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
         ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
-        ノード2 - ノード3 間 & 0.12光秒 \\
-        ノード2またはノード3 - ノード4またはノード5  間 & 480光秒, 840光秒, 1200光秒 \\
-        ノード4 - ノード5  間 & 0.13光秒 \\
-        ノード4またはノード5 - ノード6  間 & 0.13光秒 \\ \hline
+        ノード2 - ノード3 間 & 0.37光秒 \\
+        ノード2またはノード3 - ノード4  間 & 200光秒 \pm0.050\% \\
+        ノード2またはノード3 - ノード5  間 & 200光秒 \pm0.026\% \\
+        ノード4 - ノード5  間 & 0.078光秒 \pm40\% \\
+        ノード4 - ノード6  間 & 0.031光秒 \\ 
+        ノード5 - ノード6  間 & 0.078光秒 \\ \hline
     \end{tabular}
-    \label{table:earth_mars_scenario_distance}
+    \label{table:earth_mars_scenario_distance_200}
 \end{table}
-
+\begin{table}[htbp]
+    \centering
+        \caption{地球・月・火星間シナリオのシミュレーションに用いる各ノード間の距離 \\（地球・火星間の距離が750光秒のシナリオ）}
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
+        ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
+        ノード2 - ノード3 間 & 0.37光秒 \\
+        ノード2またはノード3 - ノード4  間 & 750光秒 \pm0.013\% \\
+        ノード2またはノード3 - ノード5  間 & 750光秒 \pm0.007\% \\
+        ノード4 - ノード5  間 & 0.078光秒 \pm40\% \\
+        ノード4 - ノード6  間 & 0.031光秒 \\ 
+        ノード5 - ノード6  間 & 0.078光秒 \\ \hline
+    \end{tabular}
+    \label{table:earth_mars_scenario_distance_750}
+\end{table}
+\begin{table}[htbp]
+    \centering
+        \caption{地球・月・火星間シナリオのシミュレーションに用いる各ノード間の距離 \\（地球・火星間の距離が1300光秒のシナリオ）}
+    \begin{tabular}{cc}  \hline
+        図\ref{fig:experimentation_topology}でのノードペア & Contact Planに表記する距離 \\ \hline
+        ノード1 - ノード2またはノード3 間　& 0.12光秒 \\
+        ノード2 - ノード3 間 & 0.37光秒 \\
+        ノード2またはノード3 - ノード4  間 & 1300光秒 \pm0.007\% \\
+        ノード2またはノード3 - ノード5  間 & 1300光秒 \pm0.004\% \\
+        ノード4 - ノード5  間 & 0.078光秒 \pm40\% \\
+        ノード4 - ノード6  間 & 0.031光秒 \\ 
+        ノード5 - ノード6  間 & 0.078光秒 \\ \hline
+    \end{tabular}
+    \label{table:earth_mars_scenario_distance_1300}
+\end{table}
 \subsection{シミュレーションで用いるBundleトラフィック}
 \label{section:シミュレーションで用いるBundleトラフィック}
 本実験では図\ref{fig:experimentation_topology}のトポロジーにおいて, 
@@ -129,7 +178,6 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 \begin{table}[htbp]
     \centering
     \caption{地球・月間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
-    \vspace{3mm}
     \begin{tabular}{ccc}  \hline
         図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline
         シミュレーション全体におけるBundleの総生成数 & bundlesNumber & 1800 \\
@@ -144,7 +192,6 @@ ION-DTN, HDTNなどの種々のDTN実装が動作するネットワークをシ�
 \begin{table}[htbp]
     \centering
     \caption{地球・火星間シナリオのトポロジーと図\ref{fig:experimentation_topology}での表示の対応関係}
-    \vspace{3mm}
     \begin{tabular}{ccc}  \hline
         図\ref{fig:experimentation_topology}での表示 & パラメータ名 & 値 \\ \hline
         シミュレーション全体におけるBundleの総生成数 & bundlesNumber & 8000 \\
