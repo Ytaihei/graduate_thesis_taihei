@@ -77,5 +77,6 @@
     "workbench.colorCustomizations": {
         "editorCursor.foreground": "#FFFFFF"
     },
-    "editor.lineHeight": 1.8
+    "editor.lineHeight": 1.8,
+    "files.autoSave": "afterDelay"
 }

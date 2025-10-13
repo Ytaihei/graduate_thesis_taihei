@@ -1,4 +1,4 @@
-\chapter{Contact Planの臨時更新の天体内への限定的な情報拡散の提案}
+\chapter{モバイルシステムの研究基盤に関する関連研究}
 \label{chap:suggestion}
 \ref{section:ContactPlanの臨時更新の課題}節で述べたとおり, 
 Contact Planの臨時更新にはそれによる配送能力の向上度合いと
@@ -138,21 +138,21 @@ Contact Planを更新するため天体間リンクが消費されることを�
 以下では具体的な例として図\ref{fig:experimentation_topology}のトポロジーを用いて
 要件1における既存手法と提案手法の効果について考える.
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/thesis_Sample_topology.pdf}
-    \caption{本実験で用いるトポロジー}
-    \label{fig:experimentation_topology}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        ノード1は天体Aの地上DTNネットワークを代表したノード, ノード2とノード3は
-        天体Aの軌道上に存在する宇宙のDTNノード, ノード4とノード5は
-        天体Bの軌道上に存在する宇宙のDTNノード, 
-        ノード6は天体Bの地上DTNネットワークを代表したノードを示す. 
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/thesis_Sample_topology.pdf}
+%     \caption{本実験で用いるトポロジー}
+%     \label{fig:experimentation_topology}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         ノード1は天体Aの地上DTNネットワークを代表したノード, ノード2とノード3は
+%         天体Aの軌道上に存在する宇宙のDTNノード, ノード4とノード5は
+%         天体Bの軌道上に存在する宇宙のDTNノード, 
+%         ノード6は天体Bの地上DTNネットワークを代表したノードを示す. 
+%     \end{minipage}
+% \end{figure}
 
 ノード1から3は天体A, ノード4から6はそれぞれ天体Bに属するDTNノードであり, 
 ノード1と6はそれぞれの地表DTNのノード, ノード2から5はそれぞれの天体の軌道上にある
@@ -164,12 +164,12 @@ Contact Planを更新するため天体間リンクが消費されることを�
 ただしこれよりは最適経路ではないものの
 R_{1 \rightarrow 2 \rightarrow 4 \rightarrow 5 \rightarrow 6}（の経路（経路3）でもBundleの配送が可能であるとする.
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/example_of_routechange.pdf}
-    \caption{Contact失敗時に既存手法と提案手法において選択される代替経路の例}
-    \label{fig:example_of_routechange}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/example_of_routechange.pdf}
+%     \caption{Contact失敗時に既存手法と提案手法において選択される代替経路の例}
+%     \label{fig:example_of_routechange}
+% \end{figure}
 
 既存手法も提案手法も用いず更新を行わない場合, どのノードもそのContactの失敗を知らないため
 すべてのノードはベストパスが経路1のままと認識し, ノード4においてノード6へのBundleの配送を試み続ける.
@@ -188,12 +188,12 @@ TTLの期限切れまでそれを試み続けるため, 図\ref{fig:example_of_d
 天体間には更新情報を伝搬しないため経路2が利用されることはなく, 
 そのため提案手法における障害発生時の到達遅延の推移は図\ref{fig:example_of_delaychange}中の黄線のようになる. 
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/example_of_delaychange.pdf}
-    \caption{Contact失敗時の配送遅延変化の予想}
-    \label{fig:example_of_delaychange}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/example_of_delaychange.pdf}
+%     \caption{Contact失敗時の配送遅延変化の予想}
+%     \label{fig:example_of_delaychange}
+% \end{figure}
 
 既存手法と提案手法の差はすなわち経路2と経路3の遅延の差（図\ref{fig:example_of_delaychange}中の赤い部分）である.
 しかしこれはノード2からノード4の遅延とノード2からノード5の遅延の差, 

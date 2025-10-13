@@ -1,4 +1,4 @@
-\chapter{宇宙インターネットとDTN技術}
+\chapter{既存のモバイルシステムと研究開発における課題}
 \label{chap:prerequisite_knowledge}
 
 \section{近年の宇宙開発の進展}
@@ -33,18 +33,18 @@ Orionの実証試験として, 月の周りを周回しその後地球に帰還�
 月面へのアクセス性（時間, 必要推進薬量）に優れている\cite{kiban_dai48}. 
 
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/artemis_moon_station_orbit.pdf}
-    \caption{アルテミス計画におけるステーションの投入予定軌道}
-    \label{fig:artemis_moon_station_orbit}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10pt}{12pt}\selectfont
-        参考文献\cite{kiban_dai48}9ページより抜粋
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/artemis_moon_station_orbit.pdf}
+%     \caption{アルテミス計画におけるステーションの投入予定軌道}
+%     \label{fig:artemis_moon_station_orbit}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10pt}{12pt}\selectfont
+%         参考文献\cite{kiban_dai48}9ページより抜粋
+%     \end{minipage}
+% \end{figure}
 
 アルテミス5ではさらにローバーによる月面探査などが計画されている. 
 アルテミス計画は当初の計画よりも遅延が発生しているものの, 
@@ -89,16 +89,16 @@ NASAのPerseveranceやESAとロシアの国営宇宙公社ロスコスモス（S
 一方ダイモスは火星衛星探査計画（Martian Moons eXploration : MMX）の
 フライバイ観測でデータが収集され, フォボスとの比較が行われる予定である. 
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_explorations.pdf}
-    \caption{各国の火星探査計画}
-    \label{fig:mars_explorations}
-    \begin{minipage}{\textwidth}
-        \centering
-        参考文献\cite{isas2023}4ページより抜粋
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_explorations.pdf}
+%     \caption{各国の火星探査計画}
+%     \label{fig:mars_explorations}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         参考文献\cite{isas2023}4ページより抜粋
+%     \end{minipage}
+% \end{figure}
 
 \subsection{民間事業者の宇宙事業への参画}
 \label{section:民間事業者の宇宙事業への参画}
@@ -109,18 +109,18 @@ NASAのPerseveranceやESAとロシアの国営宇宙公社ロスコスモス（S
 打ち上げ事業では米国のSpaceXを筆頭に打ち上げ回数が増加しており, 
 図\ref{fig:number_satellite_launched}のように2022年には米国の民間事業者だけで世界全体の打ち上げ回数の
 約42\%を占めた. SpaceXの独占的な状態が続いてはいるものの, 各国の事業者も開発を続けている. 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/number_satellite_launched.pdf}
-    \caption{世界のロケット打ち上げ数の推移}
-    \label{fig:number_satellite_launched}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10pt}{12pt}\selectfont
-        参考文献\cite{内閣府2023}10ページより抜粋
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/number_satellite_launched.pdf}
+%     \caption{世界のロケット打ち上げ数の推移}
+%     \label{fig:number_satellite_launched}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10pt}{12pt}\selectfont
+%         参考文献\cite{内閣府2023}10ページより抜粋
+%     \end{minipage}
+% \end{figure}
 
 
 \section{宇宙通信におけるインターネット技術の適用可能性}
@@ -170,20 +170,20 @@ End-to-Endの通信疎通性が確保できていない場合でも,  この蓄�
 % \subsection{通信機会の非対称性}
 % \label{subsection:通信機会の非対称性}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/dtnprotocolstack.pdf}
-    \caption{DTNを搭載したノード間のみでの通信}
-    \label{fig:dtnprotocolstack}
-    \begin{minipage}{\textwidth}
-        \raggedright
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        参考文献\cite{bundle_protocol_architecture}Figure1をもとに作成. 
-        図中のConvergence Layer（CL）については
-        \ref{section:Convergence LayerとLTP}項で説明する.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/dtnprotocolstack.pdf}
+%     \caption{DTNを搭載したノード間のみでの通信}
+%     \label{fig:dtnprotocolstack}
+%     \begin{minipage}{\textwidth}
+%         \raggedright
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         参考文献\cite{bundle_protocol_architecture}Figure1をもとに作成. 
+%         図中のConvergence Layer（CL）については
+%         \ref{section:Convergence LayerとLTP}項で説明する.
+%     \end{minipage}
+% \end{figure}
 
 \subsection{地上ネットワークにおけるDTNと宇宙ネットワークにおけるDTNの違い}
 DTNは当初惑星間インターネットのアーキテクチャのコンセプトとして構想された. しかしRFC 4838\cite{rfc4838}において, 
@@ -248,15 +248,15 @@ LTPをコンバージェンスレイヤに用いる場合,  トランスポー�
 Convergence Layerが対応しているトランスポートレイヤプロトコルの種類などの点で異なる. 
 これらの実装についての比較についてを表\ref{table:chart_dtn_implementations}に示す. 
 
-\begin{table}[tbh]
-    \centering
-    \caption{DTN実装とその機能の比較}
-    \begin{minipage}[t]{\textwidth}
-        \centering
-        \fontsize{10.5pt}{12pt}\selectfont
-        参考文献\cite{dtn_implementations}figure1より抜粋
-        \vspace{3mm}
-    \end{minipage}
-    \includegraphics[width=0.7\textheight]{img/chart_dtn_implementations.pdf}
-    \label{table:chart_dtn_implementations}
-\end{table}
+% \begin{table}[tbh]
+%     \centering
+%     \caption{DTN実装とその機能の比較}
+%     \begin{minipage}[t]{\textwidth}
+%         \centering
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         参考文献\cite{dtn_implementations}figure1より抜粋
+%         \vspace{3mm}
+%     \end{minipage}
+%     \includegraphics[width=0.7\textheight]{img/chart_dtn_implementations.pdf}
+%     \label{table:chart_dtn_implementations}
+% \end{table}

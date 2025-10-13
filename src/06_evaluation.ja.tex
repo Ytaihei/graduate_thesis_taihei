@@ -31,34 +31,34 @@
 また到達遅延に関しても, 図\ref{fig:graph_delay_earth_moon}に示す通り, 
 既存手法とほぼ変わらない値となった. 
 %地球・月間のシミュレーション結果
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/moon_bundle.pdf}
-    \caption{地球・月間シナリオにおけるBundleの到達率}
-    \label{fig:graph_bundle_earth_moon}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Contactの失敗情報について, どのノードにも拡散を行わない場合をFault\_Ignorant, 
-        天体間を超えてすべてのノードに拡散する場合をFault\_AllnodeAware, 
-        天体内のノードのみに拡散する場合をFault\_LocallyAwareとして表記した. 
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/moon_bundle.pdf}
+%     \caption{地球・月間シナリオにおけるBundleの到達率}
+%     \label{fig:graph_bundle_earth_moon}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Contactの失敗情報について, どのノードにも拡散を行わない場合をFault\_Ignorant, 
+%         天体間を超えてすべてのノードに拡散する場合をFault\_AllnodeAware, 
+%         天体内のノードのみに拡散する場合をFault\_LocallyAwareとして表記した. 
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/moon_delay.pdf}
-    \caption{地球・月間シナリオにおけるBundleの到達遅延}
-    \label{fig:graph_delay_earth_moon}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/moon_delay.pdf}
+%     \caption{地球・月間シナリオにおけるBundleの到達遅延}
+%     \label{fig:graph_delay_earth_moon}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
 \subsection{地球・月間のシミュレーション結果に対する考察}
 \label{section:地球・月間のシミュレーション結果に対する考察}
@@ -83,89 +83,89 @@ Contactの失敗に伴い到達できなかったBundleは到達遅延に含め�
 既存手法・提案手法で臨時更新を行なった場合には95\%を超える非常に多くのBundleが到達し, 
 かつ提案手法と既存手法で到達率が完全に一致した.
 また到達遅延に関しても, 提案手法と既存手法はともに遅延の値自体は大きかったものの, 両者の値は完全に一致した. 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_480_bundle.pdf}
-    \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達率}
-    \label{fig:graph_bundle_earth_mars_480}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_480_bundle.pdf}
+%     \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達率}
+%     \label{fig:graph_bundle_earth_mars_480}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_480_delay.pdf}
-    \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達遅延}
-    \label{fig:graph_delay_earth_mars_480}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_480_delay.pdf}
+%     \caption{地球・火星間シナリオ（距離480光秒）におけるBundleの到達遅延}
+%     \label{fig:graph_delay_earth_mars_480}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_840_bundle.pdf}
-    \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達率}
-    \label{fig:graph_bundle_earth_mars_840}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_840_bundle.pdf}
+%     \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達率}
+%     \label{fig:graph_bundle_earth_mars_840}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_840_delay.pdf}
-    \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達遅延}
-    \label{fig:graph_delay_earth_mars_840}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_840_delay.pdf}
+%     \caption{地球・火星間シナリオ（距離840光秒）におけるBundleの到達遅延}
+%     \label{fig:graph_delay_earth_mars_840}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_1200_bundle.pdf}
-    \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達率}
-    \label{fig:graph_bundle_earth_mars_1200}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_1200_bundle.pdf}
+%     \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達率}
+%     \label{fig:graph_bundle_earth_mars_1200}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.7\textheight]{img/mars_1200_delay.pdf}
-    \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達遅延}
-    \label{fig:graph_delay_earth_mars_1200}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        \fontsize{10.5pt}{12pt}\selectfont
-        Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
-        図\ref{fig:graph_bundle_earth_moon}と同様である.
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.7\textheight]{img/mars_1200_delay.pdf}
+%     \caption{地球・火星間シナリオ（距離1200光秒）におけるBundleの到達遅延}
+%     \label{fig:graph_delay_earth_mars_1200}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         \fontsize{10.5pt}{12pt}\selectfont
+%         Fault\_Ignorant, Fault\_AllnodeAware, Fault\_LocallyAwareの表記は
+%         図\ref{fig:graph_bundle_earth_moon}と同様である.
+%     \end{minipage}
+% \end{figure}
 
 \subsection{地球・火星間のシミュレーション結果に対する考察}
 \label{section:地球・火星間のシミュレーション結果に対する考察}

@@ -1,4 +1,4 @@
-\chapter{DTNにおけるContact Graph Routingの運用と課題}
+\chapter{次世代のモバイルシステムの研究開発基盤に求められる要件}
 \label{chap:cgr_in_dtn}
 
 \ref{section:ネットワークトポロジーの変動と間欠的接続}項で述べた通り, 
@@ -39,17 +39,17 @@ Contactについての記述では, 特定の2ノードの通信機会につい�
 Contact Planに記載される通信機会は, 特定の2ノードについての両方のリンクの通信可能機会ではなく, 
 片方向のリンクについての通信機会である. 
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_topology.pdf}
-    \caption{4つのノードからなるDTNの例}
-    \label{fig:contact_example_topology}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-1をもとに作成. 
-    \end{minipage}
-\end{figure}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.5\textheight]{img/contact_example_topology.pdf}
+%     \caption{4つのノードからなるDTNの例}
+%     \label{fig:contact_example_topology}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         参考文献\cite{schedule_aware_bundle_routing}figure3-1をもとに作成. 
+%     \end{minipage}
+% \end{figure}
 \begin{table}[htbp]
     \centering
     \caption{図\ref{fig:contact_example_topology}のトポロジーにおけるContact Planの例（Contactに関する表記）}
@@ -118,19 +118,19 @@ Contact Planに基づいて転送可能な経路を計算する必要がある.
 ただしContact Graphにおける頂点はDTNにおける各ノードではなく単一のContactであるため, 
 Contact GraphはDTNのトポロジーを示すものではなく, データ転送が可能な経路を計算するためのグラフである.  
 
-\begin{figure}[tbh]
-    \centering
-    \includegraphics[width=0.5\textheight]{img/contact_example_contactgraph.pdf}
-    \caption{表\ref{table:contact_example_contactplan}及び
-    表\ref{table:contact_example_contactrange}のContact Planから計算されるContact Graphの例}
-    \label{fig:contact_example_contactgraph}
-    \begin{minipage}{\textwidth}
-        \centering
-        \vspace{3mm}
-        参考文献\cite{schedule_aware_bundle_routing}figure3-4をもとに作成.  
-    \end{minipage}
-\end{figure}
-\label{chap:related_works}
+% \begin{figure}[tbh]
+%     \centering
+%     \includegraphics[width=0.5\textheight]{img/contact_example_contactgraph.pdf}
+%     \caption{表\ref{table:contact_example_contactplan}及び
+%     表\ref{table:contact_example_contactrange}のContact Planから計算されるContact Graphの例}
+%     \label{fig:contact_example_contactgraph}
+%     \begin{minipage}{\textwidth}
+%         \centering
+%         \vspace{3mm}
+%         参考文献\cite{schedule_aware_bundle_routing}figure3-4をもとに作成.  
+%     \end{minipage}
+% \end{figure}
+% \label{chap:related_works}
 
 
 \subsection{初期のCGRにおけるルーティングのアルゴリズム}
