@@ -11,27 +11,12 @@ Abstract of Bachelor's Thesis - Academic Year 2024
 \begin{spacing}{1.1}
 
 ~ \\
-In this paper, we propose a new concept of contact plan update for Contact Graph Routing (CGR), which is a basic concept of routing in the Delay/Disruption Tolerant Network (DTN) in the universe. We propose to limit the propagation of the contact plan in the case of contact failure. 
-
-In recent years, space development has made great progress, especially in the Artemis Project led by NASA, which plans to construct manned bases and orbiting stations on the Moon and Mars in the late 2020s and onward, and the number of nodes communicating with nodes on the Moon and Mars is expected to increase sequentially in the 2030s and onward. 
-
-However, the current communication with extraterrestrial nodes is direct one-to-one communication with ground antennas, which cannot cope with the increase in the number of nodes on the Moon and Mars in the future. Therefore, the necessity of a communication network using space nodes such as satellites, i.e., the space Internet, is recognized, and the application of existing Internet technologies to such a communication network is being considered. However, from the viewpoint of communication, the concept of DTN is proposed because the space environment has large latency and frequent disconnections, which are very different from those of the existing Internet on the Earth. 
-
-In a space DTN, most of the nodes that constitute the network are spacecraft, and although the communication links change with time, the timing of such changes can be predicted by orbital calculations. For this reason, it is planned to use CGR for routing in the DTN. 
-
-In CGR, each node keeps a Contact Plan, which is a list of possible contacts between two nodes for all satellites including itself, and calculates a route based on the Contact Plan, then determines a DTN node to be the next hop and transfers it. Therefore, it is necessary that the Contact Plan is distributed to the nodes and updated as necessary, but there is no standardization of the distribution method. 
-
-In this study, the contact plan is classified into two categories, i.e., periodical/continuous distribution and occasional updating, based on the timing when the updating is necessary.
-
-However, in the previous studies, the information propagation of occasional updates is also performed between different inter-object networks, which consumes valuable links between objects, and we propose to keep this method within the objects. 
-
-The simulation results for the Earth-Moon DTN in the 2030s and the Earth-Moon-Mars DTN in the 2040s show that the proposed method can improve the delivery capability to the same degree as the methods in the previous studies, and that the proposed method can deliver the information sufficiently while avoiding the consumption of valuable inter-object links by the information diffusion among the celestial bodies. The results show that the proposed method is effective enough to perform temporary updating while avoiding the consumption of valuable links among celestial bodies by spreading information among them.
 ~ \\
 
 \end{spacing}
 Keywords : \\
-\underline{1. Delay/Disruption Tolerant Network} 
-\underline{2. Contact Graph Routing} 
+\underline{1. Delay/Disruption Tolerant Network}
+\underline{2. Contact Graph Routing}
 \begin{flushright}
 \edept \\
 \eauthor

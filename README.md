@@ -60,6 +60,8 @@ When you run GNU Make on the root directory of this repository, the command will
 $ make
 ```
 
+Once thesis.pdf is output, it will not be updated unless you delete it.
+
 ## 5. Publish and share your thesis
 
 Now, you can publish your thesis on the internet and share it to requiest reviews.
