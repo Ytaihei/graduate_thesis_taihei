@@ -1,4 +1,10 @@
 \chapter{実験環境と方法}
+% --- 章アウトライン・TODO・参考文献引用例 ---
+% この章では、実験環境・シナリオ・計測方法・指標を記述する。
+% TODO: docker_open5gs_sXGP-5G の実験構成や計測手順を具体的に記述。
+% TODO: 参考文献を本文中で引用する（例: \cite{dtn_implementations}）。
+% 例: DTNの評価手法は \cite{Fraire2021} などを参照。
+% ------------------------------------------
 \label{chap:experiment}
 
 \section{実験環境}
@@ -11,7 +17,44 @@
 \subsection{データ転送（スループット・遅延）}
 \subsection{ハンドオーバ相当の扱い（必要に応じて）}
 
+\subsection{Androidエミュレータの限界と実UE検証の必要性}
+通信機能を有するAndroidアプリケーションの検証において、\textbf{PC上のエミュレータのみでは再現困難な事象}が多い。特に、セルラースタックや事業者設定、端末OSの省電力・バックグラウンド制御など、\textbf{実機依存の挙動}がアプリの通信体験を大きく左右する。本研究では、sXGP+実UE+5GC構成により、以下の観点で\textbf{実機ならではの検証}を行う。
+
+\paragraph{エミュレータで不足しがちな項目}
+\begin{itemize}
+	\item \textbf{セルラー制御プレーンの実挙動}: 実エミュレータはベースバンドを持たず、Registration/TAU、NAS再送、タイマ境界での挙動差（T3xx/Back-off等）の忠実再現が困難。
+	\item \textbf{IMS/音声・SMS連携}: VoLTE/VoNRやSMS over NASなどは端末・キャリア・IMSの三者連携が必要で、エミュレータでは未実装/限定的であることが多い。
+	\item \textbf{ネットワーク条件とスタック差分}: IPv6-only + NAT64/464XLAT、DNS64、PCO/APNパラメータ、MTU/MSS、NICオフロード（TSO/GRO）等の影響はエミュレータで再現しづらい。
+	\item \textbf{OSによるバックグラウンド制御}: Doze/App Standby、JobScheduler/WorkManagerのネットワーク可用性制御は実機の省電力・無線レイヤと結合しており、エミュレータでは挙動が異なる。
+	\item \textbf{移動性・無線イベント}: RRC Idle/Connectedの遷移、電波強度・セルリセレクション、ハンドオーバ相当の切替など、時間軸のイベントは実無線でなければ発現しにくい。
+	\item \textbf{ポリシ・スライス連携}: URSPやスライシングは端末/OS/事業者依存が強く、汎用エミュレータでは検証対象外となることが多い（本環境では制御/ユーザ面の相互接続検証を主対象とする）。
+\end{itemize}
+
+\paragraph{実UE＋sXGP＋5GCでの検証手順（例）}
+\begin{enumerate}
+	\item \textbf{端末側ログ取得}: logcat（特にradioバッファ）とネットワークログを収集し、アプリのAPI呼び出しと無線/NASイベントを時系列で突合する。
+	\item \textbf{ネットワーク側トレース}: コンバータ/5GC側でS1AP/NGAP/NAS、GTP-Uのpcapを取得し、再送、原因コード、TEID/フローの対応を解析する。
+	\item \textbf{テストシナリオ}:
+		\begin{itemize}
+			\item IPv6-only + NAT64/464XLAT 下でのアプリ接続（DNS64解決、QUIC/TCPの挙動差）。
+			\item RRC Idle復帰や電波減衰を伴う再接続でのセッション継続性（ソケット再確立、タイムアウト）。
+			\item 大きなパケットや損失率注入時の再送・バックオフ挙動（アプリ層リトライ設計の妥当性）。
+		\end{itemize}
+	\item \textbf{再現性確保}: Docker化した5GC/コンバータ構成と固定シナリオにより、回帰テストとして継続的に実行可能にする。
+\end{enumerate}
+
+\paragraph{本環境で得られる価値}
+実UEを用いることで、\textbf{シミュレータでは顕在化しにくい相互運用性問題や端末OS依存の振る舞い}（例：NAS再送シーケンスのズレ、IPv6-only下でのAPI失敗、バックグラウンド時の接続断）を早期に発見し、\textbf{パケットキャプチャと再現手順}を添えて標準化・OSS実装へフィードバックできる。
+
 \section{計測方法と指標}
+\subsection{A/B比較（シミュレータ vs 実機）}
+\begin{itemize}
+	\item A: RANシミュレータ＋5GC（OSS）\quad B: sXGP eNB＋実UE＋5GC（OSS）
+	\item 比較対象: 登録/PDU確立成功率、タイマ境界での失敗率、再送回数、エラーコード、スループット、遅延、リソース使用率
+	\item ログ・トレース: S1AP/NGAP/NAS、GTP-U、カーネル/DPDK統計、pcap
+\end{itemize}
+\subsection{成功基準}
+基本機能の安定成立（>99%）、性能劣化の要因特定、実機特有の不具合検出（再現手順付き）を満たすこと。
 \subsection{成功判定基準と再現手順}
 \subsection{メトリクス（接続成功率、遅延、スループット、CPU/メモリ）}
 \subsection{ロギング・パケットキャプチャの取得方法}

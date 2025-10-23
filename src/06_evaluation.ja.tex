@@ -1,4 +1,10 @@
 \chapter{評価}
+% --- 章アウトライン・TODO・参考文献引用例 ---
+% この章では、実験結果・考察・既存研究との比較・応用可能性を記述する。
+% TODO: docker_open5gs_sXGP-5G の評価結果や考察を記述。
+% TODO: 参考文献を本文中で引用する（例: \cite{McBrayer2022}）。
+% 例: 通信遅延の評価は \cite{McBrayer2022} などを参照。
+% ------------------------------------------
 \label{chap:evaluation}
 
 \section{結果}
@@ -6,7 +12,77 @@
 \subsection{性能測定の結果（遅延・スループット）}
 \subsection{リソース使用率・スケーラビリティ}
 
+\subsection{標準はあるが未実装・未相互運用の検証ケース}
+本節では、\textbf{仕様上は規定されているが現場実装が未成熟／相互運用に課題がある}代表例を挙げ、本環境（sXGP eNB + 実UE + 5GC + コンバータ）で\textbf{実験可能な具体ケース}を示す。いずれも「基本的な1コール（登録・PDUセッション）が可能」であることを前提に、\textbf{実装ベース標準化の観点}での達成基準を定義する。
+
+\paragraph{Case A: IPv6-only PDU + DNS64/NAT64/464XLAT}
+	extit{狙い}: Rel-15以降でIPv6-onlyが推奨される一方、端末のCLATやアプリのv6対応が未成熟で不具合が出やすい。\\
+	extit{手順}: DNNをIPv6-onlyに設定し、UPFでNAT64、DNS64を提供。Android実機でCLAT有効を確認し、HTTP/2、QUIC/HTTP/3双方で疎通。\\
+	extit{観測}: logcat(radio,netd)、pcap(S1AP/NGAP/NAS, GTP-U)、アプリ疎通率。\\
+	extit{成功基準}: v6-only環境でのアプリ成功率向上、名前解決（AAAA合成）成功、CLAT経路でのフラグメント/MTU不具合が無いこと。
+
+\paragraph{Case B: PCOパラメータ伝搬（DNS, MTU）}
+	extit{狙い}: 仕様上はPCOでDNS/MTU等が配布可能だが、UE/コア/変換部の処理抜けが散見される。\\
+	extit{手順}: 5GC/SMF設定でPCOにDNS/MTUを設定し、コンバータでS1AP/EPS相当とのマッピングを検証。\\
+	extit{観測}: UEの実際のDNSサーバ採用状況、path MTUに起因する再送/黒穴の有無。\\
+	extit{成功基準}: 端末が配布DNS/MTUを採用し、アプリの初期ハンドシェイク失敗率が低下。
+
+\paragraph{Case C: QoS分離（デフォルト/専用ベアラ相当→5QI/QFI）}
+	extit{狙い}: LTEのデフォルト/専用ベアラを5GCのQoSフローにマッピングする際の整合性が課題。\\
+	extit{手順}: トラフィックフィルタ（TFT）と5QI差（例: 9 vs 7）を設定し、UPFでキュー/帯域差を可視化。\\
+	extit{観測}: QFIごとのレイテンシ/スループット差、ドロップ時のプリエンプション挙動。\\
+	extit{成功基準}: 指定フローのみ帯域制御が有効、誤分類が発生しない。
+
+\paragraph{Case D: UL-CL（上り分類）によるローカルブレイクアウト}
+	extit{狙い}: 仕様は普及しつつあるが、設定・分類の相互運用が難しい。\\
+	extit{手順}: 2段UPF構成で特定宛先/ポートをローカルUPFに分岐、その他は中央UPFへ。\\
+	extit{観測}: TEID/Classifier一致、遅延短縮、誤分岐の有無。\\
+	extit{成功基準}: ルール通りにトラフィックがLBOされ、遅延が有意に短縮。
+
+\paragraph{Case E: SSCモード2/3相当のセッション継続性（アプリ視点）}
+	extit{狙い}: 仕様で規定されるセッション連続性の違い（IP変更含む）にアプリが耐えられないことが多い。\\
+	extit{手順}: ネットワーク側でPDU再確立（IP変更）を誘発し、アプリの再接続/セッション維持を検証。\\
+	extit{観測}: ソケット再確立時間、ユーザレベル失敗率、リトライ戦略の有効性。\\
+	extit{成功基準}: IP変更下でもユーザ体験の中断が最小化される（しきい値設定）。
+
+\paragraph{Case F: DSCP/ECNの保存とQoS反映}
+	extit{狙い}: GTP-Uカプセル化でDSCP/ECNの扱いが実装差で崩れやすい。\\
+	extit{手順}: アプリ/端末側でDSCP/ECNを付与し、UPF～外部ネットワーク間での保存・反映を確認。\\
+	extit{観測}: pcapでのビット保存、UPFキューイング差、ECNマークの往復伝搬。\\
+	extit{成功基準}: 端末→UPF→外部の各区間で規定通り保存/反映される。
+
+\paragraph{Case G: GTP-U Path MTU Discovery/フラグメントの取り扱い}
+	extit{狙い}: PMTUD未実装やICMP遮断で黒穴化しやすい。\\
+	extit{手順}: 大きなMSS/DFで送出し、ICMP応答と再送/分割の動作を観察。\\
+	extit{観測}: 黒穴検出時間、再送/スループット低下、ICMP可視。\\
+	extit{成功基準}: 黒穴化せず経路MTUに収束、アプリのスループット劣化が最小。
+
+\paragraph{Case H: SMS over NAS（可能な範囲）}
+	extit{狙い}: 仕様はあるが端末/IMS/コアの三者整合が難しい。\\
+	extit{手順}: コアのSMSF/NAS経路が利用可能な場合に限り、端末からのSMS送受を検証。\\
+	extit{観測}: NASトレース上のSMメッセージ、配達成否。\\
+	extit{成功基準}: 端末→5GC→端末/外部へのSMS疎通が確認できる（限定条件付き）。
+
+\paragraph{Case I: Paging到達性と省電力（Idle復帰）}
+	extit{狙い}: 省電力や無線条件でPaging到達が不安定になる実装差がある。\\
+	extit{手順}: UEをIdleに遷移後、下りトラフィックでPaging→Service Requestの遷移を観測。\\
+	extit{観測}: Paging応答率、復帰時間、失敗時の原因コード。\\
+	extit{成功基準}: 規定遅延内での安定復帰（しきい値）と高到達率。
+
+\paragraph{Case J: 複数DNN（APN）選択とフォールバック}
+	extit{狙い}: 端末/ネットのDNN選択・フォールバック挙動が規定とずれることがある。\\
+	extit{手順}: 存在しないDNN要求→規定エラー→代替DNN確立の流れを試験。\\
+	extit{観測}: NAS原因コード、再試行ロジック、最終確立率。\\
+	extit{成功基準}: 規定に沿った原因コードと適切なフォールバックで最終成功。
+
+以上のケースは、\textbf{制御/ユーザプレーンの相互運用とアプリ体験の両面}を対象とし、シミュレータでは露呈しにくい\textbf{実機依存の問題}を洗い出す設計である。各ケースは、pcap・logcat・メトリクスと\textbf{再現手順}をセットで文書化し、標準化・OSS実装への\textbf{具体的フィードバック}を可能にする。
+
 \section{考察}
 \subsection{提案手法の有効性と限界}
 \subsection{関連研究との比較と位置づけ}
 \subsection{実運用への適用可能性}
+
+\section{ケーススタディと妥当性の脅威}
+\subsection{実UE固有の事象（例：NAS再送シーケンスのズレ）}
+\subsection{測定系の制約（時刻同期、NICオフロードの影響）}
+\subsection{内的/外的妥当性の脅威と緩和策}

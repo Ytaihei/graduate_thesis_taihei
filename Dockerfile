@@ -13,6 +13,9 @@ RUN apt-get update \
   texlive \
   texlive-lang-cjk \
   texlive-latex-extra \
+  texlive-science \
+  texlive-pictures \
+  texlive-fonts-recommended \
   latexmk \
   default-jre \
   curl \
@@ -31,6 +34,6 @@ RUN mkdir /ghr \
 ENV GHR /ghr/ghr
 
 VOLUME thesis
-WORKDIR thesis
+WORKDIR /thesis
 
 CMD ["make"]
