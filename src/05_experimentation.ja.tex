@@ -1,4 +1,4 @@
-\chapter{実験環境と方法}
+\chapter{sXGP-5G環境での実機検証手法}
 % --- 章アウトライン・TODO・参考文献引用例 ---
 % この章では、実験環境・シナリオ・計測方法・指標を記述する。
 % TODO: docker_open5gs_sXGP-5G の実験構成や計測手順を具体的に記述。
@@ -7,15 +7,65 @@
 % ------------------------------------------
 \label{chap:experiment}
 
+\section{実験の目的}
+本章では、提案したsXGP-5Gコンバータ環境を用いて、以下を実証する：
+
+\begin{itemize}
+	\item \textbf{基本的な相互接続動作の確認}: 4G RAN（sXGP eNB + 実UE）と5G Core（Open5GS）間で、登録・PDUセッション確立・データ転送が正常に動作することを検証する。
+
+	\item \textbf{S1AP/NGAP/NAS信令変換の正当性}: コンバータが4G（S1AP）と5G（NGAP）のプロトコル変換を正しく行い、両側のプロトコルスタックが期待通り動作することを確認する。
+
+	\item \textbf{GTP-Uトンネル中継の動作確認}: ユーザ面トラフィックがS1-U（eNB側）とN3（UPF側）間で正しくトンネリングされ、TEID管理が適切に機能することを検証する。
+
+	\item \textbf{実機特有の相互運用性問題の検出能力}: シミュレータでは再現困難な実機依存の挙動（タイミング、NAS再送、端末OS依存の処理など）を検出できることを示す。
+
+	\item \textbf{再現性の確保}: Docker化された環境により、同一の実験を異なる環境で再現可能であることを確認する。
+\end{itemize}
+
 \section{実験環境}
 \subsection{ハードウェア構成（UE/eNB/sXGP基地局/サーバ）}
+本研究の実機検証は、以下の最小構成で実施する。
+\begin{itemize}
+	\item \textbf{UE}: 市販スマートフォン（4G LTE対応、sXGP対応バンド）またはLTEモデム端末。
+	\item \textbf{sXGP基地局（eNB）}: TD-LTE互換のsXGP小型基地局（室内用）。
+	\item \textbf{サーバ}: x86\_64または同等性能のホスト1台。ConverterおよびOpen5GSのコンテナを実行する。NICは1～2ポート（管理/データ分離は論理でも可）。
+	\item \textbf{スイッチ/ルータ}: 管理ネットワークと実験ネットワークのL2/L3分離に用いる。VRFまたはLinuxネットワーク名前空間で代替可能である。
+\end{itemize}
+
 \subsection{ソフトウェア構成（5GC, コンバータ, OS）}
+\begin{itemize}
+	\item \textbf{5GC}: Open5GS（AMF/SMF/UPF/UDM/AUSF/NRF, WebUI）。Dockerコンテナで起動し、加入者情報をWebUIまたはAPIで登録する\cite{open5gs}。
+	\item \textbf{Converter}: s1n2-converter（制御面: S1AP↔NGAP, ユーザ面: S1-U↔N3）。制御/ユーザ面は別プロセス（またはスレッド）として動作し、TEID対応表を共有する（第\ref{chap:proposal}章）。
+	\item \textbf{OS/ツール}: Linux（Docker/Compose, tcpdump, tshark, iproute2）。時間同期はNTPで十分である（PPS等の高精度は本検証の範囲外）。
+\end{itemize}
+
 \subsection{ネットワークトポロジとIPアドレッシング}
+トポロジは、\texttt{UE}—\texttt{eNB(sXGP)}—(S1AP,S1-U)→\texttt{Converter}—(NGAP,N3)→\texttt{5GC} の直列構成である。Converterは制御面（S1AP/NGAP）とユーザ面（S1-U/N3）で論理IFを分ける。5GC側は、AMF/SMF/UPFを同一ホスト内に配置する。UEアドレスプールやAPN等はOpen5GSのデフォルト方針に準拠し、必要に応じてIPv6-only + NAT64/464XLAT, DNS64 構成を併用する（第\ref{chap:related}章）。
 
 \section{実験シナリオ}
 \subsection{基本接続（登録・PDUセッション確立）}
+\paragraph{目的} ConverterのS1AP↔NGAP変換と5GC連携が成立することを確認する。
+\paragraph{前提} 5GC起動済、加入者登録済、eNBのS1接続先がConverterに設定済。
+\paragraph{手順}
+\begin{enumerate}
+	\item UEをsXGPセルに接続し、Attach/Registrationを開始する。
+	\item ConverterでInitial UE Message/Initial Context Setupの相互変換が成功し、AMFでUE Contextが生成されることを確認する（ログ/pcap）。
+	\item PDU Session（5G）資源手順がSMF/UPF側で成功し、ConverterにTEID情報が学習されることを確認する。
+\end{enumerate}
+\paragraph{成功基準} AMF/SMF/UPFログにエラーがなく、UEがPDUセッション確立状態となる。Converterの対応表にTEID（UL/DL）が登録される。
+
 \subsection{データ転送（スループット・遅延）}
+\paragraph{目的} S1-U/N3間のGTP-U中継とTEIDマッピングが正しく機能することを確認する。
+\paragraph{手順}
+\begin{enumerate}
+	\item UEからコアネットワーク外部（またはUPFデータネット）へのICMP/TCP/UDP通信を発生させる。
+	\item ConverterのS1-U/N3でpcapを取得し、TEID・5タプル対応を突合する。
+	\item スループット（iperf等）とRTT（ping）を測定し、パスの安定性を確認する。
+\end{enumerate}
+\paragraph{成功基準} UL/DLともに期待するTEIDでカプセル化され、フローが継続する。損失/再送が異常に多い場合はMTU/MSSやオフロード設定を点検する。
+
 \subsection{ハンドオーバ相当の扱い（必要に応じて）}
+本研究はN26等の移動性最適化を対象外とするが、\textbf{再登録/再確立}シナリオにより実運用で近似するイベントを評価する。具体的には、電波減衰やセル再選相当のイベントを与え、RegistrationやPDU Sessionの再確立が円滑に行われるかを、NAS再送やタイマ（T3xx）挙動とあわせて確認する（第\ref{chap:proposal}章）。
 
 \subsection{Androidエミュレータの限界と実UE検証の必要性}
 通信機能を有するAndroidアプリケーションの検証において、\textbf{PC上のエミュレータのみでは再現困難な事象}が多い。特に、セルラースタックや事業者設定、端末OSの省電力・バックグラウンド制御など、\textbf{実機依存の挙動}がアプリの通信体験を大きく左右する。本研究では、sXGP+実UE+5GC構成により、以下の観点で\textbf{実機ならではの検証}を行う。
@@ -56,5 +106,26 @@
 \subsection{成功基準}
 基本機能の安定成立（>99%）、性能劣化の要因特定、実機特有の不具合検出（再現手順付き）を満たすこと。
 \subsection{成功判定基準と再現手順}
+\paragraph{判定基準}
+\begin{itemize}
+	\item 制御面: Initial UE/Context SetupおよびPDU Session資源手順がエラーなく完了（AMF/SMFログ, NGAPトレース）
+	\item ユーザ面: UE↔UPF間で期待するTEIDによりカプセル化され、連続したシーケンスで転送
+	\item 安定性: 連続N回（例: 30回）の接続/切断試験で成功率>99%
+\end{itemize}
+\paragraph{再現手順（成果物）}
+試験ごとに、(i) コンテナタグ/設定ファイル、(ii) Converter/AMF/UPFのログ、(iii) S1AP/NGAP/GTP-Uのpcap、(iv) 計測スクリプトの出力（CSV/JSON）を保存し、成果物として管理する。これにより、実装の回帰有無を定量的に判定できる\cite{dtn_implementations}。
+
 \subsection{メトリクス（接続成功率、遅延、スループット、CPU/メモリ）}
+\begin{itemize}
+	\item 機能: 登録成功率、PDUセッション確立成功率、再登録時の成功率
+	\item 性能: RTT（ICMP/TCP SYN-ACK）、スループット（iperf3）、再送率、フロー継続時間
+	\item 資源: Converter/5GCのCPU利用率、メモリ、コンテキスト数、TEIDテーブルサイズ
+\end{itemize}
+
 \subsection{ロギング・パケットキャプチャの取得方法}
+\begin{itemize}
+	\item ConverterのS1AP/NGAP IFでpcap取得（制御面、フィルタ: SCTP, NGAP/S1APポート）
+	\item ConverterのS1-U/N3 IFでpcap取得（ユーザ面、フィルタ: UDP dst port 2152）
+	\item AMF/SMF/UPFのアプリケーションログ（JSON/テキスト）を保存し、タイムスタンプで突合
+\end{itemize}
+NAS/NGAP/S1APのメッセージシーケンスは、列挙型（IE）と原因コードで比較する。必要に応じ、メッセージ時系列の可視化にシーケンス図生成ツールを用いる\cite{Fraire2021}。

@@ -30,15 +30,59 @@
 	\item \textbf{再現性}: Docker等のコンテナ技術により、環境構築手順を標準化し、異なる環境でも同一の実験を再現可能にする。
 	\item \textbf{法令遵守}: 免許不要帯（sXGP）を用いることで、電波法に抵触せず実機検証を実施できる。
 	\item \textbf{安全性}: 実験環境を隔離されたネットワークで構築し、商用ネットワークへの影響を排除する。
+		\item \textbf{可観測性}: すべての制御/ユーザ面トラフィックをpcap/ログとして取得でき、試験ごとに成果物として保存できること。
+		\item \textbf{保守性}: 変換ロジックはメッセージ種別ごとにモジュール化し、追加/無効化が容易であること。
 \end{itemize}
 
 \subsection{対象範囲（制御/ユーザ面、認証、セッション管理）}
+本提案は、LTE eNBを変更せず5GCへ接続するための\textbf{変換層}（s1n2-converter）である。対象とする範囲と非対象は以下のとおりである。
+
+\paragraph{対象}
+\begin{itemize}
+	\item 制御面: S1APとNGAPのメッセージ変換およびIEマッピング（Initial UE/Context Setup近傍の手順を中心）
+	\item ユーザ面: S1-UとN3間のGTP-Uカプセル化のパススルーおよびTEIDマッピング
+	\item コンテキスト: UE識別子（MME-UE-S1AP-ID/ENB-UE-S1AP-ID, AMF-UE-NGAP-ID）の対応管理
+\end{itemize}
+
+\paragraph{非対象（現段階）}
+\begin{itemize}
+	\item 無線（PHY/MAC/RLC/PDCP）の最適化やNR固有機能（本研究はRANにsXGP/TD-LTEを用いる）
+	\item EPS/5GS間の移動性最適化（N26インターフェース）\cite{threegpp-23502}
+	\item ハンドオーバ、eDRX/PSM等の省電力最適化
+\end{itemize}
 
 \section{アーキテクチャ設計}
+提案アーキテクチャを図示的に記述すると、\texttt{eNB}—(S1AP,S1-U)→\texttt{Converter}—(NGAP,N3)→\texttt{5GC(AMF/SMF/UPF)} である。Converterは制御面/ユーザ面を分離して処理し、状態を共有する。5GCはOpen5GS\cite{open5gs}を想定するが、NGAP/N3の標準動作に従う実装であれば置換可能である（\cite{threegpp-23501,threegpp-23502}）。
+
 \subsection{制御面：S1AP–NGAP変換の設計案}
+変換対象とする代表的手順とマッピング方針を示す。
+\begin{itemize}
+	\item \textbf{Initial UE Message（S1AP）→ Initial UE Message（NGAP）}: UE識別子とTA/PLMN情報、NASコンテナを搬送する。ConverterはeNBからのECGI/TAI等をNGAPのTAI/NR CGI相当へマップし、AMF選定に必要なIEを充足させる。
+	\item \textbf{Initial Context Setup（S1AP）↔ Initial Context Setup（NGAP）}: セキュリティ/UE-AMBR等のコンテキストIEを相互に再構成する。E-RAB関連IEは、5GのPDU Session資源手順と分離して取り扱う（後述）。
+	\item \textbf{UE Context Release}: 釣り合いの取れた解放手順（S1AP UEContextRelease/NGAP UEContextRelease）を相互に変換する。
+\end{itemize}
+
+設計上の原則は、(i) NASは原則透過搬送としConverterで終端しない、(ii) IEの欠落時は安全側（エラー）に倒す、(iii) 5Gで独立した手順（例: PDU Session Resource Setup）はS1APのICSと\textbf{分離}して逐次処理する、である。これにより、AMF/SMF側の前提条件を満たさずに\texttt{unknown-PDU-session-ID}等のエラーとなる事象を回避する。
+
 \subsection{ユーザ面：GTP-U転送・TEID管理}
+ユーザ面はパススルーを基本とし、S1-U（eNB⇄Converter）とN3（Converter⇄UPF）で独立したTEID空間を維持する。Converterは方向別に以下の対応表を持つ。
+\begin{description}
+	\item[UL Map] (ENB-UE-S1AP-ID, eNB\_TEID\_UL) → (UPF\_IP, N3\_TEID\_UL)
+	\item[DL Map] (AMF-UE-NGAP-ID, N3\_TEID\_DL) → (eNB\_IP, S1U\_TEID\_DL)
+\end{description}
+TEIDの学習は、\texttt{E-RAB Setup List}（S1AP）および\texttt{PDUSessionResourceSetupResponseTransfer}（NGAP）に含まれるGTP\_Tunnel情報から行う。学習前パケットはドロップし、ログで検知する。MTUについては、d\_max = min(1500, パス上の最小MTU - GTP/IP/UDPヘッダ) とし、DFビットはクリアする保守的ポリシを採用する。
+
 \subsection{認証・登録（NASメッセージ処理の方針）}
+NASは原則透過搬送とし、Converterはカプセル化境界の整合性のみを担保する。具体的には、S1AP/NGAPの\texttt{NAS-PDU}フィールドとして運ばれるバイト列を改変せず、AMF/UEで終端されることを前提とする。学術検証モードとして、事前に加入者・鍵情報を5GCに登録し、認証アルゴリズム不一致による失敗を切り分ける運用を提供する。NASの再暗号化や鍵導出はConverterの責務に含めない（\cite{threegpp-23501}）。
+
 \subsection{コンテキスト管理とタイムアウト}
+ConverterはUEごとに以下を保持する。
+\begin{itemize}
+	\item ID束: (ENB-UE-S1AP-ID, MME-UE-S1AP-ID) ↔ (AMF-UE-NGAP-ID)
+	\item セッション束: PDU Session ID ↔ E-RAB ID の対応、TEID対応表（UL/DL）
+	\item タイマ: T\_ctx(コンテキスト保持), T\_gtp(TEID学習待ち), T\_proc(手順待ち合わせ)
+\end{itemize}
+T\_ctx満了でUEコンテキストを破棄し、未解放資源をログ出力する。異常系（IE不足/不整合、学習超過）は\texttt{cause}を付して相手側へエラーを返すか、ドロップ＋監査ログとする。
 
 \section{sXGP採用の根拠と想定限界}
 \subsection{採用の根拠：実装ベース標準化への貢献}
@@ -62,9 +106,17 @@ sXGPを採用する最大の理由は、\textbf{免許不要帯での法令遵�
 
 \section{実装方針と部品選定}
 \subsection{ソフトウェア構成（言語・ライブラリ・依存）}
+実装言語はCとし、制御面/ユーザ面は独立プロセスまたはスレッドで分離する。ASN.1の処理は外部ツールで生成したデコーダを用いるか、既存実装（例: Open5GSのエンコーダ/デコーダ参照\cite{open5gs}）の表現に合わせてシリアライザを実装する。検証用途として、srsRANのZMQインターフェースを接続し、無線機なしでの反復試験を可能とする（\S\ref{chap:related}）。
+
 \subsection{ネットワーク構成（VLAN/VRF/NATの要否）}
+最小構成では、ConverterにS1U/N3の2ポート（論理でも可）を割り当て、データプレーンをルーティングで分離する。商用NWとの干渉回避のため、VRFまたは名前空間を用いた論理分離を推奨する。UPFとは静的ルーティングで直結し、アドレス設計はOpen5GSのデフォルト構成に準拠する（\S\ref{chap:experiment}）。
+
 \subsection{監視・計測（メトリクス、トレース）}
+制御面はメッセージ種別/結果（成功・失敗原因）/処理時間をメトリクス化し、ユーザ面はスループット/RTT/パケット損失率を定期測定する。すべての試験についてpcapと構成スナップショット（コンテナタグ、設定ファイル）を成果物として保存し、回帰の基準とする。
 
 \section{制約と想定される限界}
 \subsection{規格差分による制限}
+S1APとNGAPはIEの集合と手順が一致しないため、完全な1対1変換は成立しない。特に、5GのPDU Session手順はS1APのE-RAB手順と\textbf{分離}されている。設計では手順の逐次化と、IE欠落時の安全側フェイルにより、相互運用性を最大化しつつ誤動作を抑制する（\cite{threegpp-23501,threegpp-23502}）。
+
 \subsection{性能上のボトルネックと回避策}
+ユーザ面は二重のGTP終端によるオーバヘッドが生じる可能性がある。最適化として、カーネルオフロード（XDP/TC）やゼロコピーI/Oの導入、TEIDルックアップのハッシュ最適化を段階的に適用する。制御面はASN.1エンコード/デコードのCPU負荷が支配的となるため、ホットパスの事前割付とメモリプールでGC負荷を抑える。

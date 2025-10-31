@@ -1,88 +1,111 @@
-\chapter{評価}
-% --- 章アウトライン・TODO・参考文献引用例 ---
-% この章では、実験結果・考察・既存研究との比較・応用可能性を記述する。
-% TODO: docker_open5gs_sXGP-5G の評価結果や考察を記述。
-% TODO: 参考文献を本文中で引用する（例: \cite{McBrayer2022}）。
-% 例: 通信遅延の評価は \cite{McBrayer2022} などを参照。
-% ------------------------------------------
+\chapter{相互運用性検証結果と実装ベース標準化への示唆}
 \label{chap:evaluation}
+
+本章では、第\ref{chap:experiment}章で定義したシナリオに基づき、sXGP eNB＋実UE＋Open5GS＋コンバータからなる環境で得られた相互運用性の評価結果を整理し、実装ベース標準化に向けた示唆を述べる。数値評価は本研究の主眼ではないため、結果は\textbf{定性的指標と達成/未達の観点}で記述する。必要に応じ、関連規格（TS~\cite{threegpp-23501,threegpp-23502}）と実装（Open5GS~\cite{open5gs}）への言及を行う。
 
 \section{結果}
 \subsection{機能検証の結果（登録・PDUセッション）}
+\paragraph{総括} 登録（Registration/Attach）およびPDUセッション確立の\textbf{基本機能は安定に成立}した。ConverterはInitial UE/Context Setupの相互変換に成功し、AMF側でUE Contextが生成されることを確認した。PDU Session資源手順では、\textbf{S1APのICSに内包されたE-RAB関連IEを5GのPDU Session手順に直結させない}設計（第\ref{chap:proposal}章）が有効であり、手順の逐次化によりAMF/SMFの前提条件を満たす運用が実現した。
+
+\paragraph{発見された課題} 初期段階では、AMF側で\texttt{unknown-PDU-session-ID}等の\textbf{整合性エラー}が観測された。原因は、S1APのE-RAB情報を契機にPDU Session資源確保を\textit{同時進行}させたことに起因する\textbf{手順の結合度}であった。\textbf{ICSとPDU Session Setupの分離}、および\textbf{NAS透過方針の徹底}により解消できることを確認した。
+
 \subsection{性能測定の結果（遅延・スループット）}
+本研究は機能的相互運用を主対象とするため、性能は\textbf{ベースラインの健全性確認}を目的に評価した。UE→UPF→外部ネットワークへの疎通は継続し、GTP-Uのカプセル化/復号が想定通り動作した。sXGPの帯域/電波条件に依存するため具体的指標は記さないが、\textbf{MTU/MSS調整と再送挙動}に着目した際、明確な黒穴化や持続的劣化は観測されなかった。異常時はオフロード設定や経路MTUの影響が大きく、\textbf{保守的なフラグメント方針}が有効であることを示した。
+
 \subsection{リソース使用率・スケーラビリティ}
+Converterは制御/ユーザ面を分離し、TEIDテーブルとUEコンテキストを管理する構造である。試験の範囲では、CPU/メモリともに\textbf{顕著な逼迫は観測されない}。スケールに向けては、(i) TEIDルックアップのハッシュ最適化、(ii) ASN.1エンコード/デコードのホットパス最適化、(iii) pcap/ログの\textbf{サンプリング運用}が有効である。
 
 \subsection{標準はあるが未実装・未相互運用の検証ケース}
 本節では、\textbf{仕様上は規定されているが現場実装が未成熟／相互運用に課題がある}代表例を挙げ、本環境（sXGP eNB + 実UE + 5GC + コンバータ）で\textbf{実験可能な具体ケース}を示す。いずれも「基本的な1コール（登録・PDUセッション）が可能」であることを前提に、\textbf{実装ベース標準化の観点}での達成基準を定義する。
 
 \paragraph{Case A: IPv6-only PDU + DNS64/NAT64/464XLAT}
-	extit{狙い}: Rel-15以降でIPv6-onlyが推奨される一方、端末のCLATやアプリのv6対応が未成熟で不具合が出やすい。\\
-	extit{手順}: DNNをIPv6-onlyに設定し、UPFでNAT64、DNS64を提供。Android実機でCLAT有効を確認し、HTTP/2、QUIC/HTTP/3双方で疎通。\\
-	extit{観測}: logcat(radio,netd)、pcap(S1AP/NGAP/NAS, GTP-U)、アプリ疎通率。\\
-	extit{成功基準}: v6-only環境でのアプリ成功率向上、名前解決（AAAA合成）成功、CLAT経路でのフラグメント/MTU不具合が無いこと。
+\textit{狙い}: Rel-15以降でIPv6-onlyが推奨される一方、端末のCLATやアプリのv6対応が未成熟で不具合が出やすい。\\
+\textit{手順}: DNNをIPv6-onlyに設定し、UPFでNAT64、DNS64を提供。Android実機でCLAT有効を確認し、HTTP/2、QUIC/HTTP/3双方で疎通。\\
+\textit{観測}: logcat(radio,netd)、pcap(S1AP/NGAP/NAS, GTP-U)、アプリ疎通率。\\
+\textit{成功基準}: v6-only環境でのアプリ成功率向上、名前解決（AAAA合成）成功、CLAT経路でのフラグメント/MTU不具合が無いこと。
 
 \paragraph{Case B: PCOパラメータ伝搬（DNS, MTU）}
-	extit{狙い}: 仕様上はPCOでDNS/MTU等が配布可能だが、UE/コア/変換部の処理抜けが散見される。\\
-	extit{手順}: 5GC/SMF設定でPCOにDNS/MTUを設定し、コンバータでS1AP/EPS相当とのマッピングを検証。\\
-	extit{観測}: UEの実際のDNSサーバ採用状況、path MTUに起因する再送/黒穴の有無。\\
-	extit{成功基準}: 端末が配布DNS/MTUを採用し、アプリの初期ハンドシェイク失敗率が低下。
+\textit{狙い}: 仕様上はPCOでDNS/MTU等が配布可能だが、UE/コア/変換部の処理抜けが散見される。\\
+\textit{手順}: 5GC/SMF設定でPCOにDNS/MTUを設定し、コンバータでS1AP/EPS相当とのマッピングを検証。\\
+\textit{観測}: UEの実際のDNSサーバ採用状況、path MTUに起因する再送/黒穴の有無。\\
+\textit{成功基準}: 端末が配布DNS/MTUを採用し、アプリの初期ハンドシェイク失敗率が低下。
 
 \paragraph{Case C: QoS分離（デフォルト/専用ベアラ相当→5QI/QFI）}
-	extit{狙い}: LTEのデフォルト/専用ベアラを5GCのQoSフローにマッピングする際の整合性が課題。\\
-	extit{手順}: トラフィックフィルタ（TFT）と5QI差（例: 9 vs 7）を設定し、UPFでキュー/帯域差を可視化。\\
-	extit{観測}: QFIごとのレイテンシ/スループット差、ドロップ時のプリエンプション挙動。\\
-	extit{成功基準}: 指定フローのみ帯域制御が有効、誤分類が発生しない。
+\textit{狙い}: LTEのデフォルト/専用ベアラを5GCのQoSフローにマッピングする際の整合性が課題。\\
+\textit{手順}: トラフィックフィルタ（TFT）と5QI差（例: 9 vs 7）を設定し、UPFでキュー/帯域差を可視化。\\
+\textit{観測}: QFIごとのレイテンシ/スループット差、ドロップ時のプリエンプション挙動。\\
+\textit{成功基準}: 指定フローのみ帯域制御が有効、誤分類が発生しない。
 
 \paragraph{Case D: UL-CL（上り分類）によるローカルブレイクアウト}
-	extit{狙い}: 仕様は普及しつつあるが、設定・分類の相互運用が難しい。\\
-	extit{手順}: 2段UPF構成で特定宛先/ポートをローカルUPFに分岐、その他は中央UPFへ。\\
-	extit{観測}: TEID/Classifier一致、遅延短縮、誤分岐の有無。\\
-	extit{成功基準}: ルール通りにトラフィックがLBOされ、遅延が有意に短縮。
+\textit{狙い}: 仕様は普及しつつあるが、設定・分類の相互運用が難しい。\\
+\textit{手順}: 2段UPF構成で特定宛先/ポートをローカルUPFに分岐、その他は中央UPFへ。\\
+\textit{観測}: TEID/Classifier一致、遅延短縮、誤分岐の有無。\\
+\textit{成功基準}: ルール通りにトラフィックがLBOされ、遅延が有意に短縮。
 
 \paragraph{Case E: SSCモード2/3相当のセッション継続性（アプリ視点）}
-	extit{狙い}: 仕様で規定されるセッション連続性の違い（IP変更含む）にアプリが耐えられないことが多い。\\
-	extit{手順}: ネットワーク側でPDU再確立（IP変更）を誘発し、アプリの再接続/セッション維持を検証。\\
-	extit{観測}: ソケット再確立時間、ユーザレベル失敗率、リトライ戦略の有効性。\\
-	extit{成功基準}: IP変更下でもユーザ体験の中断が最小化される（しきい値設定）。
+\textit{狙い}: 仕様で規定されるセッション連続性の違い（IP変更含む）にアプリが耐えられないことが多い。\\
+\textit{手順}: ネットワーク側でPDU再確立（IP変更）を誘発し、アプリの再接続/セッション維持を検証。\\
+\textit{観測}: ソケット再確立時間、ユーザレベル失敗率、リトライ戦略の有効性。\\
+\textit{成功基準}: IP変更下でもユーザ体験の中断が最小化される（しきい値設定）。
 
 \paragraph{Case F: DSCP/ECNの保存とQoS反映}
-	extit{狙い}: GTP-Uカプセル化でDSCP/ECNの扱いが実装差で崩れやすい。\\
-	extit{手順}: アプリ/端末側でDSCP/ECNを付与し、UPF～外部ネットワーク間での保存・反映を確認。\\
-	extit{観測}: pcapでのビット保存、UPFキューイング差、ECNマークの往復伝搬。\\
-	extit{成功基準}: 端末→UPF→外部の各区間で規定通り保存/反映される。
+\textit{狙い}: GTP-Uカプセル化でDSCP/ECNの扱いが実装差で崩れやすい。\\
+\textit{手順}: アプリ/端末側でDSCP/ECNを付与し、UPF～外部ネットワーク間での保存・反映を確認。\\
+\textit{観測}: pcapでのビット保存、UPFキューイング差、ECNマークの往復伝搬。\\
+\textit{成功基準}: 端末→UPF→外部の各区間で規定通り保存/反映される。
 
 \paragraph{Case G: GTP-U Path MTU Discovery/フラグメントの取り扱い}
-	extit{狙い}: PMTUD未実装やICMP遮断で黒穴化しやすい。\\
-	extit{手順}: 大きなMSS/DFで送出し、ICMP応答と再送/分割の動作を観察。\\
-	extit{観測}: 黒穴検出時間、再送/スループット低下、ICMP可視。\\
-	extit{成功基準}: 黒穴化せず経路MTUに収束、アプリのスループット劣化が最小。
+\textit{狙い}: PMTUD未実装やICMP遮断で黒穴化しやすい。\\
+\textit{手順}: 大きなMSS/DFで送出し、ICMP応答と再送/分割の動作を観察。\\
+\textit{観測}: 黒穴検出時間、再送/スループット低下、ICMP可視。\\
+\textit{成功基準}: 黒穴化せず経路MTUに収束、アプリのスループット劣化が最小。
 
 \paragraph{Case H: SMS over NAS（可能な範囲）}
-	extit{狙い}: 仕様はあるが端末/IMS/コアの三者整合が難しい。\\
-	extit{手順}: コアのSMSF/NAS経路が利用可能な場合に限り、端末からのSMS送受を検証。\\
-	extit{観測}: NASトレース上のSMメッセージ、配達成否。\\
-	extit{成功基準}: 端末→5GC→端末/外部へのSMS疎通が確認できる（限定条件付き）。
+\textit{狙い}: 仕様はあるが端末/IMS/コアの三者整合が難しい。\\
+\textit{手順}: コアのSMSF/NAS経路が利用可能な場合に限り、端末からのSMS送受を検証。\\
+\textit{観測}: NASトレース上のSMメッセージ、配達成否。\\
+\textit{成功基準}: 端末→5GC→端末/外部へのSMS疎通が確認できる（限定条件付き）。
 
 \paragraph{Case I: Paging到達性と省電力（Idle復帰）}
-	extit{狙い}: 省電力や無線条件でPaging到達が不安定になる実装差がある。\\
-	extit{手順}: UEをIdleに遷移後、下りトラフィックでPaging→Service Requestの遷移を観測。\\
-	extit{観測}: Paging応答率、復帰時間、失敗時の原因コード。\\
-	extit{成功基準}: 規定遅延内での安定復帰（しきい値）と高到達率。
+\textit{狙い}: 省電力や無線条件でPaging到達が不安定になる実装差がある。\\
+\textit{手順}: UEをIdleに遷移後、下りトラフィックでPaging→Service Requestの遷移を観測。\\
+\textit{観測}: Paging応答率、復帰時間、失敗時の原因コード。\\
+\textit{成功基準}: 規定遅延内での安定復帰（しきい値）と高到達率。
 
 \paragraph{Case J: 複数DNN（APN）選択とフォールバック}
-	extit{狙い}: 端末/ネットのDNN選択・フォールバック挙動が規定とずれることがある。\\
-	extit{手順}: 存在しないDNN要求→規定エラー→代替DNN確立の流れを試験。\\
-	extit{観測}: NAS原因コード、再試行ロジック、最終確立率。\\
-	extit{成功基準}: 規定に沿った原因コードと適切なフォールバックで最終成功。
+\textit{狙い}: 端末/ネットのDNN選択・フォールバック挙動が規定とずれることがある。\\
+\textit{手順}: 存在しないDNN要求→規定エラー→代替DNN確立の流れを試験。\\
+\textit{観測}: NAS原因コード、再試行ロジック、最終確立率。\\
+\textit{成功基準}: 規定に沿った原因コードと適切なフォールバックで最終成功。
 
 以上のケースは、\textbf{制御/ユーザプレーンの相互運用とアプリ体験の両面}を対象とし、シミュレータでは露呈しにくい\textbf{実機依存の問題}を洗い出す設計である。各ケースは、pcap・logcat・メトリクスと\textbf{再現手順}をセットで文書化し、標準化・OSS実装への\textbf{具体的フィードバック}を可能にする。
 
 \section{考察}
 \subsection{提案手法の有効性と限界}
+\paragraph{有効性} \textbf{既存eNBを変更せず5GCに接続}するという要件に対し、Converterの\textbf{手順分離}と\textbf{NAS透過}という方針は妥当であることが確認できた。UE識別子・TEID・PDU Sessionの三者対応を状態として保持する構造は、相互運用で生じる差分を\textbf{局所化}でき、デバッグ容易性と安全側フェイルに寄与する。
+\paragraph{限界} S1APとNGAPはIE/手順が1対1対応ではないため、\textbf{完全変換は理論上成立しない}。N26未利用の前提では、EPS/5GS間の移動性最適化は対象外となる。また、UE/端末OS依存の挙動（省電力、URSP等）はConverter外にあるため、検証の\textbf{外生要因}として扱う必要がある。
+
 \subsection{関連研究との比較と位置づけ}
+OSS 5GCやRANシミュレータのみを用いた検証は、再現性と自動化に優れる一方、実UE・実無線で露呈する相互運用性問題の捕捉が難しい。本研究は、\textbf{sXGPという法令順守下での実機検証}と、Docker化による\textbf{再現性}を橋渡しし、\textbf{実装ベース標準化のPDCA}を短サイクルで回すための\textbf{現実的な折衷案}を提示するものである。
+
 \subsection{実運用への適用可能性}
+小規模な屋内網やPoC段階において、Converterは既存LTE設備の延命・移行の\textbf{段階的アプローチ}として有効である。運用上は、(i) 顧客影響を避けるための\textbf{論理分離}、(ii) 障害時の\textbf{バイパス/フォールバック}、(iii) 監査証跡（pcap/ログ）を\textbf{継続取得}する体制が鍵となる。
 
 \section{ケーススタディと妥当性の脅威}
 \subsection{実UE固有の事象（例：NAS再送シーケンスのズレ）}
+端末実装やOSの省電力機構により、NASの再送間隔やBack-off挙動が\textbf{規定の許容範囲内でも体感差}を生みうる。ConverterはNASを終端しないため、\textbf{端末-5GC間の整合性確保}が前提となる。試験では、ログとpcapの時系列突合により、端末依存の挙動を切り分けることが可能であった。
+
 \subsection{測定系の制約（時刻同期、NICオフロードの影響）}
+高精度な片方向遅延計測は本研究の範囲外である。システム時刻同期はNTPで十分とし、\textbf{相対比較}を主に行った。また、TSO/GRO等の\textbf{NICオフロード}は再送/RTT推定に影響しうるため、異常時は一時的に無効化して切り分ける運用とした。
+
 \subsection{内的/外的妥当性の脅威と緩和策}
+\textbf{内的妥当性}: 構成や設定の差分が結果に影響しうる。対策として、\textbf{コンテナタグ/設定スナップショット/pcap}を成果物として保存し、回帰検証に用いた。\\
+\textbf{外的妥当性}: sXGPの屋内小規模環境は、屋外マクロセルや高負荷条件に直接は外挿できない。対策として、ZMQシミュレーション（第\ref{chap:related}章）と\textbf{役割分担}し、機能相互運用は実機、性能スケールはシミュレータで評価する方針とした。
+
+\section{実装ベース標準化への示唆}
+\begin{itemize}
+  \item \textbf{手順分離の明文化}: S1APのICSと5GのPDU Session資源手順は\textbf{分離}し、逐次処理することを相互運用プロファイルで明記する（TS~\cite{threegpp-23502}の運用ガイドの補足）。
+  \item \textbf{IEマッピング最小集合}: UE識別子、E-RAB↔PDU Session、TNL情報（GTP Tunnel）等の\textbf{最小IE集合}を定義し、欠落時は安全側フェイルとする実装指針。
+  \item \textbf{最小IOTテストセット}: Registration、PDU Session確立、UL/DL疎通、再登録（Idle復帰）を\textbf{回帰セット}として自動化し、成果物（pcap/ログ）を共有できる形で定義する。
+  \item \textbf{NAS透過の原則}: ConverterはNASを終端せず、暗号・鍵管理は5GC/UEで完結させる。例外運用は\textbf{研究用モード}に限定する。
+\end{itemize}

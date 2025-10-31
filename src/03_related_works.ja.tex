@@ -8,21 +8,57 @@
 \label{chap:related}
 
 \section{オープンソース5GCとテストベッド}
+
 \subsection{Open5GS / free5GC / srsRAN 5G}
+
+5G CoreのOSS実装としては、Open5GS、free5GC、OpenAirInterface（OAI）などが広く用いられている。Open5GSは4G EPC/5G Coreを統合的に実装し、Dockerコンテナでの展開が容易である。WebUIによる加入者管理や、AMF/SMF/UPF等の機能分離が明確で、研究用途に適する。本研究では、Open5GSを基盤として5GCを構築し、sXGP-5Gコンバータとの相互接続検証を行った（\S\ref{chap:experiment}）。
+
+free5GCはGo言語で実装された5GCであり、SBAのサービス間通信やNFs間のHTTP/2ベースのやり取りを可視化しやすい利点がある。OAIはRAN/COREの双方を包含する大規模プロジェクトであり、物理層から上位層までの包括的な研究に用いられている。一方で、ビルド依存や環境構築が比較的複雑で、再現性確保の観点ではDocker化・固定化が前提となる。
+
+RAN側のOSSとしては、srsRAN（旧srsLTE）とUERANSIMが代表的である。srsRANは4G eNB/UEに加えて5G gNB/UE（Project系）も提供し、ZMQベースのRFシミュレーションによって無線機器なしにプロトコル検証が可能である。UERANSIMは5GのgNB/UEシミュレータであり、NGAP/NASの制御面検証に適する。本研究では、srsRANのZMQ構成を用い、4G/5G双方の接続性とデータ疎通を確認している（TESTING\_RESULTS参照）。
+
 \subsection{商用テストベッド・教育用環境}
 
+教育・研究のためのテストベッドとして、米国のPOWDERや、欧州のONELab等が提供されている。これらは、遠隔からRAN/CORE資源にアクセスして実験を実施できる環境であるが、アカウント申請や利用審査、スケジューリングが必要であり、迅速な反復実験には必ずしも向かない。一方、OSSとDockerを組み合わせたローカルテストベッドは、構築コストと運用負荷が低く、再現性の高い実験を短時間で繰り返せる利点がある。本研究の環境設計は後者に属する。
+
 \section{OSSエコシステムと適合/相互接続テスト}
+
 \subsection{仕様準拠テスト、相互接続試験の枠組み}
+
+3GPPは適合性試験のための参照フレームワークを整備しているが、実際の実装間相互接続性（IOT）はベンダ横断のイベントや二者間検証で担保されることが多い。TTCN-3を用いた適合性試験スイートは存在するものの、導入・運用コストが高い。研究用途では、pcapのメッセージシーケンス照合、ログ解析、期待結果との比較による軽量な検証が現実的である。
+
 \subsection{回帰テストとCI/CD連携の事例}
 
+OSSコミュニティでは、CI（Continuous Integration）により回帰の早期検出を図る実践が一般化している。Open5GSでもPull Requestに対して自動ビルド・一部ユニットテストが実行される。ネットワークシステムに固有の相互接続テストはCI上での完全再現が難しいが、Docker Composeで最小構成を起動し、UE模擬・RANシミュレータで手順を自動化するアプローチが有効である。本研究でも、Attach/RegistrationとPing疎通を最小回帰セットとして設計している。
+
 \section{LTE eNBと5GCの相互接続に関する標準化}
-\subsection{ng-eNBの位置づけ（3GPP 23.501 等）}
+
+\subsection{ng-eNBの位置づけ}
+
+3GPP TS~\cite{threegpp-23501}では、E-UTRA無線を用いながらも5GCに接続する基地局としてng-eNBが定義される。ng-eNBはNG-APでAMFと接続し、SCTP/NGAPを用いて制御信令を交換する。一方、従来のeNBはMMEとS1-APで接続し、EPCに属する。両者は同一の無線（E-UTRA）であっても、制御面・ユーザ面の接続先と手順が異なるため、単純な置換では相互接続できない。本研究のs1n2-converterは、既存eNBを変更せずに5GCへ接続するための変換層として機能する。
+
 \subsection{EPS/5GS間インターワーキング（N26, 移動性）}
 
+EPS（EPCを用いる4G）と5GS（5GCを用いる5G）間の相互運用性は、選択的に規定されている。特に、UEの移動性管理やコンテキスト引継ぎに関して、N26インターフェース（MMEとAMF間）が定義されるが、実装と運用は必須ではない。N26が未実装の環境では、Attach/Registrationのやり直しが発生し、遷移時に遅延が増大する。本研究の対象は、ng-eNB化ではなく、既存eNBのまま5GCへの接続性を実現する変換であり、N26相当の移動性は扱わない。
+
 \section{プロトコル変換・ゲートウェイの先行事例}
+
 \subsection{S1AP–NGAP変換のアプローチ}
+
+S1APとNGAPはASN.1ベースの設計思想を共有するが、IEと手順の多くが非互換である。先行事例では、S1AP InitialContextSetup（ICS）に含まれるE-RAB情報から、NGAP InitialContextSetup/PDUSessionResourceSetupに必要な情報を抽出・再構成する手法が示されている。変換層は、UE識別子のマッピング（MME-UE-S1AP-ID/AMF-UE-NGAP-ID等）、E-RAB IDとPDU Session IDの対応付け、NASメッセージの封入形式（4G NAS/5G NAS）を管理する必要がある。
+
+本研究の実装では、ICS Response中のE-RAB Setup ListからGTPトンネル情報（TEID/IP）を抽出し、PDUSessionResourceSetupResponseTransferに対応するTNL情報を生成する試みを行った。しかし、AMF側でPDU Sessionが事前に認識されていない場合に"unknown-PDU-session-ID"が返るなど、5G手順の前提に起因する課題が確認された。対策として、手順の分離（ICSとPDU Session Setupの段階的処理）や、AMF/SMFとの連携順序の見直しが必要であることを示した（開発日誌参照）。
+
 \subsection{GTP-UのTEID管理とパススルー}
 
+ユーザ面におけるGTP-Uは4G/5Gで基本互換であるため、TEIDのマッピングによりパススルーが可能である。変換層は、S1-U側とN3側で独立したTEID空間を持ち、方向ごとにTEIDを管理する。先行事例では、トラフィックの負荷分散やQoS方針に応じてTEID割当を動的に変更するアプローチも報告されている。本研究では、最小実装として静的/逐次割当を採用し、ping疎通までのEnd-to-End動作を確認している。
+
 \section{sXGPの研究利用事例}
+
 \subsection{学術・企業での実験報告}
+
+sXGPは免許不要帯での運用が可能であることから、学術機関や企業において実機に近い環境でのLTE検証に用いられている。屋内小規模のカバレッジで、無線条件や端末挙動を制御しやすく、プロトコル解析や相互運用性評価に適している。OSSコア（Open5GS）との組み合わせにより、加入者管理からPDUセッション確立までの一連の手順を実機で再現できる。
+
 \subsection{運用制約と利点}
+
+sXGPの利点は、法令遵守の範囲で迅速な反復実験が可能である点にある。一方、チャネル幅10MHz・送信電力上限といった物理的制約が存在し、高スループット評価や屋外広域での検証には適さない。研究計画においては、sXGPを基盤とした実機検証と、ZMQ/RFシミュレーションによる反復試験を適切に使い分けることが重要である。本研究は、両者を組み合わせることで、実装ベース標準化に資する検証サイクルを構築した点に特徴がある。

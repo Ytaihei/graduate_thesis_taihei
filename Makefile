@@ -26,6 +26,14 @@ $(MAIN_PDF): $(BUILD_DIR)/$(SRC_DIR)
 $(BUILD_DIR)/$(SRC_DIR):
 	mkdir -p $@
 
+.PHONY: docker docker-clean
+# Dockerized build (no host TeX Live needed)
+docker:
+	docker run --rm -v $(CURDIR):/workdir texlive/texlive:latest sh -c 'cd /workdir && latexmk -pdfdvi $(MAIN_TEX)'
+
+docker-clean:
+	docker run --rm -v $(CURDIR):/workdir texlive/texlive:latest sh -c 'cd /workdir && latexmk -C'
+
 snapshot: build
 	mkdir -p output/snapshot
 	cp $(MAIN_PDF) output/snapshot/$(BASE)_$(DATE).pdf
@@ -56,9 +64,9 @@ diff:
 diffclean:
 	rm -rf $(BASE)-diff*
 
-# 020_related_works.ja.tex は仮綴に際して一時的に除外 
+# 020_related_works.ja.tex は仮綴に際して一時的に除外
 redpen.%:
-	$(eval EXCLUDE_FILES := $(SRC_DIR)/030_design_and_impl.ja.tex $(SRC_DIR)/999_thanks.ja.tex $(SRC_DIR)/020_related_works.ja.tex) 
+	$(eval EXCLUDE_FILES := $(SRC_DIR)/030_design_and_impl.ja.tex $(SRC_DIR)/999_thanks.ja.tex $(SRC_DIR)/020_related_works.ja.tex)
 	$(eval SRC_FILES := $(shell find $(SRC_DIR) -type f -name '*.$*.tex' $(foreach file,$(EXCLUDE_FILES),! -name $(notdir $(file)))))
 	redpen \
 	--conf redpen/redpen.$(subst redpen.,,$@).xml \
