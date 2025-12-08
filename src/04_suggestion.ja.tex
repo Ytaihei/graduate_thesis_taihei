@@ -14,6 +14,35 @@
 	\item \textbf{U-Plane（ユーザ面）}: GTP-U（S1-U）とGTP-U（N3）の相互変換．UDPパケットを転送し，TEID（Tunnel Endpoint Identifier）の書き換えを行う．
 \end{itemize}
 
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
+    % Nodes
+    \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
+    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5G Core};
+
+    % Converter Box
+    \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
+    \node[above] at (5,1.3) {\textbf{提案コンバータ}};
+
+    % Internal Logic
+    \node[draw, fill=white, minimum width=1.2cm] (s1) at (3.8,0) {S1};
+    \node[draw, fill=white, minimum width=1.2cm] (ng) at (6.2,0) {NG};
+    \draw[<->, thick] (s1) -- (ng) node[midway, above] {\scriptsize 変換};
+
+    % Connections
+    \draw[<->, thick] (enb) -- (s1) node[midway, above] {S1};
+    \draw[<->, thick] (ng) -- (core) node[midway, above] {N2/N3};
+
+    % Roles
+    \node[below=0.2cm of enb, align=center, font=\scriptsize] {EPCとして\\接続};
+    \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBとして\\接続};
+    \node[below=1.4cm of conv, align=center, font=\scriptsize] {相互にエミュレーションを行い\\ギャップを吸収};
+  \end{tikzpicture}
+  \caption{提案システムの全体構成（S1-N2変換ゲートウェイ）}
+  \label{fig:architecture}
+\end{figure}
+
 \section{詳細設計}
 
 \subsection{プロトコルスタック変換}
@@ -22,6 +51,62 @@
 	\item \textbf{4G側}: S1AP / SCTP / IP (eNB向け)
 	\item \textbf{5G側}: NGAP / SCTP / IP (AMF向け)
 \end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
+    % eNB側
+    \node[font=\normalsize\bfseries] at (1.5,5.5) {eNB};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,4.5) {S1-AP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.8) {SCTP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.1) {IP (172.24.0.111)};
+
+    % GTP-U
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,2.0) {GTP-U};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.3) {UDP:2152};
+
+    % Converter左側
+    \node[font=\normalsize\bfseries] at (5.5,5.5) {S1N2 Converter};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,4.5) {S1-AP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.8) {SCTP:36412};
+
+    % 変換ロジック
+    \node[draw, thick, fill=GoogleRed!10, minimum width=2.5cm, minimum height=1.2cm, align=center] at (5.5,2.6) {変換層\\{\scriptsize S1↔NG}\\{\scriptsize TEID管理}};
+
+    % GTP Proxy
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,1.3) {GTP Proxy};
+
+    % Converter右側
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,4.5) {NG-AP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.8) {SCTP:38412};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.1) {IP (172.24.0.30)};
+
+    % AMF/UPF側
+    \node[font=\normalsize\bfseries] at (13,5.5) {AMF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,4.5) {NG-AP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.8) {SCTP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.1) {IP (172.24.0.12)};
+
+    \node[font=\normalsize\bfseries] at (13,1.8) {UPF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,1.0) {GTP-U};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.3) {IP (172.24.0.21)};
+
+    % 接続線 C-Plane
+    \draw[<->, thick] (2.75,4.5) -- (4.25,4.5);
+    \draw[<->, thick] (6.75,4.5) -- (8.25,4.5);
+    \draw[<->, thick] (10.75,4.5) -- (11.75,4.5);
+
+    % 接続線 U-Plane
+    \draw[<->, thick, dashed] (2.75,1.3) -- (4.25,1.3);
+    \draw[<->, thick, dashed] (6.75,1.3) -- (11.75,1.0);
+
+    % ラベル
+    \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
+    \node[font=\scriptsize] at (3.5,1.6) {U-Plane};
+  \end{tikzpicture}
+  \caption{システム構成とプロトコルスタック}
+  \label{fig:protocol_stack}
+\end{figure}
 ゲートウェイ内部でアプリケーション層（L7）でのメッセージ変換を行うことで，下位レイヤ（L1-L4）の差異を隠蔽する．
 
 \subsection{C-Plane変換ロジック}
@@ -41,6 +126,66 @@ UEからのAttach Request（4G NAS）は，ゲートウェイによって5G NAS�
 	\item \textbf{NAS Transport}: 4G NASコンテナ内の情報を抽出し，必要に応じて5G NAS形式に変換（または透過転送）する．
 	\item \textbf{認証・セキュリティ}: 5Gの認証手順（AKA）を透過的に中継し，セキュリティコンテキストを確立する．
 \end{itemize}
+
+\subsubsection{NASメッセージ変換対応表}
+表\ref{tab:nas_conversion_ul}および表\ref{tab:nas_conversion_dl}に，主要なNASメッセージの変換対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{NASメッセージ変換対応表（上り：UE→Core）}
+\label{tab:nas_conversion_ul}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{4G NAS} & \textbf{5G NAS} \\
+\hline
+Attach Request & Registration Request \\
+\hline
+Auth Response (RES) & Auth Response (RES*: HRES*計算) \\
+\hline
+Security Mode Complete & Security Mode Complete \\
+\hline
+Attach Complete + ESM情報 & Registration Complete + PDU Session Est Req \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{NASメッセージ変換対応表（下り：Core→UE）}
+\label{tab:nas_conversion_dl}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{5G NAS} & \textbf{4G NAS} \\
+\hline
+Auth Request (ngKSI) & Auth Request (eKSI) \\
+\hline
+Security Mode Cmd (NEA/NIA) & Security Mode Cmd (EEA/EIA) \\
+\hline
+Registration Accept + 5G-GUTI & Attach Accept + GUTI \\
+\hline
+PDU Session Est Accept (5QI, DNN) & Act Def EPS Bearer (QCI, APN) \\
+\hline
+\end{tabular}
+\end{table}
+
+また，ID変換については表\ref{tab:id_conversion}に示す対応関係に基づいて行う．
+
+\begin{table}[htbp]
+\centering
+\caption{ID変換対応表}
+\label{tab:id_conversion}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{4G} & \textbf{5G} \\
+\hline
+IMSI & SUCI (NULL scheme) \\
+\hline
+GUTI & 5G-GUTI \\
+\hline
+eKSI (3bit) & ngKSI (4bit, TSC=0) \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsubsection{PDU Session Establishment（Early S1 Setup）}
 本提案の核心となる独自シーケンスである．5GではRegistration完了後にPDUセッション確立が行われるが，4GではAttach手順内でベアラ確立（Default Bearer Setup）が完了する必要がある．このタイミングのズレを解消するため，以下の「Early S1 Setup」手順を導入した．
@@ -70,10 +215,6 @@ Downlink (5GC $\rightarrow$ eNB) & (UPF IP, N3 TEID) & (eNB IP, S1-U TEID) \\
 \end{table}
 
 パケット受信時，ゲートウェイはヘッダ内のTEIDをキーとしてテーブルを検索し，宛先IPとTEIDを書き換えて転送する．これにより，eNBとUPFは互いの存在（IPアドレス体系の違いなど）を意識することなく通信が可能となる．
-\item \textbf{キャッシュ}: 抽出したSQN⊕AKをUEコンテキストに保存（s1n2\_ue\_t構造体の\texttt{sqn\_xor\_ak[6]}フィールド）．
-\item \textbf{KASME導出}: Authentication Response受信後，キャッシュされたSQN⊕AKとCK/IKを使用してKASMEを計算．
-\item \textbf{AUTS処理}: SQN不一致の場合，UEはAUTS（Authentication Failure）を返信．変換器はこれを検出し，再同期手順を開始．
-\end{enumerate}
 
 この実装により，5G認証手順と4G鍵導出の整合性を維持し，認証失敗のリスクを低減できる．
 
