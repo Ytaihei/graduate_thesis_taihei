@@ -1,0 +1,986 @@
+\documentclass[dvipdfmx,11pt,aspectratio=169]{beamer}
+
+% 日本語対応
+\usepackage{bxdpx-beamer}
+\usepackage{pxjahyper}
+\renewcommand{\kanjifamilydefault}{\gtdefault}
+
+% テーマ設定
+% Google Slidesのようなモダンでシンプルな見た目にするため metropolis を採用
+\usetheme{metropolis}
+\metroset{block=fill}
+\setbeamertemplate{navigation symbols}{}
+
+% 色設定 (Google Slidesテーマから抽出)
+\definecolor{GoogleBlue}{HTML}{4285F4}
+\definecolor{GoogleRed}{HTML}{EA4335}
+\definecolor{GoogleYellow}{HTML}{FBBC05}
+\definecolor{GoogleGreen}{HTML}{34A853}
+\definecolor{GoogleDarkGray}{HTML}{212121}
+\definecolor{GoogleLightGray}{HTML}{EEEEEE}
+
+\setbeamercolor{normal text}{fg=GoogleDarkGray, bg=white}
+\setbeamercolor{alerted text}{fg=GoogleRed}
+\setbeamercolor{example text}{fg=GoogleGreen}
+
+\setbeamercolor{palette primary}{fg=white, bg=GoogleBlue}
+\setbeamercolor{palette secondary}{fg=white, bg=GoogleRed}
+\setbeamercolor{palette tertiary}{fg=white, bg=GoogleYellow}
+\setbeamercolor{palette quaternary}{fg=white, bg=GoogleGreen}
+
+\setbeamercolor{title separator}{fg=GoogleBlue}
+\setbeamercolor{progress bar}{fg=GoogleBlue, bg=GoogleLightGray}
+\setbeamercolor{frametitle}{fg=white, bg=GoogleBlue}
+
+% フォント設定
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% 図解用
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows.meta, positioning}
+
+% タイトル情報
+\title{物理的制約のあるレガシーRANを次世代コアへ統合する\\疎結合アーキテクチャの提案と評価}
+\subtitle{〜世代間プロトコル変換による移行コスト削減と機能拡張〜}
+\author{Taihei}
+\institute{所属大学/学部}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{目次}
+  \tableofcontents
+\end{frame}
+
+\section{はじめに}
+\begin{frame}{背景：CNの進化とRAN更新のギャップ}
+  \begin{itemize}
+    \item \textbf{コアネットワークの進化 (ソフトウェア化)}
+      \begin{itemize}
+        \item CNは5G以降でソフトウェア化されたため高速に進化
+        \item 6Gでも5Gコアをベースに継続的な機能拡張が予想される
+      \end{itemize}
+    \item \textbf{現状のデプロイメントとその限界}
+      \begin{itemize}
+        \item 5Gコア特有の新機能(スライシング等)を活用するには、SA (Standalone) 構成へ移行する必要がある
+        \item 現在はRANを先行更新するNSA (Non-Standalone)構成が主流だが、CNは4Gのままであり新機能が使えない
+        \item SA化には対応RANへの更新が必要だが、コストや物理的制約(例: NTN)により困難な場合がある
+      \end{itemize}
+    $\Rightarrow$ \textbf{Coreの進化速度に対し、RANの更新サイクルにギャップが生じる}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NSA構成とSA構成の比較}
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % NSA構成（左側）
+    \node[font=\normalsize\bfseries] at (2.5,4.5) {NSA (Non-Standalone)};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (nsa-ue) at (0,2) {UE};
+
+    % eNB
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-enb) at (2.5,3) {eNB};
+    % gNB
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-gnb) at (2.5,1) {gNB};
+
+    % EPC
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-epc) at (5,2) {4G EPC};
+
+    % 接続線
+    \draw[->, thick] (nsa-ue) -- (nsa-enb);
+    \draw[->, thick] (nsa-ue) -- (nsa-gnb);
+    \draw[->, thick] (nsa-enb) -- (nsa-epc);
+    \draw[->, thick, dashed] (nsa-gnb) -- (nsa-enb);
+
+    % 説明
+    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\Coreは4Gのまま};
+
+    % 区切り線
+    \draw[thick, dashed, gray] (7,5) -- (7,-1);
+
+    % SA構成（右側）
+    \node[font=\normalsize\bfseries] at (11,4.5) {SA (Standalone)};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (sa-ue) at (8.5,2) {UE};
+
+    % gNB
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-gnb) at (11,2) {gNB};
+
+    % 5GC
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-5gc) at (13.5,2) {5GC};
+
+    % 接続線
+    \draw[->, thick] (sa-ue) -- (sa-gnb);
+    \draw[->, thick] (sa-gnb) -- (sa-5gc);
+
+    % 説明
+    \node[text width=4cm, align=center] at (11,-0.5) {5G RANと5GCの組み合わせ\\新機能が利用可能};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{課題：ギャップが問題になるケース}
+  \begin{itemize}
+    \item \textbf{研究開発：新機能の先行検証}
+      \begin{itemize}
+        \item 次世代CN機能（スライシング、URLLC等）を検証したい
+        \item 対応RAN（5G gNB）は高価で免許取得も必要
+        \item $\Rightarrow$ \textbf{低コストかつ手軽に検証できる環境が必要}
+      \end{itemize}
+    \item \textbf{商用導入：マイグレーション戦略の柔軟性欠如}
+      \begin{itemize}
+        \item 商用網を前提にした場合、全RANを一斉に更新するのは現実的でない
+        \item 段階移行のためのOptionもあるが、移行期間中は旧RANエリアで新CN機能が利用できない
+        \item $\Rightarrow$ \textbf{RAN更新を伴わないCN先行移行パスが必要}
+      \end{itemize}
+    \item \textbf{運用維持：物理的に更新が難しいRAN}
+      \begin{itemize}
+        \item NTNでは衛星やHAPSを使用するため、一度配備すると地上局よりも物理的な更新が困難
+        \item 地上のCNが進化しても、空のRANは旧世代のまま残る
+        \item $\Rightarrow$ \textbf{新旧世代が共存可能な収容技術が必要}
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{NTN (Non-Terrestrial Network) とは}
+  \centering
+  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
+    % 地上エリア
+    \fill[GoogleLightGray!50] (-0.5,-0.5) rectangle (12,0.8);
+    \node at (0.5,0.15) {\textbf{地上}};
+
+    % 地上局/ゲートウェイ
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
+
+    % 地上のCore
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
+    \draw[->, thick] (gw) -- (core);
+
+    % 衛星（宇宙）
+    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.2cm] (sat) at (5,5) {衛星};
+    \node[above] at (5,5.7) {\textbf{宇宙}};
+    \node[below, text width=2cm, align=center] at (5,4.2) {\scriptsize 4G RAN搭載};
+
+    % HAPS（成層圏）
+    \node[draw, ellipse, fill=GoogleYellow!50, minimum width=1.8cm, minimum height=0.7cm] (haps) at (9,3.5) {HAPS};
+    \node[above] at (9,4.1) {\textbf{成層圏}};
+    \node[below, text width=2cm, align=center] at (9,2.9) {\scriptsize 4G RAN搭載};
+
+    % UE（地上）
+    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue1) at (5,0.15) {UE};
+    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue2) at (8,0.15) {UE};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat) -- (gw) node[midway, above, sloped] {\scriptsize Feeder};
+    \draw[->, thick] (sat) -- (ue1) node[midway, right] {\scriptsize Service};
+    \draw[->, thick] (haps) -- (ue2);
+    \draw[->, thick, dashed] (haps) -- (gw);
+
+    % 問題点（右側に配置）
+    \node[draw, rounded corners, fill=GoogleRed!20, text width=4cm, align=center, font=\small] at (10.5,1.5) {打ち上げ後はHW更新不可\\$\Rightarrow$ SW更新のみ対応可能};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{目的とアプローチ}
+  \begin{block}{目的}
+    物理的に更新困難なレガシーRANを、ハードウェア変更なしに次世代Coreに収容し、段階的な移行と新機能利用を可能にするアーキテクチャを提案する。
+  \end{block}
+  \begin{itemize}
+    \item \textbf{アプローチ：プロトコル変換による疎結合化}
+      \begin{itemize}
+        \item 変換ゲートウェイを介在させ、RANとCoreの直接的な依存を排除
+        \item 世代間で不変な機能（AAA, Mobility, U-plane）を抽象化してマッピング
+      \end{itemize}
+    \item \textbf{本研究のスコープ}
+      \begin{itemize}
+        \item 4G eNB (LTE) と 5G Core (5GC) の異世代相互接続を実証
+      \end{itemize}
+    \item \textbf{期待される効果（課題への回答）}
+      \begin{itemize}
+        \item \textbf{R\&D:} 既存RANを用いた安価な次世代Core検証環境
+        \item \textbf{移行:} RAN更新を伴わない柔軟なCore先行移行
+        \item \textbf{運用:} NTNなど物理制約のあるインフラの延命と機能拡張
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{提案手法}
+\begin{frame}{提案アーキテクチャ：S1-N2/N3 変換ゲートウェイ}
+  \centering
+  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
+    % Nodes
+    \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
+    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5G Core};
+
+    % Converter Box
+    \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
+    \node[above] at (5,1.3) {\textbf{提案コンバータ}};
+
+    % Internal Logic
+    \node[draw, fill=white, minimum width=1.2cm] (s1) at (3.8,0) {S1};
+    \node[draw, fill=white, minimum width=1.2cm] (ng) at (6.2,0) {NG};
+    \draw[<->, thick] (s1) -- (ng) node[midway, above] {\scriptsize 変換};
+
+    % Connections
+    \draw[<->, thick] (enb) -- (s1) node[midway, above] {S1};
+    \draw[<->, thick] (ng) -- (core) node[midway, above] {N2/N3};
+
+    % Roles
+    \node[below=0.2cm of enb, align=center, font=\scriptsize] {EPCだと思って\\接続};
+    \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBだと思って\\接続};
+    \node[below=1.4cm of conv, align=center, font=\scriptsize] {相互にエミュレーションを行い\\ギャップを吸収};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{世代不変性に基づく疎結合化の原理}
+  \begin{block}{キーアイデア}
+    モバイル通信の根幹機能(AAA, Mobility, QoS)は世代を超えて\alert{本質的に同じ}であり、プロトコル表現が異なるだけ $\Rightarrow$ 抽象化して相互変換可能
+  \end{block}
+  \begin{itemize}
+    \item \textbf{C-Plane (制御信号): ステートマシン変換}
+      \begin{itemize}
+        \item 接続管理(Attach/Registration)、Mobility(HO)等の状態遷移は世代不変
+        \item S1-AP $\leftrightarrow$ NG-AP のメッセージ名・パラメータをマッピング
+      \end{itemize}
+    \item \textbf{U-Plane (データ転送): QoS抽象化}
+      \begin{itemize}
+        \item Bearer (4G) も QoS Flow (5G) も「優先度付きトンネル」という点で同一
+        \item GTP-U TEID とQoS識別子 (EBI $\leftrightarrow$ QFI) を付け替え
+      \end{itemize}
+    \item \textbf{NAS (端末-Core通信): 透過転送}
+      \begin{itemize}
+        \item \alert{NAS over LTE:} 5G NASを4GのNASコンテナに格納して運ぶ
+        \item これにより端末は4G無線上で5G Coreへ直接登録可能(技術的なブレイクスルー)
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{設計}
+\begin{frame}{システム構成：プロトコルスタック}
+  \centering
+  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
+    % eNB側
+    \node[font=\normalsize\bfseries] at (1.5,5.5) {eNB};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,4.5) {S1-AP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.8) {SCTP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.1) {IP (172.24.0.111)};
+
+    % GTP-U
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,2.0) {GTP-U};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.3) {UDP:2152};
+
+    % Converter左側
+    \node[font=\normalsize\bfseries] at (5.5,5.5) {S1N2 Converter};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,4.5) {S1-AP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.8) {SCTP:36412};
+
+    % 変換ロジック
+    \node[draw, thick, fill=GoogleRed!10, minimum width=2.5cm, minimum height=1.2cm, align=center] at (5.5,2.6) {変換層\\{\scriptsize S1↔NG}\\{\scriptsize TEID管理}};
+
+    % GTP Proxy
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,1.3) {GTP Proxy};
+
+    % Converter右側
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,4.5) {NG-AP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.8) {SCTP:38412};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.1) {IP (172.24.0.30)};
+
+    % AMF/UPF側
+    \node[font=\normalsize\bfseries] at (13,5.5) {AMF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,4.5) {NG-AP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.8) {SCTP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.1) {IP (172.24.0.12)};
+
+    \node[font=\normalsize\bfseries] at (13,1.8) {UPF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,1.0) {GTP-U};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.3) {IP (172.24.0.21)};
+
+    % 接続線 C-Plane
+    \draw[<->, thick] (2.75,4.5) -- (4.25,4.5);
+    \draw[<->, thick] (6.75,4.5) -- (8.25,4.5);
+    \draw[<->, thick] (10.75,4.5) -- (11.75,4.5);
+
+    % 接続線 U-Plane
+    \draw[<->, thick, dashed] (2.75,1.3) -- (4.25,1.3);
+    \draw[<->, thick, dashed] (6.75,1.3) -- (11.75,1.0);
+
+    % ラベル
+    \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
+    \node[font=\scriptsize] at (3.5,1.6) {U-Plane};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{UE接続シーケンス：S1 Setup}
+  \centering
+  \begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
+    % Actors
+    \node[font=\normalsize\bfseries] at (0,6) {eNB};
+    \node[font=\normalsize\bfseries] at (5,6) {S1N2 Converter};
+    \node[font=\normalsize\bfseries] at (10,6) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,5.5) -- (0,0);
+    \draw[thick] (5,5.5) -- (5,0);
+    \draw[thick] (10,5.5) -- (10,0);
+
+    % Messages
+    \draw[->, thick, GoogleBlue] (0,5) -- (5,4.8);
+    \node[above, font=\scriptsize, align=left] at (2.5,5) {S1SetupRequest\\{\tiny Global-ENB-ID, TAC}};
+
+    \draw[->, thick, GoogleGreen] (5,4.5) -- (10,4.3);
+    \node[above, font=\scriptsize, align=left] at (7.5,4.5) {NGSetupRequest\\{\tiny Global-gNB-ID, TAC}};
+
+    \draw[<-, thick, GoogleGreen] (5,3.8) -- (10,3.6);
+    \node[below, font=\scriptsize, align=left] at (7.5,3.6) {NGSetupResponse\\{\tiny AMF Name, GUAMI}};
+
+    \draw[<-, thick, GoogleBlue] (0,3.3) -- (5,3.1);
+    \node[below, font=\scriptsize, align=left] at (2.5,3.1) {S1SetupResponse\\{\tiny MME Name}};
+
+    % 変換処理
+    \node[draw, fill=GoogleYellow!20, text width=3cm, align=center, font=\tiny] at (5,1.2) {ID変換\\ENB-ID → gNB-ID\\TAC保持};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{完全シーケンス(1/5)：Initial UE Message + NAS変換}
+  \centering
+  \begin{tikzpicture}[scale=0.55, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,9) {UE};
+    \node[font=\small\bfseries] at (4,9) {eNB};
+    \node[font=\small\bfseries] at (8,9) {S1N2};
+    \node[font=\small\bfseries] at (12,9) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,8.5) -- (0,0);
+    \draw[thick] (4,8.5) -- (4,0);
+    \draw[thick] (8,8.5) -- (8,0);
+    \draw[thick] (12,8.5) -- (12,0);
+
+    % 1. RRC Connection
+    \draw[->, thick] (0.1,8) -- (3.9,8);
+    \node[above, font=\tiny] at (2,8.1) {RRC Connection Request};
+
+    \draw[->, thick] (3.9,7.2) -- (0.1,7.2);
+    \node[above, font=\tiny] at (2,7.3) {RRC Connection Setup};
+
+    % 2. Attach Request (4G NAS)
+    \draw[->, thick, GoogleBlue] (0.1,6.2) -- (3.9,6.2);
+    \node[above, font=\tiny] at (2,6.3) {RRC Setup Cmp + Attach Req};
+
+    % NAS詳細 (4G) - 左側に配置
+    \node[draw, fill=GoogleBlue!10, text width=2.3cm, align=left, font=\tiny, anchor=north east] at (-0.3,5.9) {
+      \textbf{4G NAS: Attach Req}\\
+      - IMSI\\
+      - UE Network Cap\\
+      - PDN Conn Req
+    };
+
+    % 3. S1AP InitialUEMessage
+    \draw[->, thick, GoogleBlue] (4.1,4.2) -- (7.9,4.2);
+    \node[above, font=\tiny] at (6,4.3) {InitialUEMessage (S1AP)};
+
+    % 4. NAS変換処理 - 中央下に配置
+    \node[draw, thick, fill=GoogleYellow!30, text width=2.6cm, align=center, font=\tiny, anchor=north] at (8,3.6) {
+      \textbf{NAS変換}\\
+      Attach → Registration\\
+      IMSI → SUCI
+    };
+
+    % 5. NGAP InitialUEMessage
+    \draw[->, thick, GoogleGreen] (8.1,2.0) -- (11.9,2.0);
+    \node[above, font=\tiny] at (10,2.1) {InitialUEMessage (NGAP)};
+
+    % NAS詳細 (5G) - 右側に配置
+    \node[draw, fill=GoogleGreen!10, text width=2.3cm, align=left, font=\tiny, anchor=north west] at (12.3,1.7) {
+      \textbf{5G NAS: Reg Req}\\
+      - SUCI\\
+      - UE Security Cap\\
+      - Requested NSSAI
+    };
+  \end{tikzpicture}
+\end{frame}
+
+%% ========================================
+%% シーケンス 2/5: Authentication（詳細）
+%% ========================================
+\begin{frame}{完全シーケンス(2/5)：Authentication}
+  \centering
+  \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,11) {UE};
+    \node[font=\small\bfseries] at (4,11) {eNB};
+    \node[font=\small\bfseries] at (8,11) {S1N2};
+    \node[font=\small\bfseries] at (12,11) {AMF/AUSF};
+
+    % Lifelines
+    \draw[thick] (0,10.5) -- (0,0);
+    \draw[thick] (4,10.5) -- (4,0);
+    \draw[thick] (8,10.5) -- (8,0);
+    \draw[thick] (12,10.5) -- (12,0);
+
+    % === Authentication Request (DL方向) ===
+    \node[font=\scriptsize\bfseries, GoogleGreen] at (10,10.2) {--- Auth Request ---};
+
+    % AMF generates Auth vectors
+    \node[draw, fill=GoogleGreen!10, text width=2.3cm, align=center, font=\tiny, anchor=north west] at (12.3,10.0) {
+      \textbf{AMF/AUSF}\\
+      5G-AKA vectors\\
+      RAND, AUTN
+    };
+
+    % Auth Request - AMF → S1N2 (NGAP)
+    \draw[->, thick, GoogleGreen] (11.9,8.6) -- (8.1,8.6);
+    \node[above, font=\tiny] at (10,8.65) {DL NASTransport};
+
+    % S1N2 変換処理
+    \node[draw, thick, fill=GoogleYellow!30, text width=2.5cm, align=center, font=\tiny, anchor=north] at (8,8.0) {
+      \textbf{NAS変換}\\
+      5G Auth → EPS Auth\\
+      ngKSI → eKSI
+    };
+
+    % Auth Request - S1N2 → eNB (S1AP)
+    \draw[->, thick, GoogleBlue] (7.9,6.4) -- (4.1,6.4);
+    \node[above, font=\tiny] at (6,6.45) {DL NASTransport};
+
+    % Auth Request - eNB → UE (RRC)
+    \draw[->, thick] (3.9,5.6) -- (0.1,5.6);
+    \node[above, font=\tiny] at (2,5.65) {AuthenticationRequest};
+
+    % UE側詳細
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=left, font=\tiny, anchor=north east] at (-0.3,5.2) {
+      \textbf{4G NAS}\\
+      RAND, AUTN\\
+      eKSI
+    };
+
+    % === Authentication Response (UL方向) ===
+    \node[font=\scriptsize\bfseries, GoogleBlue] at (2,4.0) {--- Auth Response ---};
+
+    % UE computes RES
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=center, font=\tiny, anchor=north east] at (-0.3,3.7) {
+      \textbf{UE計算}\\
+      AUTN検証, RES
+    };
+
+    % Auth Response - UE → eNB
+    \draw[->, thick] (0.1,2.8) -- (3.9,2.8);
+    \node[above, font=\tiny] at (2,2.85) {AuthenticationResponse};
+
+    % Auth Response - eNB → S1N2
+    \draw[->, thick, GoogleBlue] (4.1,2.2) -- (7.9,2.2);
+    \node[above, font=\tiny] at (6,2.25) {UL NASTransport};
+
+    % RES変換
+    \node[draw, thick, fill=GoogleRed!20, text width=2.5cm, align=center, font=\tiny, anchor=north] at (8,1.6) {
+      \textbf{RES変換}\\
+      RES → RES* (SHA-256)
+    };
+
+    % Auth Response - S1N2 → AMF
+    \draw[->, thick, GoogleGreen] (8.1,0.4) -- (11.9,0.4);
+    \node[above, font=\tiny] at (10,0.45) {UL NASTransport (RES*)};
+  \end{tikzpicture}
+\end{frame}
+
+%% ========================================
+%% シーケンス 3/5: Security Mode（詳細）
+%% ========================================
+\begin{frame}{完全シーケンス(3/5)：Security Mode}
+  \centering
+  \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,11) {UE};
+    \node[font=\small\bfseries] at (4,11) {eNB};
+    \node[font=\small\bfseries] at (8,11) {S1N2};
+    \node[font=\small\bfseries] at (12,11) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,10.5) -- (0,0);
+    \draw[thick] (4,10.5) -- (4,0);
+    \draw[thick] (8,10.5) -- (8,0);
+    \draw[thick] (12,10.5) -- (12,0);
+
+    % === Security Mode Command (DL方向) ===
+    \node[font=\scriptsize\bfseries, GoogleGreen] at (10,10.2) {--- Security Mode Command ---};
+
+    % AMF generates SMC
+    \node[draw, fill=GoogleGreen!10, text width=2.3cm, align=center, font=\tiny, anchor=north west] at (12.3,10.0) {
+      \textbf{AMF}\\
+      K\_AMF導出\\
+      NAS keys生成
+    };
+
+    % SMC - AMF → S1N2 (NGAP)
+    \draw[->, thick, GoogleGreen] (11.9,8.6) -- (8.1,8.6);
+    \node[above, font=\tiny] at (10,8.65) {DL NASTransport (SMC)};
+
+    % SMC詳細 (AMF側)
+    \node[draw, fill=GoogleGreen!10, text width=2cm, align=left, font=\tiny, anchor=north west] at (12.3,8.2) {
+      \textbf{5G SMC}\\
+      Selected algo\\
+      ngKSI
+    };
+
+    % S1N2 変換処理
+    \node[draw, thick, fill=GoogleYellow!30, text width=2.5cm, align=center, font=\tiny, anchor=north] at (8,7.8) {
+      \textbf{SMC変換}\\
+      5G SMC → EPS SMC\\
+      ngKSI → eKSI
+    };
+
+    % SMC - S1N2 → eNB (S1AP)
+    \draw[->, thick, GoogleBlue] (7.9,6.2) -- (4.1,6.2);
+    \node[above, font=\tiny] at (6,6.25) {DL NASTransport};
+
+    % SMC - eNB → UE (RRC)
+    \draw[->, thick] (3.9,5.4) -- (0.1,5.4);
+    \node[above, font=\tiny] at (2,5.45) {SecurityModeCommand};
+
+    % UE側詳細
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=left, font=\tiny, anchor=north east] at (-0.3,5.0) {
+      \textbf{4G SMC}\\
+      EIA/EEA\\
+      eKSI
+    };
+
+    % === Security Mode Complete (UL方向) ===
+    \node[font=\scriptsize\bfseries, GoogleBlue] at (2,3.8) {--- Security Mode Complete ---};
+
+    % UE processes SMC
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=center, font=\tiny, anchor=north east] at (-0.3,3.5) {
+      \textbf{UE処理}\\
+      K\_eNB導出\\
+      NAS暗号化開始
+    };
+
+    % SMC Complete - UE → eNB
+    \draw[->, thick] (0.1,2.4) -- (3.9,2.4);
+    \node[above, font=\tiny] at (2,2.45) {SecurityModeComplete};
+
+    % SMC Complete - eNB → S1N2
+    \draw[->, thick, GoogleBlue] (4.1,1.8) -- (7.9,1.8);
+    \node[above, font=\tiny] at (6,1.85) {UL NASTransport};
+
+    % SMC Complete - S1N2 → AMF
+    \draw[->, thick, GoogleGreen] (8.1,1.2) -- (11.9,1.2);
+    \node[above, font=\tiny] at (10,1.25) {UL NASTransport (SMC Cmp)};
+
+    % 完了状態
+    \node[draw, fill=GoogleGreen!30, text width=3cm, align=center, font=\tiny, anchor=north west] at (12.3,0.8) {
+      NAS Security確立完了
+    };
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{完全シーケンス(4/5)：Registration Accept + Early S1 Setup}
+  \centering
+  \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,10) {UE};
+    \node[font=\small\bfseries] at (4,10) {eNB};
+    \node[font=\small\bfseries] at (8,10) {S1N2};
+    \node[font=\small\bfseries] at (12,10) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,9.5) -- (0,0);
+    \draw[thick] (4,9.5) -- (4,0);
+    \draw[thick] (8,9.5) -- (8,0);
+    \draw[thick] (12,9.5) -- (12,0);
+
+    % === Registration Accept ===
+    \node[font=\scriptsize\bfseries, GoogleGreen] at (10,9.2) {--- Registration Accept ---};
+
+    % Reg Accept - AMF → S1N2
+    \draw[->, thick, GoogleGreen] (11.9,8.7) -- (8.1,8.7);
+    \node[above, font=\tiny] at (10,8.8) {DL NASTransport (Reg Accept)};
+
+    % === Early S1 Setup (独自シーケンス) ===
+    \node[font=\scriptsize\bfseries, GoogleRed] at (6,7.8) {--- Early S1 Setup ---};
+
+    % S1N2がインターセプト (右端に配置)
+    \node[draw, thick, fill=GoogleRed!20, text width=2.3cm, align=center, font=\tiny, anchor=north west] at (12.3,8.0) {
+      PDU Session前に\\
+      S1ベアラ先行確立
+    };
+
+    % InitialContextSetupRequest (S1) - S1N2 → eNB
+    \draw[->, thick, GoogleBlue] (7.9,6.8) -- (4.1,6.8);
+    \node[above, font=\tiny] at (6,6.9) {InitialContextSetupReq};
+
+    % E-RAB詳細 (eNBの左側、矢印より下)
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=left, font=\tiny, anchor=north east] at (3.7,6.5) {
+      \textbf{E-RAB Setup}\\
+      S1N2 Proxy TEID
+    };
+
+    % RRC Reconfig - eNB → UE
+    \draw[->, thick] (3.9,4.8) -- (0.1,4.8);
+    \node[above, font=\tiny] at (2,4.9) {RRC Reconfig + Attach Acc};
+
+    % 4G NAS詳細 (左端、矢印より下)
+    \node[draw, fill=GoogleBlue!10, text width=1.8cm, align=left, font=\tiny, anchor=north east] at (-0.3,4.5) {
+      \textbf{Attach Acc}\\
+      GUTI\\
+      Act Def Bearer
+    };
+
+    % RRC Reconfig Cmp - UE → eNB
+    \draw[->, thick] (0.1,2.8) -- (3.9,2.8);
+    \node[above, font=\tiny] at (2,2.9) {RRC Reconfig Cmp};
+
+    % InitialContextSetupResponse (S1) - eNB → S1N2
+    \draw[->, thick, GoogleBlue] (4.1,2.0) -- (7.9,2.0);
+    \node[above, font=\tiny] at (6,2.1) {InitialContextSetupRes};
+
+    % eNB TEID詳細 (中央、矢印より下)
+    \node[draw, fill=GoogleYellow!30, text width=2cm, align=center, font=\tiny, anchor=north] at (8,1.6) {
+      eNB TEID 保存
+    };
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{完全シーケンス(5/5)：PDU Session + TEID更新}
+  \centering
+  \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,10) {UE};
+    \node[font=\small\bfseries] at (4,10) {eNB};
+    \node[font=\small\bfseries] at (8,10) {S1N2};
+    \node[font=\small\bfseries] at (12,10) {AMF/UPF};
+
+    % Lifelines
+    \draw[thick] (0,9.5) -- (0,0.5);
+    \draw[thick] (4,9.5) -- (4,0.5);
+    \draw[thick] (8,9.5) -- (8,0.5);
+    \draw[thick] (12,9.5) -- (12,0.5);
+
+    % === Attach/Registration Complete ===
+    \node[font=\scriptsize\bfseries, GoogleBlue] at (6,9.2) {--- Complete + PDU Session ---};
+
+    % Attach Complete - UE → eNB
+    \draw[->, thick] (0.1,8.7) -- (3.9,8.7);
+    \node[above, font=\tiny] at (2,8.8) {Attach Complete};
+
+    % UL NAS - eNB → S1N2
+    \draw[->, thick, GoogleBlue] (4.1,8.1) -- (7.9,8.1);
+    \node[above, font=\tiny] at (6,8.2) {UL NASTransport};
+
+    % NAS変換 (右端に配置)
+    \node[draw, fill=GoogleYellow!30, text width=2.3cm, align=center, font=\tiny, anchor=north west] at (8.3,7.8) {
+      → Reg Complete\\
+      + PDU Session Req
+    };
+
+    % Reg Complete - S1N2 → AMF
+    \draw[->, thick, GoogleGreen] (8.1,6.4) -- (11.9,6.4);
+    \node[above, font=\tiny] at (10,6.5) {Registration Complete};
+
+    % PDU Session Req - S1N2 → AMF
+    \draw[->, thick, GoogleGreen] (8.1,5.6) -- (11.9,5.6);
+    \node[above, font=\tiny] at (10,5.7) {PDU Session Est Req};
+
+    % === PDU Session Resource Setup ===
+    \node[font=\scriptsize\bfseries, GoogleGreen] at (10,4.8) {--- PDU Session Setup ---};
+
+    % PDU Res Setup - AMF → S1N2
+    \draw[->, thick, GoogleGreen] (11.9,4.2) -- (8.1,4.2);
+    \node[above, font=\tiny] at (10,4.3) {PDUSessionResSetupReq};
+
+    % UPF TEID詳細 (右端、矢印より下)
+    \node[draw, fill=GoogleGreen!10, text width=2cm, align=left, font=\tiny, anchor=north west] at (12.3,3.9) {
+      \textbf{PDU Session}\\
+      UPF N3 TEID
+    };
+
+    % TEID更新 (中央、矢印より下)
+    \node[draw, thick, fill=GoogleRed!20, text width=2.3cm, align=center, font=\tiny, anchor=north] at (8,3.6) {
+      \textbf{TEID更新}\\
+      Proxy → UPF TEID
+    };
+
+    % PDU Res Setup Res - S1N2 → AMF
+    \draw[->, thick, GoogleGreen] (8.1,2.0) -- (11.9,2.0);
+    \node[above, font=\tiny] at (10,2.1) {PDUSessionResSetupRes};
+
+    % 最終状態
+    \node[draw, fill=GoogleGreen!30, text width=4cm, align=center, font=\tiny] at (6,1.0) {
+      \textbf{接続完了} - GTP-U TEID変換によりデータ疎通
+    };
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{NASメッセージ変換対応表}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{上り (UE → Core)}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G NAS} & \textbf{5G NAS} \\
+          \hline
+          Attach Request & Registration Request \\
+          \hline
+          Auth Response & Auth Response \\
+          (RES) & (RES*: HRES*計算) \\
+          \hline
+          Security Mode Cmp & Security Mode Cmp \\
+          \hline
+          Attach Complete & Registration Complete \\
+          + ESM情報 & + PDU Session Est Req \\
+          \hline
+        \end{tabular}
+      \end{table}
+
+      \vspace{0.3cm}
+      \textbf{ID変換}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G} & \textbf{5G} \\
+          \hline
+          IMSI & SUCI (NULL scheme) \\
+          \hline
+          GUTI & 5G-GUTI \\
+          \hline
+          eKSI (3bit) & ngKSI (4bit, TSC=0) \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{下り (Core → UE)}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{5G NAS} & \textbf{4G NAS} \\
+          \hline
+          Auth Request & Auth Request \\
+          (ngKSI) & (eKSI) \\
+          \hline
+          Security Mode Cmd & Security Mode Cmd \\
+          (NEA/NIA) & (EEA/EIA) \\
+          \hline
+          Registration Accept & Attach Accept \\
+          + 5G-GUTI & + GUTI \\
+          \hline
+          PDU Session Est Acc & Act Def EPS Bearer \\
+          (5QI, DNN) & (QCI, APN) \\
+          \hline
+        \end{tabular}
+      \end{table}
+
+      \vspace{0.3cm}
+      \textbf{セキュリティアルゴリズム}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G} & \textbf{5G} \\
+          \hline
+          EEA0/EIA0 & NEA0/NIA0 \\
+          EEA1/EIA1 & NEA1/NIA1 \\
+          EEA2/EIA2 & NEA2/NIA2 \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{データプレーン：GTP-U TEID変換}
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % Actors
+    \node[font=\normalsize\bfseries] at (0,5) {eNB};
+    \node[font=\normalsize\bfseries] at (6,5) {S1N2 Converter};
+    \node[font=\normalsize\bfseries] at (12,5) {UPF};
+
+    % Lifelines
+    \draw[thick] (0,4.5) -- (0,0);
+    \draw[thick] (6,4.5) -- (6,0);
+    \draw[thick] (12,4.5) -- (12,0);
+
+    % Uplink
+    \draw[->, thick, GoogleBlue] (0,3.8) -- (6,3.6);
+    \node[above, font=\scriptsize, align=center] at (3,3.8) {GTP-U\\S1-U TEID};
+
+    \draw[->, thick, GoogleGreen] (6,3.3) -- (12,3.1);
+    \node[above, font=\scriptsize, align=center] at (9,3.3) {GTP-U\\N3 TEID};
+
+    % Downlink
+    \draw[<-, thick, GoogleGreen] (6,2.3) -- (12,2.1);
+    \node[below, font=\scriptsize, align=center] at (9,2.1) {GTP-U\\N3 TEID};
+
+    \draw[<-, thick, GoogleBlue] (0,1.8) -- (6,1.6);
+    \node[below, font=\scriptsize, align=center] at (3,1.6) {GTP-U\\S1-U TEID};
+
+    % TEID Mapping Table
+    \node[draw, thick, fill=GoogleYellow!20, text width=4cm, align=left, font=\scriptsize] at (6,0.3) {
+      \textbf{TEID Mapping Table}\\
+      S1-U: 0x12345678\\
+      $\updownarrow$\\
+      N3: 0xABCDEF00
+    };
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{主要な変換パラメータ}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{C-Plane変換}
+      \begin{itemize}
+        \item \textbf{ID変換}
+          \begin{itemize}
+            \item ENB-ID $\rightarrow$ gNB-ID
+            \item IMSI $\rightarrow$ SUCI
+            \item GUTI $\rightarrow$ 5G-GUTI
+          \end{itemize}
+        \item \textbf{メッセージ変換}
+          \begin{itemize}
+            \item S1SetupReq $\rightarrow$ NGSetupReq
+            \item AttachReq $\rightarrow$ RegistrationReq
+          \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{U-Plane変換}
+      \begin{itemize}
+        \item \textbf{QoS変換}
+          \begin{itemize}
+            \item QCI $\rightarrow$ 5QI
+            \item E-RAB ID $\rightarrow$ PDU Session ID
+          \end{itemize}
+        \item \textbf{TEID管理}
+          \begin{itemize}
+            \item S1-U TEID $\leftrightarrow$ N3 TEID
+            \item マッピングテーブル管理
+          \end{itemize}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.5cm}
+  \begin{block}{実装のポイント}
+    \begin{itemize}
+      \item UE毎のコンテキスト管理（ENB-UE-ID、AMF-UE-ID、TEID）
+      \item NASメッセージの透過的な転送（暗号化されたまま変換）
+      \item セキュリティパラメータの保持（eKSI $\leftrightarrow$ ngKSI）
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{実験・評価}
+\begin{frame}{実験環境：sXGPとOpen5GSを用いた実機検証}
+  \centering
+  \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=0.8cm, align=center] (ue) at (0,0) {UE\\{\scriptsize Pixel}};
+
+    % sXGP
+    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm, align=center] (sxgp) at (3.5,0) {sXGP AP\\{\scriptsize 1.9GHz}};
+
+    % Gateway
+    \node[draw, thick, rounded corners, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=1cm, align=center] (gw) at (7.5,0) {Gateway\\{\scriptsize C++/Python}};
+
+    % Open5GS
+    \node[draw, rounded corners, fill=GoogleGreen!30, minimum width=2cm, minimum height=0.8cm, align=center] (o5gs) at (11.5,0) {Open5GS\\{\scriptsize 5GC}};
+
+    % Connections
+    \draw[->, thick] (ue) -- (sxgp) node[midway, above] {\scriptsize LTE};
+    \draw[->, thick] (sxgp) -- (gw) node[midway, above] {\scriptsize S1};
+    \draw[->, thick] (gw) -- (o5gs) node[midway, above] {\scriptsize N2/N3};
+
+    % Annotations
+    \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {4G/5G\\Dual SIM};
+    \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\(4G eNB)};
+    \node[below=0.5cm of gw, text width=2.5cm, align=center, font=\tiny] {提案実装\\疎結合変換層};
+    \node[below=0.3cm of o5gs, text width=2cm, align=center, font=\tiny] {オープンソース\\5GC実装};
+  \end{tikzpicture}
+
+  \vspace{0.5cm}
+  \begin{itemize}
+    \item \textbf{検証目的:} 4G無線経由で5GC登録とデータ通信が成立するか
+    \item \textbf{評価軸:} ①機能検証(定性)、②性能評価(定量)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{評価結果(1)：C-Plane接続検証}
+  \begin{itemize}
+    \item \textbf{結果：Registration成功}
+      \begin{itemize}
+        \item 4G経由で送られた \texttt{Attach Request} 内の5G NASメッセージを抽出・転送
+        \item 5GC側で正常に \texttt{Registration Accept} が発行され、PDU Sessionが確立
+      \end{itemize}
+    \item \textbf{検証の意義 (定性評価)}
+      \begin{itemize}
+        \item \textbf{依存の排除:} ゲートウェイが差異を吸収し、直接接続不可なRAN-Core間の接続を実現
+        \item \textbf{機能の抽象化:} 世代共通のAAA/RM(Registration Management)機能を維持したままマッピングに成功
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{評価結果(2)：U-Plane性能評価}
+  \begin{itemize}
+    \item \textbf{測定の狙い}
+      \begin{itemize}
+        \item \textbf{相互接続の実証:} Ping/iPerfの疎通成功により、プロトコル変換の正常性を証明
+        \item \textbf{実用性の評価:} ゲートウェイ有無(既存LTE vs 提案方式)の比較によりオーバーヘッドを検証
+      \end{itemize}
+    \item \textbf{結果概要}
+      \begin{itemize}
+        \item \textbf{遅延:} 処理による追加遅延は数ms程度
+        \item \textbf{スループット:} 4G無線区間の帯域がボトルネックとなり、変換処理による低下は軽微
+      \end{itemize}
+    \item \textbf{考察}
+      \begin{itemize}
+        \item 変換処理のオーバーヘッドは無線区間の遅延・帯域に対して十分小さい
+        \item $\Rightarrow$ \textbf{異世代相互接続は性能面でも実用可能}であることを確認
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{結論}
+\begin{frame}{学術的貢献と実用的インパクト}
+  \begin{block}{学術的貢献}
+    \begin{itemize}
+      \item 世代不変性に基づく\alert{疎結合アーキテクチャ}の理論化と実証
+      \item RANとCoreの進化サイクルを分離する新しい移行モデルの提示
+    \end{itemize}
+  \end{block}
+  \begin{block}{実用的インパクト}
+    \begin{itemize}
+      \item \textbf{R\&D:} 低コストな次世代Core検証環境(既存設備の再利用)
+      \item \textbf{商用展開:} RAN更新を伴わない柔軟なCore先行移行戦略
+      \item \textbf{NTN/IoT:} 物理更新不可能なインフラの延命と機能拡張
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{今後の展望}
+  \begin{itemize}
+    \item \textbf{スライシング制御の実装}
+      \begin{itemize}
+        \item レガシーRAN配下の端末に対するCore側QoS制御の実証
+      \end{itemize}
+    \item \textbf{NTN環境での遅延耐性評価}
+      \begin{itemize}
+        \item 衛星/HAPS特有の長遅延(数百ms)下でのプロトコル動作検証
+      \end{itemize}
+    \item \textbf{6G Coreへの拡張}
+      \begin{itemize}
+        \item 提案手法の汎用性検証(4G→5Gだけでなく5G→6Gへも適用可能か)
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\end{document}

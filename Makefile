@@ -80,3 +80,7 @@ redpen.%:
 .PHONY: clean
 clean:
 	@$(RM) -rf $(BUILD_DIR)/*
+
+.PHONY: slides
+slides:
+	$(MAKE) -C slides docker

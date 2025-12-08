@@ -8,19 +8,27 @@ Abstract of Bachelor's Thesis - Academic Year 2025
 \end{tabular}
 \end{large}
 \end{center}
-\begin{spacing}{1.1}
+\begin{spacing}{1.2}
+\small
+Mobile core networks increasingly rely on software-defined implementations, yet hands-on experiments with real radio access remain challenging due to spectrum licensing constraints and costly equipment. This study addresses the practical difficulty of validating cross-generation protocol interworking between legacy LTE RAN and 5G Core without modifying deployed base stations or user devices.
 
-This thesis presents a practical and reproducible 5G experimentation environment by leveraging sXGP (TD-LTE compatible, license-free band in Japan) as an eNB and implementing a converter that connects a 4G RAN (UE/eNB) to a 5G Core (5GC). Traditional 5G research often requires licensed spectrum and expensive RAN equipment, which raises the barrier to entry for universities, labs, and small teams. Our contributions are threefold: (1) building an sXGP-based RAN, (2) designing and implementing a converter that handles S1AP/NGAP/NAS signaling and relays GTP-U, and (3) establishing reproducible build and experiment procedures via Docker.
+We design and implement a protocol conversion layer that bridges S1AP/S1-U (LTE) and NGAP/N3 (5G) interfaces, maintaining NAS transparency while explicitly separating Initial Context Setup from PDU Session procedures. Using sXGP—a TD-LTE profile operable in Japan's unlicensed spectrum—combined with commercial smartphones and Open5GS, we demonstrate stable Registration and PDU Session establishment under real radio conditions.
 
-We validate basic functions such as Registration and PDU session establishment and provide a measurement toolkit for latency, throughput, and resource utilization. The proposed environment benefits several use cases, including (a) education and training, (b) rapid prototyping of protocol conversion, (c) interoperability and regression testing, (d) performance evaluation and bottleneck analysis, (e) reproducible research and collaboration, and (f) operational studies and fault scenario reproduction. The environment facilitates legal, low-cost, and hands-on 5G research while keeping proximity to realistic operational settings.
+Through iterative real-hardware testing, we identify and document implementation-level challenges that simulators fail to expose: timing sensitivities, protocol interpretation ambiguities, and implementation-dependent behaviors across control and user planes. These findings are systematically classified into reusable design patterns for TEID management, NAS conversion strategies, QoS mapping, and error handling.
+
+Beyond basic call establishment, our test suite covers Protocol Configuration Options (DNS, MTU), QoS differentiation (5QI/QFI mapping), UL-CL local breakout, IPv6-only operation with NAT64/DNS64/464XLAT, DSCP/ECN preservation, and GTP-U path MTU handling—providing a regression baseline for interoperability validation.
+
+For IoT-NTN migration scenarios currently dependent on EPC, this platform enables early 5GC readiness assessment under high-latency satellite conditions. By packaging the environment with Docker and documenting all artifacts, we lower the barrier for collaborative research and offer practical reference material for system implementers.
+
+Our contributions include: (1) a functional protocol conversion layer with documented design choices, (2) a catalog of discovered implementation challenges with reproduction steps, (3) systematized design guidelines for cross-generation interworking, and (4) a reproducible testbed combining license-free spectrum compliance with real-hardware validation.
 
 \end{spacing}
 Keywords : \\
-\underline{1. Mobile Systems}
-\underline{2. sXGP}
-\underline{3. 5G Core}
-\underline{4. Open5GS}
-\underline{5. GTP-U}
+\underline{1. Mobile Core Interworking}\\
+\underline{2. sXGP (TD-LTE)}\\
+\underline{3. 5G Core (Open5GS)}\\
+\underline{4. S1AP and NGAP; GTP-U}\\
+\underline{5. IoT-NTN}
 \begin{flushright}
 \edept \\
 \eauthor
