@@ -2,12 +2,12 @@
 \label{chap:proposal}
 
 \section{基本概念：世代不変性に基づく疎結合化}
-本研究では，モバイル通信の根幹機能である「認証（AAA）」，「登録管理（Registration Management）」，「QoS制御」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，状態遷移や目的は共通している．
+本研究では，モバイル通信の根幹機能である「認証（AAA）」，「移動管理（Mobility Management）」，「U-plane」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，状態遷移や目的は共通している．
 
-提案する「S1-N2変換ゲートウェイ」は，この世代不変性を利用して，4G RAN（S1インターフェース）と5G Core（N2/N3インターフェース）の間の差異を吸収・抽象化する．これにより，物理的なRANと論理的なCoreを疎結合にし，RANのハードウェア更新を伴わずにCoreのみを次世代化することを可能にする．
+提案する「S1-N2変換ゲートウェイ」は，この世代不変性を利用して，4G RAN（S1インターフェース）と5Gコア（N2/N3インターフェース）の間の差異を吸収・抽象化する．これにより，物理的なRANと論理的なCNを疎結合にし，RANのハードウェア更新を伴わずにCNのみを次世代化することを可能にする．
 
 \section{アーキテクチャ設計}
-提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5G Core（AMF/UPF）の間に配置され，以下の2つのプレーンで変換を行う．
+提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/UPF）の間に配置され，以下の2つのプレーンで変換を行う．
 
 \begin{itemize}
 	\item \textbf{C-Plane（制御面）}: S1AP（S1-MME）とNGAP（N2）の相互変換．SCTP接続を終端し，メッセージ単位で変換を行う．
@@ -19,7 +19,7 @@
   \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
     % Nodes
     \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
-    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5G Core};
+    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
 
     % Converter Box
     \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
@@ -132,7 +132,7 @@ UEからのAttach Request（4G NAS）は，ゲートウェイによって5G NAS�
 
 \begin{table}[htbp]
 \centering
-\caption{NASメッセージ変換対応表（上り：UE→Core）}
+\caption{NASメッセージ変換対応表（上り：UE→CN）}
 \label{tab:nas_conversion_ul}
 \begin{tabular}{|l|l|}
 \hline
@@ -151,7 +151,7 @@ Attach Complete + ESM情報 & Registration Complete + PDU Session Est Req \\
 
 \begin{table}[htbp]
 \centering
-\caption{NASメッセージ変換対応表（下り：Core→UE）}
+\caption{NASメッセージ変換対応表（下り：CN→UE）}
 \label{tab:nas_conversion_dl}
 \begin{tabular}{|l|l|}
 \hline
@@ -337,7 +337,7 @@ sXGPを採用する最大の理由は，\textbf{免許不要帯での法令遵�
 本環境はLTE互換のsXGPをRANとして用いるため，5G NR特有のPHY機能やスケジューリング最適化は対象外となる．しかし，制御面（S1AP/NGAP/NAS）およびユーザ面（GTP-U）のプロトコルレベルでの相互運用性検証は十分に可能であり，標準化フィードバックの主要な価値はこのレイヤーにある．NR固有の無線レイヤーの課題は，今後の拡張として分離して扱う．
 
 \paragraph{NTNを想定した適用可能性}
-IoT-NTNの移行期においても，本変換器はS1AP↔NGAPおよびS1-U↔N3の\textbf{コア境界}で動作するため，NB-IoT/EPCに依存する既存環境から5GCへ\textbf{漸進的に移行}する際の検証足場として有効である．無線特性（長RTT，Doppler，間欠接続など）は本研究の対象外だが，\textbf{手順整合性・状態管理・タイマ設定}の妥当性を高遅延条件下で検証するための土台を提供する．
+IoT-NTNの移行期においても，本変換器はS1AP↔NGAPおよびS1-U↔N3の\textbf{コア境界}で動作するため，NB-IoT/EPCに依存する既存環境から5GCへ\textbf{漸進的に移行}する際の検証足場として有効である．無線特性（長RTT，Doppler，間欠接続など）は本研究の対象外であるが，\textbf{手順整合性・状態管理・タイマ設定}の妥当性を高遅延条件下で検証するための土台を提供する．
 
 \section{実装方針と部品選定}
 \subsection{ソフトウェア構成（言語・ライブラリ・依存）}

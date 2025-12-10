@@ -41,7 +41,7 @@
 \usetikzlibrary{shapes, arrows.meta, positioning}
 
 % タイトル情報
-\title{物理的制約のあるレガシーRANを次世代コアへ統合する\\疎結合アーキテクチャの提案と評価}
+\title{世代不変性に基づくレガシーRANの5GC収容アーキテクチャ}
 \subtitle{〜世代間プロトコル変換による移行コスト削減と機能拡張〜}
 \author{Taihei}
 \institute{所属大学/学部}
@@ -71,7 +71,7 @@
         \item 現在はRANを先行更新するNSA (Non-Standalone)構成が主流だが、CNは4Gのままであり新機能が使えない
         \item SA化には対応RANへの更新が必要だが、コストや物理的制約(例: NTN)により困難な場合がある
       \end{itemize}
-    $\Rightarrow$ \textbf{Coreの進化速度に対し、RANの更新サイクルにギャップが生じる}
+    $\Rightarrow$ \textbf{CNの進化速度に対し、RANの更新サイクルにギャップが生じる}
   \end{itemize}
 \end{frame}
 
@@ -99,7 +99,7 @@
     \draw[->, thick, dashed] (nsa-gnb) -- (nsa-enb);
 
     % 説明
-    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\Coreは4Gのまま};
+    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\CNは4Gのまま};
 
     % 区切り線
     \draw[thick, dashed, gray] (7,5) -- (7,-1);
@@ -189,22 +189,22 @@
 
 \begin{frame}{目的とアプローチ}
   \begin{block}{目的}
-    物理的に更新困難なレガシーRANを、ハードウェア変更なしに次世代Coreに収容し、段階的な移行と新機能利用を可能にするアーキテクチャを提案する。
+    物理的に更新困難なレガシーRANを、ハードウェア変更なしに次世代CNに収容し、段階的な移行と新機能利用を可能にするアーキテクチャを提案する。
   \end{block}
   \begin{itemize}
     \item \textbf{アプローチ：プロトコル変換による疎結合化}
       \begin{itemize}
-        \item 変換ゲートウェイを介在させ、RANとCoreの直接的な依存を排除
-        \item 世代間で不変な機能（AAA, Mobility, U-plane）を抽象化してマッピング
+        \item 変換ゲートウェイを介在させ、RANとCNの直接的な依存を排除
+        \item 世代間で不変な機能（AAA, Mobility Management, U-plane）を抽象化してマッピング
       \end{itemize}
     \item \textbf{本研究のスコープ}
       \begin{itemize}
-        \item 4G eNB (LTE) と 5G Core (5GC) の異世代相互接続を実証
+        \item 4G eNB (LTE) と 5Gコア (5GC) の異世代相互接続を実証
       \end{itemize}
     \item \textbf{期待される効果（課題への回答）}
       \begin{itemize}
-        \item \textbf{R\&D:} 既存RANを用いた安価な次世代Core検証環境
-        \item \textbf{移行:} RAN更新を伴わない柔軟なCore先行移行
+        \item \textbf{R\&D:} 既存RANを用いた安価な次世代CN検証環境
+        \item \textbf{移行:} RAN更新を伴わない柔軟なCN先行移行
         \item \textbf{運用:} NTNなど物理制約のあるインフラの延命と機能拡張
       \end{itemize}
   \end{itemize}
@@ -216,7 +216,7 @@
   \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
     % Nodes
     \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
-    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5G Core};
+    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
 
     % Converter Box
     \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
@@ -240,12 +240,12 @@
 
 \begin{frame}{世代不変性に基づく疎結合化の原理}
   \begin{block}{キーアイデア}
-    モバイル通信の根幹機能(AAA, Mobility, QoS)は世代を超えて\alert{本質的に同じ}であり、プロトコル表現が異なるだけ $\Rightarrow$ 抽象化して相互変換可能
+    モバイル通信の根幹機能(AAA, Mobility Management, U-plane)は世代を超えて\alert{本質的に同じ}であり、プロトコル表現が異なるだけ $\Rightarrow$ 抽象化して相互変換可能
   \end{block}
   \begin{itemize}
     \item \textbf{C-Plane (制御信号): ステートマシン変換}
       \begin{itemize}
-        \item 接続管理(Attach/Registration)、Mobility(HO)等の状態遷移は世代不変
+        \item 接続管理(Attach/Registration)、Mobility Management(HO)等の状態遷移は世代不変
         \item S1-AP $\leftrightarrow$ NG-AP のメッセージ名・パラメータをマッピング
       \end{itemize}
     \item \textbf{U-Plane (データ転送): QoS抽象化}
@@ -253,10 +253,10 @@
         \item Bearer (4G) も QoS Flow (5G) も「優先度付きトンネル」という点で同一
         \item GTP-U TEID とQoS識別子 (EBI $\leftrightarrow$ QFI) を付け替え
       \end{itemize}
-    \item \textbf{NAS (端末-Core通信): 透過転送}
+    \item \textbf{NAS (端末-CN通信): 透過転送}
       \begin{itemize}
         \item \alert{NAS over LTE:} 5G NASを4GのNASコンテナに格納して運ぶ
-        \item これにより端末は4G無線上で5G Coreへ直接登録可能(技術的なブレイクスルー)
+        \item これにより端末は4G無線上で5Gコアへ直接登録可能(技術的なブレイクスルー)
       \end{itemize}
   \end{itemize}
 \end{frame}
@@ -345,6 +345,14 @@
     % 変換処理
     \node[draw, fill=GoogleYellow!20, text width=3cm, align=center, font=\tiny] at (5,1.2) {ID変換\\ENB-ID → gNB-ID\\TAC保持};
   \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} eNBのコアネットワーク接続確立
+      \item \textbf{必要性:} 相互認識、エリア情報(TAC)・セキュリティ機能の交換
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{完全シーケンス(1/5)：Initial UE Message + NAS変換}
@@ -404,6 +412,14 @@
       - Requested NSSAI
     };
   \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} UEのネットワーク接続・サービス利用開始
+      \item \textbf{必要性:} 端末識別・認証、IP割当、通信経路確立
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 %% ========================================
@@ -487,6 +503,14 @@
     \draw[->, thick, GoogleGreen] (8.1,0.4) -- (11.9,0.4);
     \node[above, font=\tiny] at (10,0.45) {UL NASTransport (RES*)};
   \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} 正規加入者の確認と暗号鍵生成
+      \item \textbf{必要性:} 相互認証(偽基地局対策)、鍵共有、リプレイ攻撃防止
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 %% ========================================
@@ -577,6 +601,14 @@
       NAS Security確立完了
     };
   \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} 生成した鍵による通信保護の開始
+      \item \textbf{必要性:} 暗号化アルゴリズム合意、セキュリティ開始点の同期
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{完全シーケンス(4/5)：Registration Accept + Early S1 Setup}
@@ -701,8 +733,7 @@
 
     % TEID更新 (中央、矢印より下)
     \node[draw, thick, fill=GoogleRed!20, text width=2.3cm, align=center, font=\tiny, anchor=north] at (8,3.6) {
-      \textbf{TEID更新}\\
-      Proxy → UPF TEID
+      TEID Mapping\\Update
     };
 
     % PDU Res Setup Res - S1N2 → AMF
@@ -714,12 +745,114 @@
       \textbf{接続完了} - GTP-U TEID変換によりデータ疎通
     };
   \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} データ通信経路(ベアラ/セッション)の確立
+      \item \textbf{必要性:} IPアドレス割当、QoS設定、GTPトンネル確立
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{完全シーケンス(6/6)：TAU (Tracking Area Update)}
+  \centering
+  \begin{tikzpicture}[scale=0.6, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,8) {UE};
+    \node[font=\small\bfseries] at (4,8) {eNB};
+    \node[font=\small\bfseries] at (8,8) {S1N2};
+    \node[font=\small\bfseries] at (12,8) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,7.5) -- (0,0);
+    \draw[thick] (4,7.5) -- (4,0);
+    \draw[thick] (8,7.5) -- (8,0);
+    \draw[thick] (12,7.5) -- (12,0);
+
+    % TAU Request - UE → eNB
+    \draw[->, thick] (0.1,7) -- (3.9,7);
+    \node[above, font=\tiny] at (2,7.1) {TAU Request};
+
+    % UL NAS - eNB → S1N2
+    \draw[->, thick, GoogleBlue] (4.1,6.2) -- (7.9,6.2);
+    \node[above, font=\tiny] at (6,6.3) {UL NASTransport (TAU Req)};
+
+    % S1N2 Local Processing
+    \node[draw, thick, fill=GoogleYellow!30, text width=3cm, align=center, font=\tiny, anchor=north] at (8,5.5) {
+      \textbf{ローカル処理}\\
+      AMFへ転送せず\\
+      S1N2が代理応答
+    };
+
+    % TAU Accept Generation
+    \node[draw, fill=GoogleYellow!10, text width=2.5cm, align=left, font=\tiny, anchor=north west] at (8.2,4.5) {
+      \textbf{TAU Accept生成}\\
+      Timer T3412\\
+      TAI List
+    };
+
+    % DL NAS - S1N2 → eNB
+    \draw[->, thick, GoogleBlue] (7.9,3.0) -- (4.1,3.0);
+    \node[above, font=\tiny] at (6,3.1) {DL NASTransport (TAU Acc)};
+
+    % TAU Accept - eNB → UE
+    \draw[->, thick] (3.9,2.2) -- (0.1,2.2);
+    \node[above, font=\tiny] at (2,2.3) {TAU Accept};
+
+    % Explanation
+    \node[draw, fill=GoogleRed!10, text width=3.5cm, align=center, font=\tiny] at (12,4) {
+      接続維持(Keep Alive)のため\\
+      定期的に実行される
+    };
+  \end{tikzpicture}
+  \vspace{-0.2cm}
+  \begin{block}{目的と必要性}
+    \scriptsize
+    \begin{itemize}
+      \item \textbf{目的:} 位置情報の更新と接続維持確認
+      \item \textbf{必要性:} 着信時の位置特定、タイムアウト防止
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{エラーハンドリングと異常系対応}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Authentication Failure (Sync Failure)}
+      \begin{itemize}
+        \item \textbf{現象:} UEとNWのシーケンス番号(SQN)不整合
+        \item \textbf{対応:}
+          \begin{itemize}
+            \item UEからの \texttt{AUTS} (再同期トークン) を透過転送
+            \item AUSFがSQNを再同期し、認証を再試行
+          \end{itemize}
+      \end{itemize}
+      \vspace{0.3cm}
+      \textbf{Security Mode Reject}
+      \begin{itemize}
+        \item \textbf{現象:} アルゴリズム不一致等による拒否
+        \item \textbf{対応:} 拒否メッセージを転送し、AMFが判断(切断等)
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{UE Context Release}
+      \begin{itemize}
+        \item \textbf{現象:} 電波圏外、電源断、タイムアウト
+        \item \textbf{対応:}
+          \begin{itemize}
+            \item S1AP/NGAP双方のRelease手順を連携
+            \item 内部リソース(TEIDマッピング等)のクリーンアップ
+          \end{itemize}
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \begin{frame}{NASメッセージ変換対応表}
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
-      \textbf{上り (UE → Core)}
+      \textbf{上り (UE → CN)}
       \begin{table}
         \tiny
         \begin{tabular}{|l|l|}
@@ -757,7 +890,7 @@
       \end{table}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \textbf{下り (Core → UE)}
+      \textbf{下り (CN → UE)}
       \begin{table}
         \tiny
         \begin{tabular}{|l|l|}
@@ -923,7 +1056,7 @@
       \end{itemize}
     \item \textbf{検証の意義 (定性評価)}
       \begin{itemize}
-        \item \textbf{依存の排除:} ゲートウェイが差異を吸収し、直接接続不可なRAN-Core間の接続を実現
+        \item \textbf{依存の排除:} ゲートウェイが差異を吸収し、直接接続不可なRAN-CN間の接続を実現
         \item \textbf{機能の抽象化:} 世代共通のAAA/RM(Registration Management)機能を維持したままマッピングに成功
       \end{itemize}
   \end{itemize}
@@ -949,36 +1082,123 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{考察：デプロイメント戦略（1/2）}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=0.6, every node/.style={font=\tiny}]
+        % eNB
+        \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=1cm, minimum height=0.5cm] (enb) at (0,0) {eNB};
+        % TN/Ground Station
+        \node[draw, dashed, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (tn) at (3,0) {};
+        \node[above] at (3,0.4) {TN};
+        % Core
+        \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=1cm, minimum height=0.5cm] (core) at (6,0) {5GC};
+
+        % Gateway Positions
+        % A
+        \node[draw, fill=GoogleYellow!40, circle, inner sep=0.5pt] (gwa) at (0.8,0.5) {Gw};
+        \draw[->, thick, GoogleRed] (gwa) -- (0.4,0.2);
+        \node[GoogleRed, font=\bfseries] at (0.8,0.9) {A};
+
+        % B
+        \node[draw, fill=GoogleYellow!40, circle, inner sep=0.5pt] (gwb) at (3,0) {Gw};
+        \node[GoogleRed, font=\bfseries] at (3,0.5) {B};
+
+        % C
+        \node[draw, fill=GoogleYellow!40, circle, inner sep=0.5pt] (gwc) at (5.2,0.5) {Gw};
+        \draw[->, thick, GoogleRed] (gwc) -- (5.6,0.2);
+        \node[GoogleRed, font=\bfseries] at (5.2,0.9) {C};
+
+        % Connections
+        \draw[thick] (enb) -- (tn) -- (core);
+      \end{tikzpicture}
+
+      \vspace{0.5em}
+      \textbf{配置パターン}
+      \begin{itemize}
+        \item \textbf{A. RAN側}: 基地局と同一拠点
+        \item \textbf{B. TN内}: 集約局/地上局
+        \item \textbf{C. コア側}: DC/クラウド集約
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{判断軸}
+        \begin{itemize}
+          \item \textbf{運用性 (Operability)}
+            \begin{itemize}
+              \item 保守の容易さ
+              \item 現地作業の有無
+              \item スケーラビリティ
+            \end{itemize}
+          \item \textbf{QoS適用範囲}
+            \begin{itemize}
+              \item スライシング適用開始点
+              \item バックホール制御
+            \end{itemize}
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{考察：デプロイメント戦略（2/2）}
+  \begin{itemize}
+    \item \textbf{課題1: R\&D（低コスト検証）} → \alert{コア側配置}
+      \begin{itemize}
+        \item 構成の単純さ最優先。PC1台でAll-in-One構成が可能
+      \end{itemize}
+    \item \textbf{課題2: 商用マイグレーション} → \alert{コア側配置}
+      \begin{itemize}
+        \item 運用コスト最優先。数千局に対し現地作業ゼロで移行可能
+      \end{itemize}
+    \item \textbf{課題3: NTN（物理更新困難）} → \alert{コア側配置}（基本）
+      \begin{itemize}
+        \item 地上局は僻地が多く、保守性を考慮しコア集約が合理的
+        \item 例外：バックホール帯域逼迫時は地上局配置でスライシング早期適用
+      \end{itemize}
+  \end{itemize}
+  \vspace{0.5em}
+  $\Rightarrow$ \textbf{基本は「コア側」への集約配置が最適解}
+\end{frame}
+
 \section{結論}
 \begin{frame}{学術的貢献と実用的インパクト}
   \begin{block}{学術的貢献}
     \begin{itemize}
       \item 世代不変性に基づく\alert{疎結合アーキテクチャ}の理論化と実証
-      \item RANとCoreの進化サイクルを分離する新しい移行モデルの提示
+      \item RANとCNの進化サイクルを分離する新しい移行モデルの提示
     \end{itemize}
   \end{block}
   \begin{block}{実用的インパクト}
     \begin{itemize}
-      \item \textbf{R\&D:} 低コストな次世代Core検証環境(既存設備の再利用)
-      \item \textbf{商用展開:} RAN更新を伴わない柔軟なCore先行移行戦略
+      \item \textbf{R\&D:} 低コストな次世代CN検証環境(既存設備の再利用)
+      \item \textbf{商用展開:} RAN更新を伴わない柔軟なCN先行移行戦略
       \item \textbf{NTN/IoT:} 物理更新不可能なインフラの延命と機能拡張
     \end{itemize}
   \end{block}
 \end{frame}
 
-\begin{frame}{今後の展望}
+\begin{frame}{今後の展望と未実装機能}
   \begin{itemize}
-    \item \textbf{スライシング制御の実装}
+    \item \textbf{モビリティ管理の完全対応}
       \begin{itemize}
-        \item レガシーRAN配下の端末に対するCore側QoS制御の実証
+        \item Handover (S1ハンドオーバー $\leftrightarrow$ N2ハンドオーバー変換)
+        \item Paging (Idleモードからの着信・復帰)
       \end{itemize}
-    \item \textbf{NTN環境での遅延耐性評価}
+    \item \textbf{セッション管理の高度化}
       \begin{itemize}
-        \item 衛星/HAPS特有の長遅延(数百ms)下でのプロトコル動作検証
+        \item Service Request (Idleからのデータ再開)
+        \item Multi-PDU Session (複数スライス/ベアラの同時利用)
+        \item Detach / Deregistration (明示的な切断手順)
       \end{itemize}
-    \item \textbf{6G Coreへの拡張}
+    \item \textbf{セキュリティ機能の拡張}
       \begin{itemize}
-        \item 提案手法の汎用性検証(4G→5Gだけでなく5G→6Gへも適用可能か)
+        \item NAS Ciphering (現在は完全性保護のみ、暗号化はNull)
+      \end{itemize}
+    \item \textbf{NTN環境での実証}
+      \begin{itemize}
+        \item 衛星回線エミュレータを用いた長遅延・ロス耐性評価
       \end{itemize}
   \end{itemize}
 \end{frame}

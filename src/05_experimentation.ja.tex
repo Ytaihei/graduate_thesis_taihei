@@ -6,7 +6,7 @@
 実験の主な目的は以下の通りである．
 
 \begin{enumerate}
-    \item \textbf{機能検証}: 4G RAN（sXGP）と5G Core（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．特に，C-Planeにおける登録手順（Registration）と，U-Planeにおけるデータ疎通（PDU Session）の成立を検証する．
+    \item \textbf{機能検証}: 4G RAN（sXGP）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．特に，C-Planeにおける登録手順（Registration）と，U-Planeにおけるデータ疎通（PDU Session）の成立を検証する．
     \item \textbf{性能評価}: ゲートウェイの導入によるオーバーヘッド（遅延，スループット低下）を測定し，実用上の許容範囲内であることを確認する．
     \item \textbf{実機相互運用性}: シミュレータではなく，実際の無線機（sXGP）と商用スマートフォン（UE）を用いた環境において，プロトコルスタックが正常に動作することを実証する．
 \end{enumerate}
@@ -49,20 +49,20 @@
     \item \textbf{UE (User Equipment)}: Google Pixel (4G/5G Dual SIM対応)．市販のスマートフォンを使用し，商用網と同様の挙動（省電力制御，バックグラウンド通信など）を検証する．
     \item \textbf{RAN (Radio Access Network)}: sXGP対応小型基地局（1.9GHz帯，TD-LTE方式）．免許不要で利用可能なプライベートLTE環境を構築する．
     \item \textbf{Gateway Server}: 提案するS1-N2変換ソフトウェアを実行するPC（Linux）．
-    \item \textbf{Core Network Server}: Open5GSを実行するPC（Linux）．Gatewayと同一ホスト上のコンテナとして動作させる場合もある．
+    \item \textbf{CN Server}: Open5GSを実行するPC（Linux）．Gatewayと同一ホスト上のコンテナとして動作させる場合もある．
 \end{itemize}
 
 \subsection{ソフトウェア構成}
 \begin{itemize}
     \item \textbf{S1-N2 Converter}: C++およびPythonで実装されたプロトコル変換器．S1AP/NGAPの相互変換とGTP-Uのカプセル化変換を行う．
-    \item \textbf{Open5GS}: オープンソースの5G Core実装．AMF, SMF, UPF, UDM, AUSF等の主要NF（Network Function）を含む．
+    \item \textbf{Open5GS}: オープンソースの5Gコア実装．AMF, SMF, UPF, UDM, AUSF等の主要NF（Network Function）を含む．
     \item \textbf{OS}: Ubuntu Linux 22.04 LTS．Dockerコンテナを用いて各機能を分離・管理する．
 \end{itemize}
 
 \section{評価シナリオ}
 
 \subsection{シナリオ1: C-Plane接続検証（Registration）}
-UEの電源投入から，sXGP基地局への接続（RRC Connection），およびCoreネットワークへの登録（Registration）までのシーケンスを確認する．
+UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録（Registration）までのシーケンスを確認する．
 \begin{itemize}
     \item \textbf{確認項目}:
     \begin{itemize}
@@ -75,16 +75,9 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
 \end{itemize}
 
 \subsection{シナリオ2: U-Plane性能評価（Throughput/Latency）}
-接続確立後，UEからインターネット（またはCoreネットワーク内のサーバ）に対してデータ通信を行い，性能を測定する．
+接続確立後，UEからインターネット（またはコアネットワーク内のサーバ）に対してデータ通信を行い，性能を測定する．
 \begin{itemize}
     \item \textbf{測定ツール}: iPerf3（スループット），Ping（遅延）
     \item \textbf{比較対象}: ゲートウェイを経由しない通常のLTE構成（EPC接続）との比較（参考値），または理論上の無線帯域に対する効率．
     \item \textbf{評価観点}: 変換処理によるボトルネックの有無．
-\end{itemize}
-
-\subsection{シナリオ3: NTN環境を想定した遅延耐性評価（予備実験）}
-NTN（非地上系ネットワーク）への適用を見据え，ネットワークエミュレータ（tc/netem等）を用いてGateway-Core間に擬似的な遅延とパケット損失を挿入する．
-\begin{itemize}
-    \item \textbf{設定遅延}: 数百ms 〜 数秒（静止衛星やHAPSを想定）
-    \item \textbf{評価項目}: 高遅延環境下でのC-Plane手順（タイムアウト発生有無）およびU-Planeの安定性．
 \end{itemize}

@@ -10,24 +10,25 @@ Abstract of Bachelor's Thesis - Academic Year 2025
 \end{center}
 \begin{spacing}{1.2}
 \small
-Mobile core networks increasingly rely on software-defined implementations, yet hands-on experiments with real radio access remain challenging due to spectrum licensing constraints and costly equipment. This study addresses the practical difficulty of validating cross-generation protocol interworking between legacy LTE RAN and 5G Core without modifying deployed base stations or user devices.
+The Mobile Core Network (Core) is responsible for essential functions in mobile communication systems, including terminal authentication, session management, mobility control, QoS control, and connectivity to external networks. In recent years, Core networks have evolved rapidly through software-defined implementations, while Radio Access Networks (RAN) have long update cycles due to physical constraints, creating an "evolutionary gap" between the two.
+This gap causes three challenges: (1) lack of low-cost verification environments for R\&D, (2) lack of flexible migration strategies for commercial deployment, and (3) stranded infrastructure such as Non-Terrestrial Networks (NTN) that cannot be physically updated.
 
-We propose a "Loosely Coupled Architecture" based on the generational invariance of core functions (AAA, Mobility, QoS). We design and implement a protocol conversion gateway that bridges S1AP/S1-U (LTE) and NGAP/N3 (5G) interfaces. To resolve timing discrepancies between generations, we introduce an "Early S1 Setup" sequence that separates Initial Context Setup from PDU Session procedures. Using sXGP—a TD-LTE profile operable in Japan's unlicensed spectrum—combined with commercial smartphones and Open5GS, we demonstrate stable Registration and PDU Session establishment under real radio conditions.
+To address these challenges, we propose a "Loosely Coupled Architecture" that enables legacy 4G RAN to connect to 5G Core (5GC) without hardware modifications. Specifically, we design and implement an "S1-N2 Conversion Gateway" that abstracts and maps generation-invariant functions (AAA, Mobility Management, U-plane).
 
-Through iterative real-hardware testing, we verify that the proposed architecture successfully abstracts the differences between generations. We identify and document implementation-level challenges that simulators fail to expose, such as timing sensitivities and protocol interpretation ambiguities. These findings are systematically classified into reusable design patterns for TEID management, NAS conversion strategies, and QoS mapping.
+In the design, we introduce protocol conversion logic between S1AP and NGAP, an "Early S1 Setup" mechanism to absorb timing differences in U-Plane establishment, and dynamic TEID (Tunnel Endpoint Identifier) rewriting between S1-U and N3 interfaces.
 
-For IoT-NTN migration scenarios currently dependent on EPC, this platform enables early 5GC readiness assessment under high-latency satellite conditions. By packaging the environment with Docker and documenting all artifacts, we lower the barrier for collaborative research and offer practical reference material for system implementers.
+Through real-hardware verification using sXGP—an unlicensed TD-LTE profile—combined with Open5GS, we confirmed: (i) successful Registration in the C-Plane, demonstrating that the gateway abstracts RAN-Core dependencies (qualitative evaluation), and (ii) successful communication via Ping and iPerf in the U-Plane, showing that conversion overhead is negligible for practical use (quantitative evaluation).
 
-Our contributions include: (1) theorization and demonstration of a loosely coupled architecture based on generational invariance, (2) establishment of a new migration model that decouples RAN and Core evolution cycles, and (3) practical impacts such as low-cost R\&D environments and life-extension of physically constrained infrastructure like NTN.
+Our contributions include the theorization and demonstration of a loosely coupled architecture based on generational invariance. This establishes a new migration model that allows Core-only advancement without physical RAN updates, contributing to life-extension of physically constrained infrastructure like NTN and low-cost next-generation Core verification environments.
 
 \end{spacing}
 Keywords : \\
 \underline{1. Loosely Coupled Architecture}\\
-\underline{2. Mobile Core Interworking}\\
+\underline{2. Generational Invariance}\\
 \underline{3. sXGP (TD-LTE)}\\
 \underline{4. 5G Core (Open5GS)}\\
-\underline{5. S1AP/NGAP; GTP-U}\\
-\underline{6. IoT-NTN}
+\underline{5. Protocol Conversion (S1AP/NGAP)}\\
+\underline{6. Non-Terrestrial Network (NTN)}
 \begin{flushright}
 \edept \\
 \eauthor

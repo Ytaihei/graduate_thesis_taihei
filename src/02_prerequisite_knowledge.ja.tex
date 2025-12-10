@@ -1,23 +1,23 @@
 \chapter{モバイルネットワークの進化と世代間ギャップ}
 \label{chap:background}
 
-本章では，本研究の背景となるモバイルネットワークの技術的変遷と，そこで生じている「世代間のギャップ」について詳述する．特に，CoreとRANの進化速度の乖離，NTN等の物理的制約，および既存の移行技術の限界について整理し，なぜ「S1-N2変換」が必要とされるのかを技術的観点から明らかにする．
+本章では，本研究の背景となるモバイルネットワークの技術的変遷と，そこで生じている「世代間のギャップ」について詳述する．特に，CNとRANの進化速度の乖離，NTN等の物理的制約，および既存の移行技術の限界について整理し，なぜ「S1-N2変換」が必要とされるのかを技術的観点から明らかにする．
 
 \section{4G LTEと5G NR/5GCの技術的変遷}
 
 \subsection{4G EPC: 専用装置による統合アーキテクチャ}
 第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，MME（Mobility Management Entity），S-GW（Serving Gateway），P-GW（PDN Gateway）といった専用のネットワークノードによって構成される．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
 
-RAN側（eNB）とCore側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される．このアーキテクチャは安定した通信を提供する一方で，新機能の追加やスケーリングにはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
+RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される．このアーキテクチャは安定した通信を提供する一方で，新機能の追加やスケーリングにはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
 
-\subsection{5G Core: ソフトウェア化とSBA}
+\subsection{5Gコア: ソフトウェア化とSBA}
 第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．AMF（Access and Mobility Management Function）やSMF（Session Management Function）といった各機能はソフトウェアモジュール（Network Function: NF）として定義され，汎用サーバやクラウド基盤上でコンテナとして動作する．NF間の通信にはHTTP/2やREST APIが用いられる．
 
 このソフトウェア化により，5GCはハードウェアに依存せず，ソフトウェアアップデートのみで新機能（ネットワークスライシング，MEC連携，AI活用等）を迅速に導入可能となった．これが，次節で述べる「進化のギャップ」の根本原因である．
 
 \section{物理的制約によるRANの更新困難性}
 
-Core側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．
+CN側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．
 
 \subsection{NTN (Non-Terrestrial Network) における制約}
 衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は事実上不可能である．
@@ -34,7 +34,7 @@ Core側がソフトウェアとして進化する一方で，RAN側は依然と�
     % 地上局/ゲートウェイ
     \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
 
-    % 地上のCore
+    % 地上のCN
     \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
     \draw[->, thick] (gw) -- (core);
 
@@ -70,14 +70,14 @@ Core側がソフトウェアとして進化する一方で，RAN側は依然と�
 \subsection{プライベートネットワーク (sXGP) における制約}
 地上においても，コストや法規制の観点からRANの更新が困難なケースがある．日本国内で普及しているsXGP（shared eXtended Global Platform）は，免許不要で利用可能な1.9GHz帯のLTEシステムである．
 
-sXGPは安価にプライベートLTEを構築できる利点があるが，これを「ローカル5G」に移行するには，高額な5G基地局の購入に加え，免許取得手続きや電波干渉調整が必要となる．多くの既存ユーザにとって，RAN設備を全面的に更新することは経済的に困難であり，既存のsXGP端末や基地局（4G資産）を活かしたまま，Core側の機能のみを高度化したいというニーズが存在する．
+sXGPは安価にプライベートLTEを構築できる利点があるが，これを「ローカル5G」に移行するには，高額な5G基地局の購入に加え，免許取得手続きや電波干渉調整が必要となる．多くの既存ユーザにとって，RAN設備を全面的に更新することは経済的に困難であり，既存のsXGP端末や基地局（4G資産）を活かしたまま，CN側の機能のみを高度化したいというニーズが存在する．
 
 \section{既存の移行・収容技術とその限界}
 
 4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，前述の課題を解決するには不十分である．
 
-\subsection{NSA (Option 3): Coreが4Gのまま}
-現在主流のNSA（Non-Standalone）構成（Option 3）は，5G RAN（gNB）を導入するが，Coreには既存のEPCを使用する．これは高速通信（eMBB）の提供には適しているが，Coreが4Gであるため，5GC特有の機能（スライシング，QoS制御の高度化等）は利用できない．本研究の目的である「次世代Core機能の活用」とは矛盾する．
+\subsection{NSA (Option 3): 4G CN継続利用の限界}
+現在主流のNSA（Non-Standalone）構成（Option 3）は，5G RAN（gNB）を導入するが，CNには既存のEPCを使用する．これは高速通信（eMBB）の提供には適しているが，CNが4Gであるため，5GC特有の機能（スライシング，QoS制御の高度化等）は利用できない．本研究の目的である「次世代CN機能の活用」とは矛盾する．
 
 図\ref{fig:nsa_sa_comparison}にNSA構成とSA構成の比較を示す．
 
@@ -105,7 +105,7 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
     \draw[->, thick, dashed] (nsa-gnb) -- (nsa-enb);
 
     % 説明
-    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\Coreは4Gのまま};
+    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\CNは4Gのまま};
 
     % 区切り線
     \draw[thick, dashed, gray] (7,5) -- (7,-1);
@@ -133,8 +133,8 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
   \label{fig:nsa_sa_comparison}
 \end{figure}
 
-\subsection{ng-eNB (Option 5/7): RANの改修が必要}
-3GPPは，LTE基地局（eNB）を5GCに接続するための規格として「ng-eNB」を定義している．ng-eNBは，無線方式はLTE（E-UTRA）のままであるが，Coreとのインターフェースとして5G用のNG-AP（N2）およびNG-U（N3）をサポートする．
+\subsection{ng-eNB (Option 5/7): RAN改修を前提とした構成}
+3GPPは，LTE基地局（eNB）を5GCに接続するための規格として「ng-eNB」を定義している．ng-eNBは，無線方式はLTE（E-UTRA）のままであるが，CNとのインターフェースとして5G用のNG-AP（N2）およびNG-U（N3）をサポートする．
 
 しかし，既存のレガシーeNBをng-eNB化するには，基地局ファームウェアの大幅な改修が必要となる．古いハードウェアでは処理能力不足でNG-APスタックが動作しない場合や，ベンダーが旧製品のサポートを終了しておりファームウェア更新が提供されない場合も多い．つまり，ng-eNBは「RANの更新」を前提としたソリューションであり，物理的に更新困難な環境への適用は限定的である．
 
@@ -147,7 +147,7 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
 例えば，4Gでは「Attach」手順で接続とベアラ確立を一括して行うが，5Gでは「Registration」と「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
 \subsection{NAS: セキュリティと鍵管理の相違}
-端末（UE）とCoreが直接通信するNAS（Non-Access Stratum）層においても，4G NASと5G NASは異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，Core側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
+端末（UE）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NASと5G NASは異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
 
 \subsection{U-Plane: QoSモデルの変革}
 ユーザデータ転送（GTP-U）自体は互換性が高いが，QoSモデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，パケットヘッダを書き換える必要がある．
