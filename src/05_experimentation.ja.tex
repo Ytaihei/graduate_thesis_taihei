@@ -44,6 +44,16 @@
   \label{fig:experiment_setup}
 \end{figure}
 
+\subsection{検証アプローチとソフトウェア構成}
+本研究の実証には，仕様が公開され改変可能なオープンソースソフトウェア（OSS）と、実環境での動作を確認できる実機環境の両方を活用する。
+
+\subsubsection{Open5GSとsrsRAN}
+Open5GS\cite{open5gs}は，3GPP Release 16/17に準拠した5GC機能（AMF, SMF, UPF等）を提供するOSSである．商用製品と異なり，内部のステートマシンやメッセージ処理ロジックを詳細に追跡・修正できるため，プロトコル変換の挙動検証に適している．
+また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェア無線（SDR）で実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．本研究では，sXGP実機に加え，srsRAN 4Gを用いた試験環境でも動作検証を行っている．
+
+\subsubsection{sXGPによる実機検証の意義}
+シミュレーションだけでなく，実際の電波を発射するsXGPシステムを用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を洗い出すことができる．本研究では，これらのOSSと実機を組み合わせることで，提案アーキテクチャの実用性を多角的に評価する．
+
 \subsection{ハードウェア構成}
 \begin{itemize}
     \item \textbf{UE (User Equipment)}: Google Pixel (4G/5G Dual SIM対応)．市販のスマートフォンを使用し，商用網と同様の挙動（省電力制御，バックグラウンド通信など）を検証する．

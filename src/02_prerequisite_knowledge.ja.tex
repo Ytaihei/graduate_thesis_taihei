@@ -1,26 +1,132 @@
 \chapter{モバイルネットワークの進化と世代間ギャップ}
 \label{chap:background}
 
-本章では，本研究の背景となるモバイルネットワークの技術的変遷と，そこで生じている「世代間のギャップ」について詳述する．特に，CNとRANの進化速度の乖離，NTN等の物理的制約，および既存の移行技術の限界について整理し，なぜ「S1-N2変換」が必要とされるのかを技術的観点から明らかにする．
+本章では，本研究の背景となるモバイルネットワークの技術的変遷と，そこで生じている「世代間のギャップ」について詳述する．第\ref{chap:introduction}章で述べた3つの課題（NTN等の物理的制約，R\&Dにおける低コスト検証環境の欠如，商用導入におけるマイグレーション戦略の柔軟性欠如）について，本章ではその技術的背景と既存移行技術の限界を整理し，なぜ「S1-N2変換」が必要とされるのかを明らかにする．
 
 \section{4G LTEと5G NR/5GCの技術的変遷}
 
 \subsection{4G EPC: 専用装置による統合アーキテクチャ}
-第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，MME（Mobility Management Entity），S-GW（Serving Gateway），P-GW（PDN Gateway）といった専用のネットワークノードによって構成される．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
+第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，移動管理を行うMME（Mobility Management Entity），ユーザデータ転送を行うS-GW（Serving Gateway）/P-GW（PDN Gateway），および加入者情報を管理するHSS（Home Subscriber Server）といった専用のネットワークノードによって構成される\cite{threegpp-23401}．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
 
-RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される．このアーキテクチャは安定した通信を提供する一方で，新機能の追加やスケーリングにはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
+図\ref{fig:epc_architecture}に4G EPCの基本構成を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,0) {UE};
+
+    % eNB
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (enb) at (3,0) {eNB};
+
+    % MME
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (mme) at (6.5,1.5) {MME};
+
+    % S-GW
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (sgw) at (6.5,0) {S-GW};
+
+    % P-GW
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (pgw) at (10,0) {P-GW};
+
+    % HSS
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (hss) at (10,1.5) {HSS};
+
+    % Internet/DN
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (13,0) {DN};
+
+    % EPC枠
+    \draw[dashed, thick, GoogleBlue] (5.2,-1) rectangle (11.3,2.5);
+    \node[above, GoogleBlue] at (8.25,2.5) {\textbf{EPC (4G Core)}};
+
+    % 接続線（C-Plane）
+    \draw[->, thick] (ue) -- (enb) node[midway, above] {\scriptsize LTE-Uu};
+    \draw[->, thick] (enb) -- (mme) node[midway, above, sloped] {\scriptsize S1-MME};
+    \draw[->, thick] (mme) -- (hss) node[midway, above] {\scriptsize S6a};
+    \draw[->, thick] (mme) -- (sgw) node[midway, right] {\scriptsize S11};
+
+    % 接続線（U-Plane）
+    \draw[->, thick, GoogleGreen] (enb) -- (sgw) node[midway, below] {\scriptsize S1-U};
+    \draw[->, thick, GoogleGreen] (sgw) -- (pgw) node[midway, below] {\scriptsize S5/S8};
+    \draw[->, thick, GoogleGreen] (pgw) -- (dn) node[midway, below] {\scriptsize SGi};
+
+    % 凡例
+    \node[font=\scriptsize] at (1.5,-1.5) {C-Plane: 黒線};
+    \node[font=\scriptsize, GoogleGreen] at (4.5,-1.5) {U-Plane: 緑線};
+  \end{tikzpicture}
+  \caption{4G EPC（Evolved Packet Core）の基本構成}
+  \label{fig:epc_architecture}
+\end{figure}
+
+RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される\cite{3GPP_TS36413}．このアーキテクチャは安定した通信を提供する一方で，C-Plane（信号処理）とU-Plane（データ転送）が物理ノードに紐付いているため独立したスケーリングが困難であり，新機能の追加にはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
 
 \subsection{5Gコア: ソフトウェア化とSBA}
-第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．AMF（Access and Mobility Management Function）やSMF（Session Management Function）といった各機能はソフトウェアモジュール（Network Function: NF）として定義され，汎用サーバやクラウド基盤上でコンテナとして動作する．NF間の通信にはHTTP/2やREST APIが用いられる．
+第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された\cite{threegpp-23501}．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．
+移動管理を行うAMF（Access and Mobility Management Function），セッション管理を行うSMF（Session Management Function），ユーザデータ転送を行うUPF（User Plane Function），加入者情報を管理するUDM（Unified Data Management），認証を行うAUSF（Authentication Server Function）といった各機能はソフトウェアモジュール（Network Function: NF）として定義され，汎用サーバやクラウド基盤上でコンテナとして動作する．NF間の通信にはHTTP/2ベースのSBI（Service Based Interface）が用いられる．
+また，UPFがC-Planeから独立したことで，トラフィック需要に応じたU-Planeの柔軟なスケーリングが可能となった（CUPS: Control and User Plane Separation）．
+
+図\ref{fig:5gc_architecture}に5GCのSBAアーキテクチャを示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,0) {UE};
+
+    % gNB
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (gnb) at (3,0) {gNB};
+
+    % SBA Bus
+    \draw[very thick, GoogleBlue] (5.5,2.5) -- (13,2.5);
+    \node[above, GoogleBlue, font=\scriptsize] at (9.25,2.5) {SBI (Service Based Interface)};
+
+    % NFs on SBA bus
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (nrf) at (6,3.3) {NRF};
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (ausf) at (7.8,3.3) {AUSF};
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (udm) at (9.6,3.3) {UDM};
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (pcf) at (11.4,3.3) {PCF};
+
+    % AMF/SMF (connected to bus)
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (amf) at (7,1) {AMF};
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (smf) at (10,1) {SMF};
+
+    % UPF
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (upf) at (10,0) {UPF};
+
+    % DN
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (13.5,0) {DN};
+
+    % 5GC枠
+    \draw[dashed, thick, GoogleGreen] (5,-0.8) rectangle (12.5,4);
+    \node[below, GoogleGreen] at (8.75,-0.8) {\textbf{5GC (5G Core)}};
+
+    % SBA connections
+    \draw[thick] (nrf) -- (6,2.5);
+    \draw[thick] (ausf) -- (7.8,2.5);
+    \draw[thick] (udm) -- (9.6,2.5);
+    \draw[thick] (pcf) -- (11.4,2.5);
+    \draw[thick] (amf) -- (7,2.5);
+    \draw[thick] (smf) -- (10,2.5);
+
+    % N2/N3 connections
+    \draw[->, thick] (ue) -- (gnb) node[midway, above] {\scriptsize NR-Uu};
+    \draw[->, thick] (gnb) -- (amf) node[midway, above, sloped] {\scriptsize N2};
+    \draw[->, thick, GoogleGreen] (gnb) -- (upf) node[midway, below] {\scriptsize N3};
+    \draw[->, thick] (amf) -- (smf) node[midway, above] {\scriptsize N11};
+    \draw[->, thick] (smf) -- (upf) node[midway, right] {\scriptsize N4};
+    \draw[->, thick, GoogleGreen] (upf) -- (dn) node[midway, below] {\scriptsize N6};
+  \end{tikzpicture}
+  \caption{5GC（5G Core）のSBAアーキテクチャ}
+  \label{fig:5gc_architecture}
+\end{figure}
 
 このソフトウェア化により，5GCはハードウェアに依存せず，ソフトウェアアップデートのみで新機能（ネットワークスライシング，MEC連携，AI活用等）を迅速に導入可能となった．これが，次節で述べる「進化のギャップ」の根本原因である．
 
 \section{物理的制約によるRANの更新困難性}
 
-CN側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．
+CN側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．本節では，第\ref{chap:introduction}章で述べた「NTN等の物理的制約」および「R\&Dにおける低コスト検証環境の欠如」に対応する技術的背景を整理する．
 
 \subsection{NTN (Non-Terrestrial Network) における制約}
-衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は事実上不可能である．
+衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている\cite{3GPP_TR38811}．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は事実上不可能である．
 
 図\ref{fig:ntn_architecture}にNTNの概念構成を示す．
 
@@ -67,17 +173,17 @@ CN側がソフトウェアとして進化する一方で，RAN側は依然とし
 
 現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている．地上のネットワークが5G，そして6Gへと進化した際，宇宙空間にあるeNBを回収して5G gNBに交換することはできない．ソフトウェア更新による対応も，FPGAやRFフロントエンドの制約により限界がある．したがって，NTN環境では「レガシーRAN」が長期間にわたって残存することが不可避である．
 
-\subsection{プライベートネットワーク (sXGP) における制約}
-地上においても，コストや法規制の観点からRANの更新が困難なケースがある．日本国内で普及しているsXGP（shared eXtended Global Platform）は，免許不要で利用可能な1.9GHz帯のLTEシステムである．
+\subsection{コストおよび法規制による制約（sXGP・検証環境）}
+地上においても，コストや法規制の観点からRANの更新が困難なケースがある．日本国内で普及しているsXGP（shared eXtended Global Platform）は，免許不要で利用可能な1.9GHz帯のLTEシステムである\cite{XGP_Forum_WhitePaper}．本研究では，このsXGP基地局を入手容易な「レガシーRAN」の代表例として扱い，実証実験に用いる．
 
 sXGPは安価にプライベートLTEを構築できる利点があるが，これを「ローカル5G」に移行するには，高額な5G基地局の購入に加え，免許取得手続きや電波干渉調整が必要となる．多くの既存ユーザにとって，RAN設備を全面的に更新することは経済的に困難であり，既存のsXGP端末や基地局（4G資産）を活かしたまま，CN側の機能のみを高度化したいというニーズが存在する．
 
 \section{既存の移行・収容技術とその限界}
 
-4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，前述の課題を解決するには不十分である．
+4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，第\ref{chap:introduction}章で述べた「商用導入におけるマイグレーション戦略の柔軟性欠如」を解決するには不十分である．
 
 \subsection{NSA (Option 3): 4G CN継続利用の限界}
-現在主流のNSA（Non-Standalone）構成（Option 3）は，5G RAN（gNB）を導入するが，CNには既存のEPCを使用する．これは高速通信（eMBB）の提供には適しているが，CNが4Gであるため，5GC特有の機能（スライシング，QoS制御の高度化等）は利用できない．本研究の目的である「次世代CN機能の活用」とは矛盾する．
+現在主流のNSA（Non-Standalone）構成（Option 3）\cite{threegpp-23501}は，5G RAN（gNB）を導入するが，CNには既存のEPCを使用する．これは高速通信（eMBB）の提供には適しているが，CNが4Gであるため，5GC特有の機能（スライシング，QoS制御の高度化等）は利用できない．本研究の目的である「次世代CN機能の活用」とは矛盾する．
 
 図\ref{fig:nsa_sa_comparison}にNSA構成とSA構成の比較を示す．
 
@@ -134,7 +240,7 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
 \end{figure}
 
 \subsection{ng-eNB (Option 5/7): RAN改修を前提とした構成}
-3GPPは，LTE基地局（eNB）を5GCに接続するための規格として「ng-eNB」を定義している．ng-eNBは，無線方式はLTE（E-UTRA）のままであるが，CNとのインターフェースとして5G用のNG-AP（N2）およびNG-U（N3）をサポートする．
+3GPPは，LTE基地局（eNB）を5GCに接続するための規格として「ng-eNB」を定義している\cite{3GPP_TS38300}．ng-eNBは，無線方式はLTE（E-UTRA）のままであるが，CNとのインターフェースとして5G用のNG-AP（N2）およびNG-U（N3）をサポートする．
 
 しかし，既存のレガシーeNBをng-eNB化するには，基地局ファームウェアの大幅な改修が必要となる．古いハードウェアでは処理能力不足でNG-APスタックが動作しない場合や，ベンダーが旧製品のサポートを終了しておりファームウェア更新が提供されない場合も多い．つまり，ng-eNBは「RANの更新」を前提としたソリューションであり，物理的に更新困難な環境への適用は限定的である．
 
@@ -142,14 +248,64 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
 
 以上の背景から，レガシーeNB（S1インターフェースのみサポート）を，そのままの状態で5GCに収容する技術が必要となる．しかし，これを実現するには以下の技術的障壁を乗り越える必要がある．
 
+図\ref{fig:inter_generation_gap}に，レガシーRANと5GCの間に存在する技術的なギャップを示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+    % 左側: 4G World (UE -> eNB を一直線に配置)
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (-3,2) {UE};
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=2.5cm, minimum height=1.2cm] (enb) at (0,2) {\textbf{Legacy eNB}};
+    \node[below] at (0,1.3) {(S1 Interface)};
+
+    % UE-eNB接続
+    \draw[->, thick] (ue) -- (enb) node[midway, above] {\scriptsize LTE-Uu};
+
+    % 右側: 5G World
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=1cm] (amf) at (11,3.5) {\textbf{AMF}};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=1cm] (upf) at (11,0.5) {\textbf{UPF}};
+    \node[below] at (11,-0.2) {(N2/N3 Interface)};
+
+    % 障壁の壁
+    \draw[line width=2pt, dashed, GoogleRed] (5.5,5) -- (5.5,-1);
+    \node[fill=white, text=GoogleRed, font=\bfseries] at (5.5,5) {Inter-Generation Gap};
+
+    % NAS Flow (UEからAMFへの弧)
+    \draw[->, thick, dotted] (ue.north) to[out=80, in=180] node[pos=0.3, above, sloped] {\scriptsize 4G NAS} (4.5,4.2);
+    \node[align=left, text=GoogleRed, font=\footnotesize] at (5.6,4.2) {\textbf{Security Mismatch}\\(Key Derivation, AKA)};
+    \draw[<-, thick, dotted] (amf.west) to[out=180, in=0] node[midway, above] {\scriptsize 5G NAS} (6.5,4.2);
+
+    % C-Plane Flow
+    \draw[->, thick] (enb.east) -- (4.5,2.5) node[midway, above] {S1-AP};
+    \node[align=left, text=GoogleRed, font=\footnotesize] at (5.6,2.5) {\textbf{Protocol Mismatch}\\(State Machine)};
+    \draw[<-, thick] (amf.west) -- (6.5,2.5) node[midway, above] {NG-AP};
+
+    % U-Plane Flow
+    \draw[->, thick, GoogleGreen] (enb.east) -- (4.5,1.0) node[midway, above] {GTP-U (Bearer)};
+    \node[align=left, text=GoogleRed, font=\footnotesize] at (5.6,0.8) {\textbf{QoS Model Diff}\\(EBI $\not\leftrightarrow$ QFI)};
+    \draw[<-, thick, GoogleGreen] (upf.west) -- (6.5,0.8) node[midway, above] {GTP-U (Flow)};
+
+    % 説明枠
+    \node[draw, dashed, fill=GoogleYellow!10, align=left, text width=10cm, rounded corners] at (5.5,-2.5) {
+      \textbf{主な技術的障壁:}\\
+      1. \textbf{NAS}: 4G/5G間のセキュリティコンテキストおよび鍵生成の不整合\\
+      2. \textbf{C-Plane}: S1-APとNG-APのメッセージ構造・手順の相違\\
+      3. \textbf{U-Plane}: ベアラ(4G)とQoSフロー(5G)の概念相違
+    };
+
+  \end{tikzpicture}
+  \caption{レガシーRANと5GC間の技術的ギャップ}
+  \label{fig:inter_generation_gap}
+\end{figure}
+
 \subsection{C-Plane: S1-APとNG-APの非互換性}
-4Gの制御プロトコルであるS1-APと，5GのNG-APは，共にASN.1で記述されているものの，メッセージ構造やパラメータ（Information Element）が異なる．
+4Gの制御プロトコルであるS1-AP\cite{3GPP_TS36413}と，5GのNG-AP\cite{3GPP_TS38413}は，共にASN.1で記述されているものの，メッセージ構造やパラメータ（Information Element）が異なる．
 例えば，4Gでは「Attach」手順で接続とベアラ確立を一括して行うが，5Gでは「Registration」と「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
 \subsection{NAS: セキュリティと鍵管理の相違}
-端末（UE）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NASと5G NASは異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
+端末（UE）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{threegpp-24301}と5G NAS\cite{threegpp-24501}は異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
 
 \subsection{U-Plane: QoSモデルの変革}
-ユーザデータ転送（GTP-U）自体は互換性が高いが，QoSモデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，パケットヘッダを書き換える必要がある．
+ユーザデータ転送（GTP-U）\cite{threegpp-29281}自体は互換性が高いが，QoSモデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，GTP-Uパケットヘッダ（拡張ヘッダ等）を書き換える必要がある．
 
 本研究では，これらの障壁を「S1-N2変換ゲートウェイ」によって解消し，RANの改修なしに5GCへの収容を実現する．
