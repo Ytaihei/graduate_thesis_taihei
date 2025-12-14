@@ -1,0 +1,12 @@
+@misc{rfc2003,
+  author = {C. Perkins},
+  title = {{IP Encapsulation within IP}},
+  series = {Request for Comments},
+  number = {2003},
+  howpublished = {RFC 2003},
+  publisher = {IETF},
+  organization = {Internet Engineering Task Force},
+  year = {1996},
+  month = oct,
+  url = {https://www.rfc-editor.org/info/rfc2003},
+}
