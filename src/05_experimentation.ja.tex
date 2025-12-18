@@ -6,12 +6,12 @@
 実験の主な目的は以下の通りである．
 
 \begin{enumerate}
-    \item \textbf{機能検証}: 4G RAN（sXGP）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．特に，C-Planeにおける登録手順（Registration）と，U-Planeにおけるデータ疎通（PDU Session）の成立を検証する．
+    \item \textbf{機能検証（世代共通機能の実証）}: 4G RAN（sXGP）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．具体的には，C-Planeにおける登録手順（Registration）とU-Planeにおけるデータ疎通（PDU Session）の成立を通じて，認証や移動管理といった「世代共通機能」がプロトコル変換を経ても正しく維持されることを検証する．
     \item \textbf{性能評価}: ゲートウェイの導入によるオーバーヘッド（遅延，スループット低下）を測定し，実用上の許容範囲内であることを確認する．
     \item \textbf{実機相互運用性}: シミュレータではなく，実際の無線機（sXGP）と商用スマートフォン（UE）を用いた環境において，プロトコルスタックが正常に動作することを実証する．
 \end{enumerate}
 
-本研究の評価はLTE互換RAN（sXGP）と5GC（Open5GS）を用いた実験環境で行う．したがって，5G NR特有のPHY/MAC機能や無線スケジューリング最適化は対象外とする．一方で，提案変換器はS1AP↔NGAPおよびS1-U↔N3の\textbf{コア境界}で動作するため，制御面（S1AP/NGAP/NAS）およびユーザ面（GTP-U）の手順整合性・状態管理・タイマ設定といったプロトコルレベルの評価は可能である．
+本研究の評価はLTE互換RAN（sXGP）と5GC（Open5GS）を用いた実験環境で行う．したがって，5G NR特有のPHY/MAC機能や無線スケジューリング最適化は対象外とする．また，本プロトタイプ実装ではNetwork Slicing等の高度機能は固定値補完に留まるため，それらの機能実証は対象外とする．一方で，提案変換器はS1AP↔NGAPおよびS1-U↔N3の\textbf{コア境界}で動作するため，制御面（S1AP/NGAP/NAS）およびユーザ面（GTP-U）の手順整合性・状態管理・タイマ設定といったプロトコルレベルの評価は可能である．
 
 \section{実験環境}
 実験環境の構成を図\ref{fig:experiment_setup}に示す．
@@ -20,15 +20,19 @@
   \centering
   \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
     % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=0.8cm, align=center] (ue) at (0,0) {UE\\{\scriptsize Pixel}};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=0.8cm, align=center] (ue) at (0,0) {UE\\{\scriptsize Pixel 8a}};
 
     % sXGP
-    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm, align=center] (sxgp) at (3.5,0) {sXGP AP\\{\scriptsize 1.9GHz}};
+    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm, align=center] (sxgp) at (3.5,0) {sXGP AP\\{\scriptsize Nova430X}};
 
-    % Gateway
-    \node[draw, thick, rounded corners, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=1cm, align=center] (gw) at (7.5,0) {Gateway\\{\scriptsize C++/Python}};
+    % Docker Host boundary
+    \node[draw, dashed, thick, rounded corners, fill=GoogleLightGray!10, minimum width=6.5cm, minimum height=2.2cm] (docker) at (9.5,0) {};
+    \node[above, font=\tiny] at (9.5, 1.1) {Docker Host (Intel NUC)};
 
-    % Open5GS
+    % Gateway (inside Docker)
+    \node[draw, thick, rounded corners, fill=GoogleYellow!20, minimum width=2cm, minimum height=0.8cm, align=center] (gw) at (7.5,0) {Gateway\\{\scriptsize s1n2}};
+
+    % Open5GS (inside Docker)
     \node[draw, rounded corners, fill=GoogleGreen!30, minimum width=2cm, minimum height=0.8cm, align=center] (o5gs) at (11.5,0) {Open5GS\\{\scriptsize 5GC}};
 
     % Connections
@@ -38,23 +42,21 @@
 
     % Annotations
     \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {4G/5G\\Dual SIM};
-    \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\(4G eNB)};
-    \node[below=0.5cm of gw, text width=2.5cm, align=center, font=\tiny] {提案実装\\疎結合変換層};
-    \node[below=0.3cm of o5gs, text width=2cm, align=center, font=\tiny] {オープンソース\\5GC実装};
+    \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\1.9GHz / 10MHz};
   \end{tikzpicture}
-  \caption{実験環境構成図}
+  \caption{実験環境構成図．GatewayとOpen5GSは同一物理サーバ上のDockerコンテナとして動作する．}
   \label{fig:experiment_setup}
 \end{figure}
 
 \subsection{検証アプローチとソフトウェア構成}
-本研究の実証には，仕様が公開され改変可能なオープンソースソフトウェア（OSS）と、実環境での動作を確認できる実機環境の両方を活用する。
+本研究の実証には，仕様が公開され改変可能なオープンソースソフトウェア（OSS）と，実環境での動作を確認できる実機環境の両方を活用する．
 
 \subsubsection{Open5GSとsrsRAN}
 Open5GS\cite{open5gs}は，3GPP Release 16/17に準拠した5GC機能（AMF, SMF, UPF等）を提供するOSSである．商用製品と異なり，内部のステートマシンやメッセージ処理ロジックを詳細に追跡・修正できるため，プロトコル変換の挙動検証に適している．
-また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェア無線（SDR）で実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．本研究では，sXGP実機に加え，srsRAN 4Gを用いた試験環境でも動作検証を行っている．
+また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェアで実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．ZeroMQ（ZMQ）モードを使用することで，物理的な無線ハードウェア（SDR）を用いずにPC内のみで動作検証が可能である．本研究では，sXGP実機を主たる検証環境とし，srsRAN 4GのZMQモードは初期の開発・デバッグ段階で補助的に使用した．
 
 \subsubsection{sXGP採用理由と実機検証の意義}
-sXGPを採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
+sXGP\cite{ARIB_STD_T118}を採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
 \begin{itemize}
     \item \textbf{継続性}: 実機を用いた反復試験を継続して実施できる．
     \item \textbf{再現性}: 構成（RAN/コア/変換器）を固定し，ログ/pcapを併せて保存することで再現可能な評価を行いやすい．
@@ -62,66 +64,131 @@ sXGPを採用する主目的は，評価を再現可能な形で継続実施で�
 \end{itemize}
 本研究では，OSS（Open5GS/srsRAN）と実機（sXGP）を組み合わせることで，提案アーキテクチャの有効性を多角的に評価する．
 
-\subsection{ハードウェア構成}
+\subsection{ハードウェア・ソフトウェア構成}
+表\ref{tab:experiment_env}に，本実験で使用したハードウェアおよびソフトウェアの構成を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{実験環境の構成}
+\label{tab:experiment_env}
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{カテゴリ} & \textbf{項目} & \textbf{仕様} \\
+\hline
+\hline
+\multirow{2}{*}{UE} & 端末 & Google Pixel 8a \\
+& 対応方式 & 4G/5G Dual SIM \\
+\hline
+\multirow{6}{*}{RAN} & 機種 & Baicells Nova430X \\
+& 方式 & TD-LTE (sXGP) \\
+& 周波数 & 1.9GHz帯 (Band 39) \\
+& 帯域幅 & 10MHz \\
+& 最大速度 & DL 37.5Mbps / UL 14Mbps \\
+& 同時接続 & 最大96台 / VoLTE 32通話 \\
+\hline
+\multirow{4}{*}{Server} & 機種 & Intel NUC7i7BNH \\
+& CPU & Core i7-7567U (2C/4T, 3.50GHz) \\
+& RAM & 16GB \\
+& Disk & 256GB SSD \\
+\hline
+\hline
+\multirow{2}{*}{Gateway} & 実装言語 & C (ASN.1: asn1c生成) \\
+& 機能 & S1AP$\leftrightarrow$NGAP, GTP-U変換 \\
+\hline
+\multirow{2}{*}{5GC} & 実装 & Open5GS v2.7.2 \\
+& NF & AMF, SMF, UPF, UDM, AUSF等 \\
+\hline
+\multirow{2}{*}{OS} & ホスト & Ubuntu 22.04 LTS \\
+& コンテナ & Docker 28.0 \\
+\hline
+\end{tabular}
+\end{table}
+
+UEには市販のスマートフォンを使用し，商用網と同様の挙動（省電力制御，バックグラウンド通信など）を含めた検証を行った．
+RANにはsXGP対応の小型基地局を採用し，免許不要で利用可能なプライベートLTE環境を構築した．
+GatewayおよびOpen5GSは同一物理サーバ上のDockerコンテナとして動作させ，コンテナ間通信によるオーバーヘッドを最小化した．
+実装の詳細および最適化方針については第\ref{chap:proposal}章で述べた．
+
+\subsection{ネットワーク構成}
+各NFはDockerコンテナとして構築し，Linuxブリッジ（\texttt{br-sXGP-5G}）上のサブネット\texttt{172.24.0.0/16}に固定IPアドレスで配置した．
+ホストマシンの物理NIC（\texttt{eno1}）を当該ブリッジに接続し，物理的に接続されたeNB（IPアドレス: \texttt{172.24.0.111}）とコンテナ群とのL2到達性を確保した．
+本実験は小規模な検証環境であるため，VLANやVRFによるネットワーク分離は行わず，単一セグメントで構成した．
+
+UEへのIPアドレス払い出しには，インターネット接続用APN（internet）に\texttt{192.168.100.0/24}，IMS用APN（ims）に\texttt{192.168.101.0/24}を割り当てた．
+外部ネットワークへの接続性を確保するため，UPFコンテナ内でiptablesによるNAPT（IPマスカレード）を設定した．
+
+\subsection{監視・計測}
+制御面の動作検証には，Linuxブリッジ上で\texttt{tcpdump}によりパケットキャプチャを取得し，Wiresharkおよび\texttt{tshark}を用いてプロトコル解析を行った．
+また，各NFコンテナのログはホスト側ディレクトリにマウントして保存し，障害発生時の原因追跡に使用した．
+ゲートウェイの処理時間は，変換器がメッセージを受信した時刻と送信した時刻の差分をログ出力し，その差分から算出した．
+
+ユーザ面の性能測定には以下のツールと条件を使用した．
 \begin{itemize}
-    \item \textbf{UE (User Equipment)}: Google Pixel (4G/5G Dual SIM対応)．市販のスマートフォンを使用し，商用網と同様の挙動（省電力制御，バックグラウンド通信など）を検証する．
-    \item \textbf{RAN (Radio Access Network)}: sXGP対応小型基地局（1.9GHz帯，TD-LTE方式）．免許不要で利用可能なプライベートLTE環境を構築する．
-    \item \textbf{Gateway Server}: 提案するS1-N2変換ソフトウェアを実行するPC（Linux）．
-    \item \textbf{CN Server}: Open5GSを実行するPC（Linux）．Gatewayと同一ホスト上のコンテナとして動作させる場合もある．
+    \item \textbf{遅延測定}: \texttt{ping}によるRTT測定（100回試行，1秒間隔）
+    \item \textbf{スループット測定}: \texttt{iPerf3}によるTCP/UDP測定
+    \begin{itemize}
+        \item TCP: 10秒間の連続転送（Downlink/Uplink各5回試行）
+        \item UDP: 40Mbps目標帯域での転送（sXGP 10MHz帯域の理論上限付近）
+    \end{itemize}
 \end{itemize}
+すべての試験について，pcapファイルおよび設定ファイルのスナップショットを保存し，再現性を確保した．
 
-\subsection{ソフトウェア構成}
-\begin{itemize}
-    \item \textbf{S1-N2 Converter}: C++およびPythonで実装されたプロトコル変換器．S1AP/NGAPの相互変換とGTP-Uのカプセル化変換を行う．
-    \item \textbf{Open5GS}: オープンソースの5Gコア実装．AMF, SMF, UPF, UDM, AUSF等の主要NF（Network Function）を含む．
-    \item \textbf{OS}: Ubuntu Linux 22.04 LTS．Dockerコンテナを用いて各機能を分離・管理する．
-\end{itemize}
-
-実装言語はC++およびPythonとし，制御面/ユーザ面は独立プロセスまたはスレッドで分離する．ASN.1の処理は外部ツールで生成したデコーダを用いるか，既存実装（例: Open5GSのエンコーダ/デコーダ参照\cite{open5gs}）の表現に合わせてシリアライザを実装する．検証用途として，srsRANのZMQインターフェースを接続し，無線機なしでの反復試験を可能とする（\S\ref{chap:related}）．
-
-\subsection{ネットワーク構成（VLAN/VRF/NATの要否）}
-最小構成では，変換器にS1U/N3の2ポート（論理でも可）を割り当て，データプレーンをルーティングで分離する．商用NWとの干渉回避のため，VRFまたは名前空間を用いた論理分離を推奨する．UPFとは静的ルーティングで直結し，アドレス設計はOpen5GSのデフォルト構成に準拠する．
-
-\subsection{監視・計測（メトリクス，トレース）}
-制御面はメッセージ種別/結果（成功・失敗原因）/処理時間をメトリクス化し，ユーザ面はスループット/RTT/パケット損失率を定期測定する．また，ゲートウェイ内部の処理時間は，変換器がメッセージ（またはパケット）を受信した時刻と送信した時刻の差分をログ出力し，その差分から算出した．すべての試験についてpcapと構成スナップショット（コンテナタグ，設定ファイル）を成果物として保存し，回帰の基準とする．
-
-\subsection{実装における性能最適化}
-変換器の処理遅延は，主に以下の要素から構成される．
-\begin{itemize}
-\item \textbf{ASN.1デコード/エンコード}: S1APおよびNGAPメッセージのASN.1処理．最も計算コストが高い．
-\item \textbf{NASメッセージ変換}: EMM↔5GMM，ESM↔5GSMのメッセージタイプと情報要素の再構成．
-\item \textbf{暗号化処理}: NAS暗号化（NEA2/EEA2）と完全性保護（NIA2/EIA2）の計算．
-\item \textbf{GTP-Uヘッダ書き換え}: TEIDマッピングテーブル検索とヘッダ再構成．
-\item \textbf{コンテキスト検索}: UE IDによるテーブル検索．
-\end{itemize}
-
-これらの遅延を低減するため，本実装では以下の最適化方針を採用した．
-\begin{itemize}
-\item \textbf{ハッシュテーブルによる高速検索}: UE IDとTEIDマッピングのルックアップにハッシュテーブル（O(1)）を使用し，検索コストを一定時間に抑える．
-\item \textbf{メモリプール}: ASN.1デコード用のメモリを事前割り当てし，動的メモリ確保のオーバヘッドを削減する．
-\item \textbf{ゼロコピー転送}: GTP-Uパケットのペイロードはコピーせず，ヘッダのみ書き換えて転送する．
-\end{itemize}
-これらの最適化により，変換処理が通信全体のボトルネックとならないことを目指した．実際の遅延測定結果は第\ref{chap:evaluation}章で示す．
+\subsection{ベースライン環境}
+提案手法のオーバーヘッドを評価するためのベースラインとして，変換ゲートウェイを介さずにsXGP基地局を4G EPC（Open5GSのMME/SGW/PGW機能）に直接接続した「LTEネイティブ環境」を構築した．
+ハードウェア構成は提案手法と同一であり，Open5GSの設定を変更して4Gコアとして動作させることで，純粋なプロトコル変換処理の影響を比較可能な状態とした．
 
 \section{評価シナリオ}
 
-\subsection{シナリオ1: C-Plane接続検証（Registration）}
-UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録（Registration）までのシーケンスを確認する．
+本研究では，モバイル通信の根幹機能である「認証（AAA）」「移動管理（Mobility Management）」「U-plane」が世代を超えて本質的に不変であるという仮説に基づき，これらを「世代共通機能」として抽象化・変換する設計を採用した（第\ref{chap:proposal}章参照）．本節の評価シナリオでは，この世代共通機能が4G-5G間で正しくマッピングされ，動作することを検証する．
+
+なお，ゲートウェイが取り扱う具体的なパラメータ（ID/NAS/TEID/QoS）と変換規則は，第\ref{chap:proposal}章のNASメッセージ変換（表\ref{tab:nas_conversion_ul}，表\ref{tab:nas_conversion_dl}），ID変換（表\ref{tab:id_conversion}），TEIDマッピング（表\ref{tab:teid_mapping}），QoSマッピング（表\ref{tab:qos_mapping}）に整理している．
+
+表\ref{tab:generation_invariant_mapping}に，評価項目と世代共通機能の対応関係を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{評価項目と世代共通機能の対応}
+\label{tab:generation_invariant_mapping}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{世代共通機能} & \textbf{4G（S1）} & \textbf{5G（NG）} & \textbf{評価項目} \\
+\hline
+認証（AAA） & Auth Req/Resp & Auth Req/Resp & シナリオ1 \\
+& Security Mode Cmd & Security Mode Cmd & \\
+\hline
+移動管理 & Attach/TAU & Registration & シナリオ1 \\
+（Mobility） & S1 Setup & NG Setup & \\
+\hline
+U-plane & GTP-U (S1-U) & GTP-U (N3) & シナリオ2 \\
+& E-RAB / QCI & PDU Session / 5QI & \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{シナリオ1: C-Plane接続検証}
+UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．このシナリオでは，世代共通機能のうち「認証（AAA）」および「移動管理」の変換が正しく行われることを検証する．
 \begin{itemize}
     \item \textbf{確認項目}:
     \begin{itemize}
-        \item S1 SetupおよびNG Setupの完了
-        \item Initial UE Messageの正常転送
-        \item 認証（Authentication）およびセキュリティモード（Security Mode Command）の成功
-        \item Registration Acceptの受信とPDU Sessionの確立
+        \item S1 SetupおよびNG Setupの完了（移動管理：基地局接続）
+        \item Initial UE Messageの正常転送（移動管理：接続開始）
+        \item 認証（Authentication）およびセキュリティモード（Security Mode Command）の成功（AAA）
+        \item Attach Accept（4G側）/ Registration Accept（5GC側）の正常な変換と転送（移動管理：登録完了）
+        \item E-RAB Setup（4G側）/ PDU Session Establishment（5GC側）のシグナリング完了
     \end{itemize}
     \item \textbf{成功基準}: UE画面上でアンテナピクトが表示され，データ通信可能な状態（IPアドレス取得）となること．Open5GSのログにおいてエラーが発生していないこと．
 \end{itemize}
 
-\subsection{シナリオ2: U-Plane性能評価（Throughput/Latency）}
-接続確立後，UEからインターネット（またはコアネットワーク内のサーバ）に対してデータ通信を行い，性能を測定する．
+\subsection{シナリオ2: U-Planeデータ転送性能の評価}
+接続確立後，UEからコアネットワーク内のサーバ（またはインターネット上のホスト）に対してデータ通信を行い，パケットの到達性および転送性能を検証する．このシナリオでは，世代共通機能のうち「U-plane」（GTP-Uトンネリング）の変換が正しく行われ，かつ変換処理が性能上のボトルネックとならないことを確認する．
 \begin{itemize}
-    \item \textbf{測定ツール}: iPerf3（スループット），Ping（遅延）
-    \item \textbf{比較対象}: ゲートウェイを経由しない通常のLTE構成（EPC接続）との比較（参考値），または理論上の無線帯域に対する効率．
-    \item \textbf{評価観点}: 変換処理によるボトルネックの有無．
+    \item \textbf{確認項目}:
+    \begin{itemize}
+        \item GTP-UのTEIDマッピング（S1-U↔N3）が正常に機能すること
+        \item ユーザデータが双方向に透過的に転送されること
+        \item 変換処理によるスループット低下および遅延増大が，実用上無視できるレベルであること
+    \end{itemize}
+    \item \textbf{測定ツール}: Ping（遅延），iPerf3（スループット）
+    \item \textbf{成功基準}: UEから対向サーバへのICMP Echo Request/Replyが損失なく交換されること．また，ベースライン環境（LTE Native）と比較して著しい性能劣化が見られず，変換処理が通信の律速要因となっていないこと．
 \end{itemize}

@@ -41,11 +41,11 @@
 \usetikzlibrary{shapes, arrows.meta, positioning}
 
 % タイトル情報
-\title{世代不変性に基づくレガシーRANの5GC収容アーキテクチャ}
-\subtitle{〜世代間プロトコル変換による移行コスト削減と機能拡張〜}
-\author{Taihei}
-\institute{所属大学/学部}
-\date{\today}
+\title{レガシーRANの次世代CN収容を実現する\\S1-N2変換ゲートウェイの設計と実装}
+\subtitle{〜疎結合アーキテクチャによる異世代相互接続〜}
+\author{渡邉 泰平}
+\institute{慶應義塾大学 総合政策学部}
+\date{2025年度 卒業論文発表}
 
 \begin{document}
 
@@ -1163,42 +1163,43 @@
 \end{frame}
 
 \section{結論}
-\begin{frame}{学術的貢献と実用的インパクト}
-  \begin{block}{学術的貢献}
+\begin{frame}{本研究の成果}
+  \begin{block}{達成事項}
     \begin{itemize}
-      \item 世代不変性に基づく\alert{疎結合アーキテクチャ}の理論化と実証
-      \item RANとCNの進化サイクルを分離する新しい移行モデルの提示
+      \item \textbf{疎結合アーキテクチャの確立}: RANとCNのライフサイクルを分離し、RAN側の改修なしに5GCへの接続が可能であることを実証
+      \item \textbf{Early S1 Setup方式の考案}: 4G/5Gのベアラ確立タイミングの差異を吸収するシーケンスを設計・実装
+      \item \textbf{実用性の実証}: sXGP実機による検証で、変換オーバーヘッドが実運用上許容範囲であることを確認
     \end{itemize}
   \end{block}
-  \begin{block}{実用的インパクト}
+  \begin{block}{3つの課題への貢献}
     \begin{itemize}
-      \item \textbf{R\&D:} 低コストな次世代CN検証環境(既存設備の再利用)
-      \item \textbf{商用展開:} RAN更新を伴わない柔軟なCN先行移行戦略
-      \item \textbf{NTN/IoT:} 物理更新不可能なインフラの延命と機能拡張
+      \item \textbf{R\&D:} sXGP + Open5GSによる低コストな5GC検証環境を実現
+      \item \textbf{商用導入:} eNBの改修なしに5GCへ接続可能な「CN先行移行」戦略を提示
+      \item \textbf{NTN:} 地上ゲートウェイのみで衛星/HAPS上RANの5GC収容が可能
     \end{itemize}
   \end{block}
 \end{frame}
 
 \begin{frame}{今後の展望と未実装機能}
   \begin{itemize}
-    \item \textbf{モビリティ管理の完全対応}
+    \item \textbf{スケーラビリティの向上}
       \begin{itemize}
-        \item Handover (S1ハンドオーバー $\leftrightarrow$ N2ハンドオーバー変換)
+        \item DPDK（Data Plane Development Kit）やeBPF（extended Berkeley Packet Filter）等の高速化技術導入
+        \item TEID変換テーブルの検索処理・パケットコピー処理の最適化
+      \end{itemize}
+    \item \textbf{移動管理機能の拡張}
+      \begin{itemize}
+        \item S1ハンドオーバー $\leftrightarrow$ N2ハンドオーバー変換
         \item Paging (Idleモードからの着信・復帰)
       \end{itemize}
-    \item \textbf{セッション管理の高度化}
+    \item \textbf{NTN環境での実証実験}
       \begin{itemize}
-        \item Service Request (Idleからのデータ再開)
-        \item Multi-PDU Session (複数スライス/ベアラの同時利用)
-        \item Detach / Deregistration (明示的な切断手順)
+        \item 衛星回線エミュレータを用いた高遅延条件（長RTT）での検証
+        \item 実際の衛星回線を用いたフィールド実験
       \end{itemize}
-    \item \textbf{セキュリティ機能の拡張}
+    \item \textbf{6Gコアへの拡張}
       \begin{itemize}
-        \item NAS Ciphering (現在は完全性保護のみ、暗号化はNull)
-      \end{itemize}
-    \item \textbf{NTN環境での実証}
-      \begin{itemize}
-        \item 衛星回線エミュレータを用いた長遅延・ロス耐性評価
+        \item 5G RAN と 6Gコアの相互接続（N2-N2'変換等）への適用可能性検討
       \end{itemize}
   \end{itemize}
 \end{frame}

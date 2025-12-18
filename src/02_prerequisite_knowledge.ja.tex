@@ -6,7 +6,7 @@
 \section{4G LTEと5G NR/5GCの技術的変遷}
 
 \subsection{4G EPC: 専用装置による統合アーキテクチャ}
-第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，移動管理を行うMME（Mobility Management Entity），ユーザデータ転送を行うS-GW（Serving Gateway）/P-GW（PDN Gateway），および加入者情報を管理するHSS（Home Subscriber Server）といった専用のネットワークノードによって構成される\cite{threegpp-23401}．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
+第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，移動管理を行うMME（Mobility Management Entity），ユーザデータ転送を行うS-GW（Serving Gateway）/P-GW（PDN Gateway），および加入者情報を管理するHSS（Home Subscriber Server）といった専用のネットワークノードによって構成される\cite{3GPP_TS23401}．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
 
 図\ref{fig:epc_architecture}に4G EPCの基本構成を示す．
 
@@ -57,10 +57,10 @@
   \label{fig:epc_architecture}
 \end{figure}
 
-RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される\cite{3GPP_TS36413}．このアーキテクチャは安定した通信を提供する一方で，C-Plane（信号処理）とU-Plane（データ転送）が物理ノードに紐付いているため独立したスケーリングが困難であり，新機能の追加にはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
+RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される\cite{3GPP_TS36413}．このアーキテクチャは安定した通信を提供する一方で，C-Plane（制御信号処理）とU-Plane（データ転送）が物理ノードに紐付いているため独立したスケーリングが困難であり，新機能の追加にはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
 
 \subsection{5Gコア: ソフトウェア化とSBA}
-第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された\cite{threegpp-23501}．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．
+第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された\cite{3GPP_TS23501_R15}．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．
 移動管理を行うAMF（Access and Mobility Management Function），セッション管理を行うSMF（Session Management Function），ユーザデータ転送を行うUPF（User Plane Function），加入者情報を管理するUDM（Unified Data Management），認証を行うAUSF（Authentication Server Function）といった各機能はソフトウェアモジュール（Network Function: NF）として定義され，汎用サーバやクラウド基盤上でコンテナとして動作する．NF間の通信にはHTTP/2ベースのSBI（Service Based Interface）が用いられる．
 また，UPFがC-Planeから独立したことで，トラフィック需要に応じたU-Planeの柔軟なスケーリングが可能となった（CUPS: Control and User Plane Separation）．
 
@@ -119,14 +119,14 @@ RAN側（eNB）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, 
   \label{fig:5gc_architecture}
 \end{figure}
 
-このソフトウェア化により，5GCはハードウェアに依存せず，ソフトウェアアップデートのみで新機能（ネットワークスライシング，MEC連携，AI活用等）を迅速に導入可能となった．これが，次節で述べる「進化のギャップ」の根本原因である．
+このソフトウェア化により，5GCはハードウェアに依存せず，ソフトウェアアップデートのみで新機能（ネットワークスライシング，MEC連携等）を迅速に導入可能となった．これが，次節で述べる「進化のギャップ」の根本原因である．
 
 \section{物理的制約によるRANの更新困難性}
 
 CN側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．本節では，第\ref{chap:introduction}章で述べた「NTN等の物理的制約」および「R\&Dにおける低コスト検証環境の欠如」に対応する技術的背景を整理する．
 
 \subsection{NTN (Non-Terrestrial Network) における制約}
-衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている\cite{3GPP_TR38811}．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は事実上不可能である．
+衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている\cite{3GPP_TR38811}．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は難しい．
 
 図\ref{fig:ntn_architecture}にNTNの概念構成を示す．
 
@@ -164,66 +164,158 @@ CN側がソフトウェアとして進化する一方で，RAN側は依然とし
     \draw[->, thick] (haps) -- (ue2);
     \draw[->, thick, dashed] (haps) -- (gw);
 
-    % 問題点（右側に配置）
-    \node[draw, rounded corners, fill=GoogleRed!20, text width=3.5cm, align=center, font=\small] at (10.5,1.2) {打ち上げ後は\\HW更新不可};
+
   \end{tikzpicture}
   \caption{NTN（非地上系ネットワーク）の概念構成}
   \label{fig:ntn_architecture}
 \end{figure}
 
-現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている．地上のネットワークが5G，そして6Gへと進化した際，宇宙空間にあるeNBを回収して5G gNBに交換することはできない．ソフトウェア更新による対応も，FPGAやRFフロントエンドの制約により限界がある．したがって，NTN環境では「レガシーRAN」が長期間にわたって残存することが不可避である．
+NTNのアーキテクチャには，衛星が単なる中継器（ベントパイプ）として動作する「トランスペアレント（Transparent）型」と，衛星上で基地局機能（ベースバンド処理やL2/L3制御）を実行する「再生（Regenerative）型」が存在する\cite{3GPP_TR38821}．
+図\ref{fig:ntn_payload_comparison}に両アーキテクチャの比較を示す．
 
-\subsection{コストおよび法規制による制約（sXGP・検証環境）}
-地上においても，コストや法規制の観点からRANの更新が困難なケースがある．日本国内で普及しているsXGP（shared eXtended Global Platform）は，免許不要で利用可能な1.9GHz帯のLTEシステムである\cite{XGP_Forum_WhitePaper}．本研究では，このsXGP基地局を入手容易な「レガシーRAN」の代表例として扱い，実証実験に用いる．
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.72, every node/.style={font=\small}]
+    % ========== トランスペアレント型（左側）==========
+    \node[font=\normalsize\bfseries] at (3,7) {Transparent型};
 
-sXGPは安価にプライベートLTEを構築できる利点があるが，これを「ローカル5G」に移行するには，高額な5G基地局の購入に加え，免許取得手続きや電波干渉調整が必要となる．多くの既存ユーザにとって，RAN設備を全面的に更新することは経済的に困難であり，既存のsXGP端末や基地局（4G資産）を活かしたまま，CN側の機能のみを高度化したいというニーズが存在する．
+    % 衛星（ベントパイプ）
+    \node[draw, circle, fill=GoogleLightGray!50, minimum size=1.6cm] (sat-t) at (3,4.8) {};
+    \node[align=center, font=\scriptsize] at (3,4.8) {衛星\\(中継のみ)};
+    \node[above, font=\scriptsize] at (3,5.8) {RF増幅・周波数変換};
+
+    % 地上局（gNB設置）
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=0.8cm] (gw-t) at (0.8,2) {gNB};
+    \node[below, font=\scriptsize] at (0.8,1.4) {地上局};
+
+    % 5GC
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-t) at (0.8,0.3) {5GC};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-t) at (5.2,0.3) {UE};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat-t) -- (gw-t) node[midway, left, font=\scriptsize] {Feeder Link};
+    \draw[->, thick] (sat-t) -- (ue-t) node[midway, right, font=\scriptsize] {Service Link};
+    \draw[<->, thick] (gw-t) -- (core-t) node[midway, left, font=\scriptsize] {N2/N3};
+
+    % 特徴（下部）
+    \node[draw, rounded corners, fill=GoogleGreen!10, text width=4.5cm, align=left, font=\scriptsize] at (3,-1.3) {
+      \textbf{特徴:}\\
+      • gNBは地上に設置\\
+      • 地上設備の更新で世代交代可能\\
+      • 遅延: Feeder + Service
+    };
+
+    % ========== 区切り線 ==========
+    \draw[thick, dashed, gray] (7.5,7.5) -- (7.5,-2.5);
+
+    % ========== 再生型（右側）==========
+    \node[font=\normalsize\bfseries] at (12,7) {Regenerative型};
+
+    % 衛星（gNB搭載）
+    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.8cm] (sat-r) at (12,4.8) {};
+    \node[align=center, font=\scriptsize] at (12,4.8) {衛星\\(gNB搭載)};
+    \node[above, font=\scriptsize, text width=3cm, align=center] at (12,5.9) {ベースバンド処理\\L2/L3制御};
+
+    % 地上局（GWのみ）
+    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm] (gw-r) at (9.5,2) {Gateway};
+    \node[below, font=\scriptsize] at (9.5,1.4) {地上局};
+
+    % 5GC
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-r) at (9.5,0.3) {5GC};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-r) at (14.5,0.3) {UE};
+
+    % ISL（衛星間リンク）オプション
+    \node[draw, circle, fill=GoogleYellow!30, minimum size=1.1cm, font=\scriptsize] (sat-r2) at (15.5,4.2) {衛星};
+    \draw[<->, thick, dotted, GoogleBlue] (sat-r) -- (sat-r2) node[midway, above, font=\scriptsize] {ISL};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat-r) -- (gw-r) node[midway, left, font=\scriptsize] {Feeder};
+    \draw[->, thick] (sat-r) -- (ue-r) node[midway, right, font=\scriptsize] {Service};
+    \draw[<->, thick] (gw-r) -- (core-r) node[midway, left, font=\scriptsize] {N2/N3};
+
+    % 特徴（下部）
+    \node[draw, rounded corners, fill=GoogleRed!10, text width=5cm, align=left, font=\scriptsize] at (12,-1.3) {
+      \textbf{特徴:}\\
+      • gNBは衛星上に搭載\\
+      • \textcolor{GoogleRed}{\textbf{打ち上げ後のHW更新不可}}\\
+      • 遅延: Service Linkのみ\\
+      • ISLによるメッシュ構築可能
+    };
+  \end{tikzpicture}
+  \caption{NTNペイロードアーキテクチャの比較（TR 38.821に基づく）}
+  \label{fig:ntn_payload_comparison}
+\end{figure}
+
+トランスペアレント型であれば，地上のゲートウェイ局（GW）に設置された基地局設備を更新することで世代交代が可能である．一方，再生型アーキテクチャでは，衛星自体にeNB/gNB機能がハードウェアとして搭載されているため，打ち上げ後にこれを最新世代のハードウェア（例えば4G用プロセッサから5G/6G用プロセッサへ）に交換することは事実上不可能である．
+特に，伝送遅延の低減や衛星間通信（ISL: Inter-Satellite Link）によるメッシュネットワーク構築の観点から，次世代の低軌道（LEO）衛星コンステレーションにおいては再生型アーキテクチャの採用が期待されているが，これは同時に「軌道上のインフラがレガシー化しやすい」という課題を内包している．
+
+現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている\cite{3GPP_TR38821}．地上のネットワークが5G，そして6Gへと進化した際，宇宙空間にあるeNBを回収して5G gNBに交換することはできない．ソフトウェア更新による対応も，FPGAやRFフロントエンドの制約により限界がある．したがって，NTN環境では「レガシーRAN」が長期間にわたって残存することが不可避である．
+
+\subsection{研究開発における低コスト検証環境の欠如}
+第\ref{chap:introduction}章で述べた通り，次世代CN機能（ネットワークスライシング，URLLC等）の研究開発には5GCが必要である．しかし，5GCに接続可能な5G gNBは高価であり，さらに無線免許の取得手続きも伴う．このため，大学や中小企業の研究者にとって，5GCの新機能を実環境で検証するための導入障壁は高い．
+
+現在，5GCの研究開発においては，ns-3等のネットワークシミュレータや，有線接続によるエミュレーション環境が広く用いられている．しかし，これらの環境では無線区間の物理的な特性（フェージング，ハンドオーバ時の瞬断，端末の実装依存挙動など）を十分に再現できない．
+
+また，オープンソースを用いた5G SA検証環境においても，SDRを用いた実機RAN構成と，エミュレーション／シミュレーション構成（RF SimulatorやUERANSIM等）では，スループットや遅延，計算資源利用といった観点で性能が大きく異なり得ることが報告されている\cite{Rouili_NOMS2024_OpenSource5GTestbeds}．
+
+このように，ソフトウェアベースで進化するCNに対し，それを検証するためのRAN環境が追いついていないという「進化のギャップ」が，研究開発の現場においても顕在化している．
 
 \section{既存の移行・収容技術とその限界}
 
-4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，第\ref{chap:introduction}章で述べた「商用導入におけるマイグレーション戦略の柔軟性欠如」を解決するには不十分である．
+4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，第\ref{chap:introduction}章で述べた「商用導入におけるマイグレーション戦略の柔軟性欠如」を解決するには不十分である．本節では，まず一般的な概念としてのSA/NSAを整理し，次に3GPPが規定する移行Optionとの対応を示した上で，ng-eNBを用いた構成の限界を述べる．
 
-\subsection{NSA (Option 3): 4G CN継続利用の限界}
-現在主流のNSA（Non-Standalone）構成（Option 3）\cite{threegpp-23501}は，5G RAN（gNB）を導入するが，CNには既存のEPCを使用する．これは高速通信（eMBB）の提供には適しているが，CNが4Gであるため，5GC特有の機能（スライシング，QoS制御の高度化等）は利用できない．本研究の目的である「次世代CN機能の活用」とは矛盾する．
+\subsection{5G SAと5G NSA}
+5Gネットワークの展開形態は，一般に「SA（Standalone）」と「NSA（Non-Standalone）」に大別される\cite{3GPP_5GSystemOverview}．
 
-図\ref{fig:nsa_sa_comparison}にNSA構成とSA構成の比較を示す．
+\textbf{5G SA}は，5G NR（New Radio）と5GC（5G Core）を組み合わせた構成を指す．RANとCNの両方が5G世代で統一されているため，ネットワークスライシングや高度なQoS制御といった5GC固有の機能をフルに活用できる．一方，\textbf{5G NSA}は，既存の4G LTE基盤を活用しながら5G NRを追加する構成を指す．4G EPCをCNとして継続利用するため，5GC機能は利用できないが\cite{GSMA_5GNSA_Option3}，既存インフラへの投資を活かしつつ段階的に5Gサービスを開始できるという利点がある\cite{Ericsson_5GNSA_Bands2024}．
+
+図\ref{fig:nsa_sa_comparison}に両構成の概念的な比較を示す．なお，NSAには複数の実現形態があるため，図は代表例として商用で一般的なOption 3系（特にOption 3x）を示す\cite{3GPP_TR38801,NGMN_5GDevices_SAMigration}．
 
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
     % NSA構成（左側）
-    \node[font=\normalsize\bfseries] at (2.5,4.5) {NSA (Non-Standalone)};
+    \node[font=\normalsize\bfseries] at (2.5,4.5) {5G NSA（Option 3xの例）};
 
     % UE
     \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (nsa-ue) at (0,2) {UE};
 
     % eNB
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-enb) at (2.5,3) {eNB};
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-enb) at (2.5,3) {LTE eNB};
     % gNB
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-gnb) at (2.5,1) {gNB};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-gnb) at (2.5,1) {NR gNB};
 
     % EPC
     \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-epc) at (5,2) {4G EPC};
 
-    % 接続線
-    \draw[->, thick] (nsa-ue) -- (nsa-enb);
+    % 接続線（概念図）
+    % Control Plane（概念）
+    \draw[->, thick, dashed] (nsa-ue) -- (nsa-enb);
+    \draw[->, thick, dashed] (nsa-enb) -- (nsa-epc);
+    % User Plane（概念；Option 3xではgNBからEPCへ直接経路を持ち得る）
     \draw[->, thick] (nsa-ue) -- (nsa-gnb);
-    \draw[->, thick] (nsa-enb) -- (nsa-epc);
-    \draw[->, thick, dashed] (nsa-gnb) -- (nsa-enb);
+    \draw[->, thick] (nsa-gnb) -- (nsa-epc);
+    % eNB-gNB間（概念）
+    \draw[<->, thick, dashed] (nsa-gnb) -- (nsa-enb);
 
     % 説明
-    \node[text width=4cm, align=center] at (2.5,-0.5) {5G RANを追加するが\\CNは4Gのまま};
+    \node[text width=4cm, align=center] at (2.5,-0.5) {C-PlaneはLTE側\\U-PlaneはNR側};
 
     % 区切り線
     \draw[thick, dashed, gray] (7,5) -- (7,-1);
 
     % SA構成（右側）
-    \node[font=\normalsize\bfseries] at (11,4.5) {SA (Standalone)};
+    \node[font=\normalsize\bfseries] at (11,4.5) {5G SA};
 
     % UE
     \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (sa-ue) at (8.5,2) {UE};
 
     % gNB
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-gnb) at (11,2) {gNB};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-gnb) at (11,2) {NR gNB};
 
     % 5GC
     \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-5gc) at (13.5,2) {5GC};
@@ -233,20 +325,60 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
     \draw[->, thick] (sa-gnb) -- (sa-5gc);
 
     % 説明
-    \node[text width=4cm, align=center] at (11,-0.5) {5G RANと5GCの組み合わせ\\新機能が利用可能};
+    \node[text width=4cm, align=center] at (11,-0.5) {5G RANと5GCの組み合わせ\\5GC機能が利用可能};
   \end{tikzpicture}
-  \caption{NSA構成とSA構成の比較}
+  \caption{5G NSA（Option 3xの例）と5G SA構成の概念比較}
   \label{fig:nsa_sa_comparison}
 \end{figure}
 
-\subsection{ng-eNB (Option 5/7): RAN改修を前提とした構成}
-3GPPは，LTE基地局（eNB）を5GCに接続するための規格として「ng-eNB」を定義している\cite{3GPP_TS38300}．ng-eNBは，無線方式はLTE（E-UTRA）のままであるが，CNとのインターフェースとして5G用のNG-AP（N2）およびNG-U（N3）をサポートする．
+\subsection{3GPPにおける移行Option}
+3GPPは，4G（LTE/EPC）から5G（NR/5GC）への段階的な移行を可能にするため，TR 38.801において複数の移行構成（Option 1〜7）を規定している\cite{3GPP_TR38801}．表\ref{tab:migration_options}にOption一覧を示す．
 
-しかし，既存のレガシーeNBをng-eNB化するには，基地局ファームウェアの大幅な改修が必要となる．古いハードウェアでは処理能力不足でNG-APスタックが動作しない場合や，ベンダーが旧製品のサポートを終了しておりファームウェア更新が提供されない場合も多い．つまり，ng-eNBは「RANの更新」を前提としたソリューションであり，物理的に更新困難な環境への適用は限定的である．
+\begin{table}[htbp]
+  \centering
+  \caption{3GPPが規定する移行Option一覧}
+  \label{tab:migration_options}
+  \begin{tabular}{c|c|c|c|l}
+    \hline
+    Option & RAN & CN & 分類 & 備考 \\
+    \hline\hline
+    1 & eNB & EPC & --- & 従来の4G LTE構成 \\
+    2 & gNB & 5GC & 5G SA & 純粋な5G構成 \\
+    3/3a/3x & eNB + gNB & EPC & 5G NSA & 商用で広く採用 \\
+    4/4a & gNB + ng-eNB & 5GC & --- & gNB主，ng-eNB副 \\
+    5 & ng-eNB & 5GC & --- & LTE RANで5GC接続 \\
+    7/7a/7x & ng-eNB + gNB & 5GC & --- & ng-eNBとgNBを併用 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+ここで，末尾の「a」や「x」は，制御面・ユーザ面の終端点やアンカー方式等の細部が異なる派生構成を表す．
+
+前節で述べた一般的な5G SA/NSAの分類との対応は以下の通りである：
+\begin{itemize}
+  \item \textbf{5G SA}に該当: Option 2（gNB+5GC）
+  \item \textbf{5G NSA}に該当: Option 3系（eNB+gNB+EPC）
+\end{itemize}
+なお，Option 1は従来の4G構成であり5Gではない．Option 4/5/7はng-eNBを用いて5GCに接続する構成であり，5GC機能を利用可能という点では5G SAに近いが，RANがLTEであるため純粋な5G SAとは区別される\cite{3GPP_TR38801,3GPP_TS38300}．
+
+現在，商用導入で最も広く用いられているのはOption 3系（特にOption 3x）である\cite{Malik_INSPECT2024_5GTactical}．これは，LTE eNBがEPCに接続されたまま，NR gNBを追加してデュアルコネクティビティ（DC）によりサービスを提供する構成である\cite{3GPP_TR38801}．既存の4Gインフラを活用できるため導入が容易である一方，CNがEPCのままであるため，5GCを前提とする機能（3GPPが定義するネットワークスライシング等）は利用できないという限界がある\cite{GSMA_5GNSA_Option3}．
+
+\subsection{ng-eNBを用いた構成とその限界}
+Option 3系ではCNがEPCのままであるため5GC機能が利用できない．これに対し，3GPPはLTE基地局を5GCに接続するためのノードとしてng-eNBを定義している\cite{3GPP_TS38300}．
+
+ng-eNBは，無線インターフェースはLTE（E-UTRA）のままであるが，CNとのインターフェースとしてNG-C（NGAP）およびNG-Uをサポートし，5GCに直接接続可能である\cite{3GPP_TS38300,3GPP_TS38413}．ng-eNBを用いた移行Optionとしては以下が規定されている\cite{Malik_INSPECT2024_5GTactical,3GPP_TR38801}：
+\begin{itemize}
+  \item \textbf{Option 5}: ng-eNBが単独で5GCに接続する構成
+  \item \textbf{Option 4/4a}: gNBが5GCに接続し，ng-eNBを副ノードとして追加する構成
+  \item \textbf{Option 7/7a/7x}: ng-eNBが5GCに接続し（Master Node），gNBを副ノード（Secondary Node）として追加してデュアルコネクティビティを提供する構成\cite{3GPP_TR38801}
+\end{itemize}
+
+しかし，既存のレガシーeNBをng-eNB化するには，基地局側でNGインターフェース（少なくともNG-C/NGAP）を終端・処理する実装が必要となるため，基地局ソフトウェア（ファームウェア）の改修が前提となる\cite{3GPP_TS38300,3GPP_TS38413}．したがって，ng-eNBは「RANの更新」を前提としたソリューションであり，物理的に更新困難な環境への適用は限定的である．
 
 \section{異世代相互接続の技術的障壁}
 
-以上の背景から，レガシーeNB（S1インターフェースのみサポート）を，そのままの状態で5GCに収容する技術が必要となる．しかし，これを実現するには以下の技術的障壁を乗り越える必要がある．
+前節までで述べたように，NTN等の物理的制約（第\ref{chap:introduction}章で述べた課題1・3）や，R\&Dにおける低コスト検証環境の欠如（課題2），そしてng-eNBがRAN改修を前提とする点を踏まえると，これらの課題に共通するのは「RANの物理的更新を前提としない移行手段が存在しない」という点である．
+したがって，レガシーeNB（S1インターフェースのみサポート）を，改修なしにそのままの状態で5GCに収容する技術が求められる．本節では，これを実現する上で克服すべき技術的障壁を整理する．
 
 図\ref{fig:inter_generation_gap}に，レガシーRANと5GCの間に存在する技術的なギャップを示す．
 
@@ -303,9 +435,9 @@ sXGPは安価にプライベートLTEを構築できる利点があるが，こ�
 例えば，4Gでは「Attach」手順で接続とベアラ確立を一括して行うが，5Gでは「Registration」と「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
 \subsection{NAS: セキュリティと鍵管理の相違}
-端末（UE）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{threegpp-24301}と5G NAS\cite{threegpp-24501}は異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
+端末（UE）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}は異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
 
 \subsection{U-Plane: QoSモデルの変革}
-ユーザデータ転送（GTP-U）\cite{threegpp-29281}自体は互換性が高いが，QoSモデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，GTP-Uパケットヘッダ（拡張ヘッダ等）を書き換える必要がある．
+ユーザデータ転送（GTP-U）\cite{3GPP_TS29281}自体は互換性が高いが，QoSモデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，GTP-Uパケットヘッダ（拡張ヘッダ等）を書き換える必要がある．
 
 本研究では，これらの障壁を「S1-N2変換ゲートウェイ」によって解消し，RANの改修なしに5GCへの収容を実現する．

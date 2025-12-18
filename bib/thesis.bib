@@ -1,20 +1,19 @@
+% =============================================================================
+% thesis.bib - 卒業論文用参考文献データベース
+% =============================================================================
 
-@misc{nasa2020,
-  author = { NASA },
-  title = { NASA's Lunar Exploration Program Overview },
-  year = { 2020 },
-  note = {\url{https://www.nasa.gov/wp-content/uploads/2020/12/artemis_plan-20200921.pdf}（accessed 2024/12/14）},
-}
+% =============================================================================
+% 国際標準化機関 (ITU, ETSI, O-RAN)
+% =============================================================================
 
-% ---- 1章背景用の引用文献 (added) ----
 @techreport{ITUR_M2083,
   author      = {{ITU-R}},
   title       = {{IMT Vision -- Framework and overall objectives of the future development of IMT for 2020 and beyond}},
   institution = {International Telecommunication Union},
   type        = {Recommendation},
   number      = {M.2083-0},
-  month       = sep,
   year        = {2015},
+  month       = sep,
   note        = {\url{https://www.itu.int/dms_pubrec/itu-r/rec/m/R-REC-M.2083-0-201509-I!!PDF-E.pdf}}
 }
 
@@ -24,31 +23,9 @@
   institution = {European Telecommunications Standards Institute},
   type        = {Group Specification},
   number      = {GS NFV 002 V1.1.1},
-  month       = oct,
   year        = {2013},
+  month       = oct,
   note        = {\url{https://www.etsi.org/deliver/etsi_gs/NFV/001_099/002/01.01.01_60/gs_nfv002v010101p.pdf}}
-}
-
-@techreport{3GPP_TS23501_R15,
-  author      = {{3GPP}},
-  title       = {{System architecture for the 5G System (5GS)}},
-  institution = {3rd Generation Partnership Project (3GPP)},
-  type        = {Technical Specification},
-  number      = {TS 23.501 V15.0.0},
-  note        = {Release 15},
-  month       = dec,
-  year        = {2017}
-}
-
-@techreport{3GPP_TS23203,
-  author      = {{3GPP}},
-  title       = {{Policy and charging control architecture}},
-  institution = {3rd Generation Partnership Project (3GPP)},
-  type        = {Technical Specification},
-  number      = {TS 23.203 V17.0.0},
-  note        = {Release 17},
-  month       = mar,
-  year        = {2022}
 }
 
 @techreport{ORAN_WhitePaper2018,
@@ -56,51 +33,280 @@
   title       = {{O-RAN: Towards an Open and Smart RAN}},
   institution = {O-RAN Alliance},
   type        = {White Paper},
-  month       = oct,
   year        = {2018},
+  month       = oct,
   note        = {\url{https://mediastorage.o-ran.org/white-papers/O-RAN.White-Paper-2018-10.pdf}}
 }
 
-@article{Garcia_ORAN2021,
-  author  = {Garcia-Saavedra, Andres and Costa-Perez, Xavier},
-  journal = {IEEE Communications Standards Magazine},
-  title   = {{O-RAN: Disrupting the Virtualized RAN Ecosystem}},
-  year    = {2021},
-  volume  = {5},
-  number  = {4},
-  pages   = {96-103},
-  month   = dec,
-  note    = {\url{https://ieeexplore.ieee.org/document/9579445}}
-}
+% =============================================================================
+% 3GPP Technical Specifications (TS) - 番号順
+% =============================================================================
 
-@techreport{3GPP_TR23799,
+% TS 22.261: 5Gサービス要件
+@techreport{3GPP_TS22261,
   author      = {{3GPP}},
-  title       = {{Study on Architecture for Next Generation System}},
+  title       = {{Service requirements for the 5G system}},
   institution = {3rd Generation Partnership Project (3GPP)},
-  type        = {Technical Report},
-  number      = {TR 23.799},
-  note        = {Annex J Deployment Scenarios},
-  year        = {2016}
+  type        = {Technical Specification},
+  number      = {TS 22.261 V19.6.0},
+  year        = {2024},
+  month       = jun,
+  note        = {Release 19}
 }
 
+% TS 23.203: QoS/PCC
+@techreport{3GPP_TS23203,
+  author      = {{3GPP}},
+  title       = {{Policy and charging control architecture}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 23.203 V17.0.0},
+  year        = {2022},
+  month       = mar,
+  note        = {Release 17}
+}
+
+% TS 23.401: EPCアーキテクチャ
+@techreport{3GPP_TS23401,
+  author      = {{3GPP}},
+  title       = {{General Packet Radio Service (GPRS) enhancements for Evolved Universal Terrestrial Radio Access Network (E-UTRAN) access}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 23.401 V18.0.0},
+  year        = {2024},
+  note        = {Release 18}
+}
+
+% TS 23.501: 5GSアーキテクチャ
+@techreport{3GPP_TS23501_R15,
+  author      = {{3GPP}},
+  title       = {{System architecture for the 5G System (5GS)}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 23.501 V15.0.0},
+  year        = {2017},
+  month       = dec,
+  note        = {Release 15}
+}
+
+% TS 24.301: 4G NAS
+@techreport{3GPP_TS24301,
+  author      = {{3GPP}},
+  title       = {{Non-Access-Stratum (NAS) protocol for Evolved Packet System (EPS); Stage 3}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 24.301 V18.0.0},
+  year        = {2024},
+  note        = {Release 18}
+}
+
+% TS 24.501: 5G NAS
+@techreport{3GPP_TS24501,
+  author      = {{3GPP}},
+  title       = {{Non-Access-Stratum (NAS) protocol for 5G System (5GS); Stage 3}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 24.501 V18.0.0},
+  year        = {2024},
+  note        = {Release 18}
+}
+
+% TS 29.281: GTP-U
+@techreport{3GPP_TS29281,
+  author      = {{3GPP}},
+  title       = {{General Packet Radio System (GPRS) Tunnelling Protocol User Plane (GTPv1-U)}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 29.281 V18.0.0},
+  year        = {2024},
+  note        = {Release 18}
+}
+
+% TS 33.401: 4Gセキュリティ
+@techreport{3GPP_TS33401,
+  author      = {{3GPP}},
+  title       = {{3GPP System Architecture Evolution (SAE); Security architecture}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 33.401 V18.0.0},
+  year        = {2024},
+  note        = {Release 18}
+}
+
+% TS 33.501: 5Gセキュリティ
+@techreport{3GPP_TS33501,
+  author      = {{3GPP}},
+  title       = {{Security architecture and procedures for 5G System}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 33.501 V17.0.0},
+  year        = {2023},
+  note        = {Release 17}
+}
+
+% TS 36.413: S1AP
+@techreport{3GPP_TS36413,
+  author      = {{3GPP}},
+  title       = {{Evolved Universal Terrestrial Radio Access Network (E-UTRAN); S1 Application Protocol (S1AP)}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 36.413 V18.0.0},
+  year        = {2024},
+  month       = mar,
+  note        = {Release 18, \url{https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2446}}
+}
+
+% TS 38.300: NR概要
 @techreport{3GPP_TS38300,
   author      = {{3GPP}},
   title       = {{NR; NR and NG-RAN Overall description}},
   institution = {3rd Generation Partnership Project (3GPP)},
   type        = {Technical Specification},
   number      = {TS 38.300},
-  note        = {Clause 4.1},
-  year        = {2017}
+  year        = {2017},
+  note        = {Clause 4.1}
 }
 
+% TS 38.413: NGAP
+@techreport{3GPP_TS38413,
+  author      = {{3GPP}},
+  title       = {{NG-RAN; NG Application Protocol (NGAP)}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Specification},
+  number      = {TS 38.413 V18.2.0},
+  year        = {2024},
+  month       = sep,
+  note        = {Release 18, \url{https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223}}
+}
+
+% =============================================================================
+% 3GPP Technical Reports (TR) - 番号順
+% =============================================================================
+
+% TR 23.799: 5GSアーキテクチャ検討
+@techreport{3GPP_TR23799,
+  author      = {{3GPP}},
+  title       = {{Study on Architecture for Next Generation System}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Report},
+  number      = {TR 23.799},
+  year        = {2016},
+  note        = {Annex J Deployment Scenarios}
+}
+
+% TR 38.801: NRアーキテクチャ検討
+@techreport{3GPP_TR38801,
+  author      = {{3GPP}},
+  title       = {{Study on new radio access technology: Radio access architecture and interfaces}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Report},
+  number      = {TR 38.801 V14.0.0},
+  year        = {2017},
+  month       = mar,
+  note        = {Release 14}
+}
+
+% TR 38.821: NR NTNソリューション
+@techreport{3GPP_TR38821,
+  author      = {{3GPP}},
+  title       = {{Solutions for NR to support non-terrestrial networks (NTN)}},
+  institution = {3rd Generation Partnership Project (3GPP)},
+  type        = {Technical Report},
+  number      = {TR 38.821 V16.2.0},
+  year        = {2021},
+  month       = sep,
+  note        = {Release 16}
+}
+
+% TR 38.811: NR NTN検討
 @techreport{3GPP_TR38811,
   author      = {{3GPP}},
   title       = {{Study on New Radio (NR) to support non-terrestrial networks}},
   institution = {3rd Generation Partnership Project (3GPP)},
   type        = {Technical Report},
   number      = {TR 38.811},
-  note        = {Clause 4.2},
-  year        = {2018}
+  year        = {2018},
+  note        = {Clause 4.2}
+}
+
+% =============================================================================
+% 3GPP Web Resources
+% =============================================================================
+
+@misc{3GPP_5GSystemOverview,
+  author       = {{3GPP}},
+  title        = {{5G System Overview}},
+  year         = {2025},
+  howpublished = {\url{https://www.3gpp.org/technologies/5g-system-overview}},
+  note         = {accessed 2025/12/17}
+}
+
+@misc{GSMA_5GNSA_Option3,
+  author       = {{GSMA}},
+  title        = {{5G Implementation Guidelines: NSA Option 3}},
+  year         = {2025},
+  howpublished = {\url{https://www.gsma.com/solutions-and-impact/technologies/networks/gsma_resources/5g-implementation-guidelines-nsa-option-3/}},
+  note         = {accessed 2025/12/17}
+}
+
+@misc{Ericsson_5GNSA_Bands2024,
+  author       = {{Ericsson}},
+  title        = {{Data-driven prioritization of 5G NSA bands}},
+  year         = {2024},
+  month        = jul,
+  howpublished = {\url{https://www.ericsson.com/en/blog/2024/7/data-driven-prioritization-of-5g-nsa-bands}},
+  note         = {accessed 2025/12/17}
+}
+
+@misc{NGMN_5GDevices_SAMigration,
+  author       = {{NGMN Alliance}},
+  title        = {{5G Devices SA Migration Scenarios}},
+  year         = {2021},
+  howpublished = {\url{https://www.ngmn.org/wp-content/uploads/NGMN-5G-Devices-SA-Migration-Scenarios-v1.0.pdf}},
+  note         = {accessed 2025/12/17}
+}
+
+% =============================================================================
+% 国内標準規格 (ARIB)
+% =============================================================================
+
+@techreport{ARIB_STD_T118,
+  author      = {{ARIB}},
+  title       = {{sXGP方式}},
+  institution = {一般社団法人電波産業会},
+  type        = {ARIB標準規格},
+  number      = {ARIB STD-T118 2.0版},
+  year        = {2019},
+  month       = mar,
+  note        = {\url{https://www.arib.or.jp/kikaku/kikaku_tushin/std-t118.html}}
+}
+
+% =============================================================================
+% 学術論文・技術論文
+% =============================================================================
+
+@article{NTTDocomo_5GSA_2023,
+  author  = {田中 優多 and 荒川 雅矢 and 奥田 兼三 and 清水 和人 and 國友 宏一郎},
+  title   = {{5G SA方式を実現する5Gコアネットワーク技術概要}},
+  journal = {NTT DOCOMOテクニカル・ジャーナル},
+  volume  = {30},
+  number  = {4},
+  pages   = {17--28},
+  year    = {2023},
+  month   = jan,
+  note    = {\url{https://www.docomo.ne.jp/binary/pdf/corporate/technology/rd/technical_journal/bn/vol30_4/vol30_4_003jp.pdf}}
+}
+
+@article{Garcia_ORAN2021,
+  author  = {Garcia-Saavedra, Andres and Costa-Perez, Xavier},
+  title   = {{O-RAN: Disrupting the Virtualized RAN Ecosystem}},
+  journal = {IEEE Communications Standards Magazine},
+  volume  = {5},
+  number  = {4},
+  pages   = {96--103},
+  year    = {2021},
+  month   = dec,
+  note    = {\url{https://ieeexplore.ieee.org/document/9579445}}
 }
 
 @article{Starlink_D2D_Measurement,
@@ -111,7 +317,6 @@
   note    = {\url{https://arxiv.org/abs/2506.00283}}
 }
 
-% Mobile system generation-invariant requirements (AAA, Mobility, U-plane)
 @inproceedings{Watanabe_ADMobile2025,
   author    = {Watanabe, Hiroki and Shima, Keiichi and Horiba, Katsuhiro},
   title     = {{Autonomous Decentralized Mobile System: C-Plane RAN Core Convergence for Stable Network}},
@@ -122,476 +327,89 @@
   doi       = {10.1145/3763400.3763449}
 }
 
-% 1. S1 Interface (S1AP)
-@techreport{3GPP_TS36413,
-  author      = {{3GPP}},
-  title       = {{Evolved Universal Terrestrial Radio Access Network (E-UTRAN); S1 Application Protocol (S1AP)}},
-  institution = {3rd Generation Partnership Project (3GPP)},
-  type        = {Technical Specification},
-  number      = {TS 36.413 v18.0.0 (Release 18)},
-  year        = {2024},
-  month       = mar,
-  note        = {Available: \url{https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2446}}
+@inproceedings{Rouili_NOMS2024_OpenSource5GTestbeds,
+  author    = {Rouili, Mohamed and Saha, Niloy and Golkarifard, Morteza and Zangooei, Mohammad and Boutaba, Raouf and Onur, Ertan and Saleh, Aladdin},
+  title     = {{Evaluating Open-Source 5G SA Testbeds: Unveiling Performance Disparities in RAN Scenarios}},
+  booktitle = {2024 IEEE/IFIP Network Operations and Management Symposium (NOMS)},
+  year      = {2024},
+  publisher = {IEEE},
+  doi       = {10.1109/NOMS59830.2024.10575687},
+  isbn      = {979-8-3503-2793-9},
+  note      = {Experience Session, \url{https://doi.org/10.1109/NOMS59830.2024.10575687}}
 }
 
-% 2. N2 Interface (NGAP)
-@techreport{3GPP_TS38413,
-  author      = {{3GPP}},
-  title       = {{NG-RAN; NG Application Protocol (NGAP)}},
-  institution = {3rd Generation Partnership Project (3GPP)},
-  type        = {Technical Specification},
-  number      = {TS 38.413 v18.2.0 (Release 18)},
-  year        = {2024},
-  month       = sep,
-  note        = {Available: \url{https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223}}
-}
-
-% 4. sXGP Definition
-@misc{XGP_Forum_WhitePaper,
-  author       = {{XGP Forum}},
-  title        = {{XGP Forum White Paper: sXGP System}},
-  howpublished = {\url{http://www.xgpforum.com/new_XGP/en/004/XGP_Forum_White_Paper_E_v1_0.pdf}},
-  year         = {2017},
-  note         = {Accessed: 2025-12-11}
-}
-% ----------------------------------------
-
-% ---- 5G/3GPP/OSS references (added) ----
-@misc{threegpp-23501,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {System Architecture for the 5G System (5GS)},
-  howpublished = {3GPP TS 23.501},
-  year = {2024},
-  note = {Technical Specification 23.501}
-}
-
-@misc{threegpp-23502,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {Procedures for the 5G System (5GS)},
-  howpublished = {3GPP TS 23.502},
-  year = {2024},
-  note = {Technical Specification 23.502}
-}
-
-@misc{open5gs,
-  author = {Open5GS Project},
-  title = {Open5GS: Open Source 5G/4G Core Network},
-  year = {2025},
-  note = {\url{https://open5gs.org/}（accessed 2025/01/18）}
-}
-% ----------------------------------------
-
-% --- Additional 3GPP specifications ---
-@misc{threegpp-24501,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {Non-Access-Stratum (NAS) protocol for 5G System (5GS); Stage 3},
-  howpublished = {3GPP TS 24.501},
-  year = {2024},
-  note = {Technical Specification 24.501}
-}
-
-@misc{threegpp-23503,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {Policy and charging control framework for the 5G System (5GS)},
-  howpublished = {3GPP TS 23.503},
-  year = {2024},
-  note = {Technical Specification 23.503}
-}
-
-@misc{threegpp-29281,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {GPRS Tunnelling Protocol User Plane (GTPv1-U)},
-  howpublished = {3GPP TS 29.281},
-  year = {2024},
-  note = {Technical Specification 29.281}
-}
-
-@misc{threegpp-23401,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {GPRS enhancements for E-UTRAN access},
-  howpublished = {3GPP TS 23.401},
-  year = {2024},
-  note = {Technical Specification 23.401}
-}
+% =============================================================================
+% IETF RFC
+% =============================================================================
 
 @misc{rfc2003,
-  author = {C. Perkins},
-  title = {{IP Encapsulation within IP}},
-  howpublished = {RFC Editor, RFC 2003},
-  year = {1996},
-  month = oct,
-  note = {[Online]. Available: \url{https://www.rfc-editor.org/info/rfc2003}},
-  doi = {10.17487/RFC2003}
+  author       = {Perkins, C.},
+  title        = {{IP Encapsulation within IP}},
+  howpublished = {RFC 2003},
+  year         = {1996},
+  month        = oct,
+  doi          = {10.17487/RFC2003},
+  note         = {\url{https://datatracker.ietf.org/doc/html/rfc2003}}
 }
 
-% --- NAT64/DNS64/464XLAT ---
 @misc{rfc6146,
-  author = {M. Bagnulo and P. Matthews and I. van Beijnum},
-  title = {{Stateful NAT64: Network Address and Protocol Translation from IPv6 Clients to IPv4 Servers}},
-  howpublished = {RFC Editor, RFC 6146},
-  year = {2011},
-  month = {Apr.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc6146},
-  doi = {10.17487/RFC6146}
+  author       = {Bagnulo, M. and Matthews, P. and van Beijnum, I.},
+  title        = {{Stateful NAT64: Network Address and Protocol Translation from IPv6 Clients to IPv4 Servers}},
+  howpublished = {RFC 6146},
+  year         = {2011},
+  month        = apr,
+  doi          = {10.17487/RFC6146},
+  note         = {\url{https://datatracker.ietf.org/doc/html/rfc6146}}
 }
 
-@misc{rfc6147,
-  author = {M. Bagnulo and A. Sullivan and P. Matthews and I. van Beijnum},
-  title = {{DNS64: DNS Extensions for Network Address Translation from IPv6 Clients to IPv4 Servers}},
-  howpublished = {RFC Editor, RFC 6147},
-  year = {2011},
-  month = {Apr.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc6147},
-  doi = {10.17487/RFC6147}
-}
+% =============================================================================
+% オープンソースソフトウェア・ツール
+% =============================================================================
 
-@misc{rfc6877,
-  author = {M. Mawatari and M. Kawashima and C. Byrne},
-  title = {{464XLAT: Combination of Stateful and Stateless Translation}},
-  howpublished = {RFC Editor, RFC 6877},
-  year = {2013},
-  month = {Apr.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc6877},
-  doi = {10.17487/RFC6877}
-}
-
-% --- PMTUD/PLPMTUD ---
-@misc{rfc1191,
-  author = {J. C. Mogul and S. Deering},
-  title = {{Path MTU Discovery}},
-  howpublished = {RFC Editor, RFC 1191},
-  year = {1990},
-  month = {Nov.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc1191},
-  doi = {10.17487/RFC1191}
-}
-
-@misc{rfc4821,
-  author = {J. T. Mathis and J. Heffner and R. Raghunarayan},
-  title = {{Packetization Layer Path MTU Discovery}},
-  howpublished = {RFC Editor, RFC 4821},
-  year = {2007},
-  month = {Mar.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc4821},
-  doi = {10.17487/RFC4821}
-}
-
-% --- DSCP/ECN ---
-@misc{rfc2474,
-  author = {K. Nichols and S. Blake and F. Baker and D. Black},
-  title = {{Definition of the Differentiated Services Field (DS Field) in the IPv4 and IPv6 Headers}},
-  howpublished = {RFC Editor, RFC 2474},
-  year = {1998},
-  month = {Dec.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc2474},
-  doi = {10.17487/RFC2474}
-}
-
-@misc{rfc2475,
-  author = {S. Blake and D. Black and M. Carlson and E. Davies and Z. Wang and W. Weiss},
-  title = {{An Architecture for Differentiated Services}},
-  howpublished = {RFC Editor, RFC 2475},
-  year = {1998},
-  month = {Dec.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc2475},
-  doi = {10.17487/RFC2475}
-}
-
-@misc{rfc3168,
-  author = {K. K. Ramakrishnan and S. Floyd and D. L. Black},
-  title = {{The Addition of Explicit Congestion Notification (ECN) to IP}},
-  howpublished = {RFC Editor, RFC 3168},
-  year = {2001},
-  month = {Sep.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc3168},
-  doi = {10.17487/RFC3168}
-}
-
-% --- OSS project official pages ---
-@misc{free5gc,
-  author = {free5GC Project},
-  title = {free5GC: Open Source 5G Core Network},
-  year = {2025},
-  note = {\url{https://www.free5gc.org/}（accessed 2025/10/31）}
-}
-
-@misc{oai,
-  author = {OpenAirInterface Software Alliance},
-  title = {OpenAirInterface Project},
-  year = {2025},
-  note = {\url{https://www.openairinterface.org/}（accessed 2025/10/31）}
+@misc{open5gs,
+  author       = {{Open5GS Project}},
+  title        = {{Open5GS: Open Source 5G/4G Core Network}},
+  year         = {2025},
+  howpublished = {\url{https://open5gs.org/}},
+  note         = {accessed 2025/01/18}
 }
 
 @misc{srsran,
-  author = {srsRAN Project},
-  title = {srsRAN 4G/5G Software Radio Suite},
-  year = {2025},
-  note = {\url{https://www.srsran.com/}（accessed 2025/10/31）}
+  author       = {{srsRAN Project}},
+  title        = {{srsRAN 4G}},
+  year         = {2025},
+  howpublished = {\url{https://www.srsran.com/4g}},
+  note         = {accessed 2025/10/31}
 }
 
-@misc{ueransim,
-  author = {UERANSIM Project},
-  title = {UERANSIM: Open Source 5G UE and RAN (gNodeB) Simulator},
-  year = {2025},
-  note = {\url{https://github.com/aligungr/UERANSIM}（accessed 2025/10/31）}
+@misc{dpdk,
+  author       = {{DPDK Project}},
+  title        = {{Data Plane Development Kit (DPDK)}},
+  year         = {2025},
+  howpublished = {\url{https://www.dpdk.org/}},
+  note         = {accessed 2025/01/18}
 }
 
-@misc{artemis_agreement1,
-  title = {アルテミス合意について},
-  author = {内閣府},
-  year = {2020},
-  note = {\url{https://www8.cao.go.jp/space/comittee/01-kihon/kihon-dai13/siryou2_4.pdf}（accessed 2024/12/14）},
+@misc{ebpf,
+  author       = {{eBPF Foundation}},
+  title        = {{eBPF: A New Generation of Networking, Security, and Observability Tools}},
+  year         = {2025},
+  howpublished = {\url{https://ebpf.io/}},
+  note         = {accessed 2025/01/18}
 }
 
-@misc{artemis_agreement2,
-  title = {日・米・加・英・伊・豪・ルクセンブルグ・UAEの8カ国間で国際宇宙探査に関する宣言, アルテミス合意に署名},
-  author = {総務省},
-  year = {2020},
-  note = {\url{https://www.mext.go.jp/b_menu/activity/detail/2020/20201014.html}（accessed 2024/12/14）},
-}
+% =============================================================================
+% 学術論文 - 5Gアーキテクチャ
+% =============================================================================
 
-@misc{artemis_agreement3,
-  title = {Artemis Accords Reach 40 Signatories as NASA Welcomes Lithuania},
-  author = {NASA},
-  year = {2024},
-  month = {5},
-  note = {\url{https://www.nasa.gov/news-release/artemis-accords-reach-40-signatories-as-nasa-welcomes-lithuania/}（accessed 2024/12/14）},
-}
-
-@article{McBrayer2022,
-    author = {McBrayer and Katherine and Chai and Patrick and Judd Emily},
-    year = {2022},
-    month = {10},
-    title = {Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions},
-    doi = {10.2514/6.2022-4239}
-}
-
-@article{bundle_protocol_architecture,
-    author = {Farrera Marcos and Fleury Martin and Guil Ken and Ghanbari Mohammed},
-    year = {2010},
-    month = {02},
-    title = {Measurement and Analysis Study of Congestion Detection for Internet Video Streaming},
-    volume = {5},
-    journal = {Journal of Communications},
-    doi = {10.4304/jcm.5.2.169-177}
-}
-@article{久保田2009,
-  title={日本の宇宙開発・宇宙探査の技術ロードマップ},
-  author={小田 光茂 and 久保田 孝},
-  journal={日本ロボット学会誌},
-  volume={27},
-  number={5},
-  pages={482-489},
-  year={2009},
-  doi={10.7210/jrsj.27.482}
-}
-
-@misc{rfc5326,
-  author = {S. C. Burleigh and S. Farrell and M. Ramadas},
-  title = {{Licklider Transmission Protocol - Specification}},
-  howpublished = {RFC Editor, RFC 5326},
-  year = {2008},
-  month = {Sep.},
-  note = {[Online]. Available: https://www.rfc-editor.org/info/rfc5326},
-  doi = {10.17487/RFC5326}
-}
-
-@misc{rfc9171,
-author = {Scott Burleigh and Kevin Fall and Edward J. Birrane},
-title = {{"Bundle Protocol Version 7}},
-howpublished = {RFC Editor, RFC 9171},
-year = {2022},
-month = {Jan.},
-note = {[Online]. Available: https://datatracker.ietf.org/doc/rfc9171/6},
-doi = {10.17487/RFC9171}
-}
-
-@misc{schedule_aware_bundle_routing,
-title = {Schedule-Aware Bundle Routing (SABR)},
-author = {{Consultative Committee for Space Data Systems}},
-year = {2019},
-month = {July},
-note = {CCSDS 734.3-B-1,\url{https://public.ccsds.org/Pubs/734x3b1.pdf}（accessed 2024/12/15）},
-organization = {CCSDS},
-type = {Recommended Standard},
-}
-
-@inproceedings{dtn_implementations,
-author = {Bull, Ronny and Dudukovich, Rachel and Fraire, Juan and Kortas, Nadia and Kassouf-Short, Robert and Smith, Aaron and Schweinsberg, Ethan},
-year = {2024},
-month = {05},
-pages = {1-8},
-title = {Network Emulation Testbed Capabilities for Prototyping Space DTN Software and Protocols},
-booktitle = {IEEE INFOCOM 2024 - IEEE Conference on Computer Communications Workshops (INFOCOM WKSHPS)},
-doi = {10.1109/INFOCOMWKSHPS61880.2024.10620672}
-}
-
-@article{Fraire2021,
-title = {Routing in the Space Internet: A contact graph routing tutorial},
-journal = {Journal of Network and Computer Applications},
-volume = {174},
-pages = {102884},
-year = {2021},
-issn = {1084-8045},
-doi = {https://doi.org/10.1016/j.jnca.2020.102884},
-url = {https://www.sciencedirect.com/science/article/pii/S1084804520303489},
-author = {Juan A. Fraire and Olivier {De Jonckère} and Scott C. Burleigh},
-keywords = {Contact graph routing, Schedule aware bundle routing, Delay-tolerant networks},
-}
-@article{FRAIRE2018,
-title = {On route table computation strategies in Delay-Tolerant Satellite Networks},
-journal = {Ad Hoc Networks},
-volume = {80},
-pages = {31-40},
-year = {2018},
-issn = {1570-8705},
-doi = {https://doi.org/10.1016/j.adhoc.2018.07.002},
-url = {https://www.sciencedirect.com/science/article/pii/S1570870518304359},
-author = {Juan A. Fraire and Pablo G. Madoery and Amir Charif and Jorge M. Finochietto},
-keywords = {Delay-Tolerant Satellite Networks, Contact Graph Routing, Schedule Aware Bundle Routing},
-}
-
-@INPROCEEDINGS{DeJonckere2019,
-  author={De Jonckère, Olivier},
-  booktitle={2019 IEEE International Conference on Space Mission Challenges for Information Technology (SMC-IT)},
-  title={Efficient Contact Graph Routing Algorithms for Unicast and Multicast Bundles},
-  year={2019},
-  volume={},
-  number={},
-  pages={87-94},
-  keywords={Multicast algorithms;Routing;Delays;Unicast;Complexity theory;Software algorithms;Knowledge engineering},
-  doi={10.1109/SMC-IT.2019.00016}
+@inproceedings{Malik_INSPECT2024_5GTactical,
+  author    = {Malik, Mandeep and Kothari, Ashwin and Pandhare, Rashmi A.},
+  title     = {{Stand Alone or Non Stand Alone 5G Tactical Edge Network Architecture for Military and Use Case Scenarios}},
+  booktitle = {2024 IEEE International Conference on Intelligent Signal Processing and Effective Communication Technologies (INSPECT)},
+  year      = {2024},
+  pages     = {1--6},
+  publisher = {IEEE},
+  doi       = {10.1109/INSPECT63485.2024.10896152}
 }
 
 
-BibTeX
-@inproceedings{Bezirgiannidis2013,
-author = {Bezirgiannidis, Nikolaos and Tsapeli, Fani and Diamantopoulos, Sotiris and Tsaoussidis, Vassilis},
-title = {Towards flexibility and accuracy in space DTN communications},
-year = {2013},
-isbn = {9781450323635},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-url = {https://doi.org/10.1145/2505494.2505499},
-doi = {10.1145/2505494.2505499},
-booktitle = {Proceedings of the 8th ACM MobiCom Workshop on Challenged Networks},
-pages = {43-48},
-numpages = {6},
-keywords = {interplanetary communications, dynamic updates, delay tolerant networking, contact graph routing},
-location = {Miami, Florida, USA},
-series = {CHANTS '13}
-}
-
-@misc{rfc4838,
-    series =    {Request for Comments},
-    number =    4838,
-    howpublished =  {RFC 4838},
-    publisher = {RFC Editor},
-    doi =       {10.17487/RFC4838},
-    url =       {https://www.rfc-editor.org/info/rfc4838},
-    author =    {Leigh Torgerson and Scott C. Burleigh and Howard Weiss and Adrian J. Hooke and Kevin Fall and Dr. Vinton G. Cerf and Keith Scott and Robert C. Durst},
-    title =     {{Delay-Tolerant Networking Architecture}},
-    pagetotal = 35,
-    year =      2007,
-    month =     apr,
-}
-
-@misc{kiban_dai48,
-  author = {内閣府},
-  title = {	宇宙政策委員会 宇宙産業・科学技術基盤部会 第43回会合　資料3-1 国際宇宙ステーション・国際宇宙探査小委員会における検討状況（文部科学省提供資料）（２／５）},
-  year = 2019,
-  month = Aug,
-  note = {\url{https://www8.cao.go.jp/space/comittee/27-kiban/kiban-dai48/pdf/siryou4-3-1.pdf}（accessed 2024/12/23）},
-}
-
-@misc{jaxa2021,
-  author = {国立研究開発法人宇宙航空研究開発機構（JAXA）国際宇宙探査センター},
-  title = {	アルテミス計画に関する各国の開発状況について },
-  year = 2021,
-  month = June,
-  note = {\url{https://www.mext.go.jp/kaigisiryo/content/0210630-mxt_uchukai01-000016486_5.pdf}（accessed 2024/12/23）},
-}
-
-@misc{isas2023,
-  author = {宇宙科学研究所},
-  title = {	火星本星探査構想の検討について},
-  year = 2023,
-  month = Oct,
-  note = {\url{https://www8.cao.go.jp/space/comittee/27-kagaku/kagaku-dai57/siryou4.pdf}（accessed 2024/12/23）},
-}
-
-@INPROCEEDINGS{6134460,
-  author={Segui, John and Jennings, Esther and Burleigh, Scott},
-  booktitle={2011 IEEE Global Telecommunications Conference - GLOBECOM 2011},
-  title={Enhancing Contact Graph Routing for Delay Tolerant Space Networking},
-  year={2011},
-  volume={},
-  number={},
-  pages={1-6},
-  keywords={Routing;Relays;Routing protocols;Delay;Network topology;Bandwidth;Peer to peer computing},
-  doi={10.1109/GLOCOM.2011.6134460}
-}
-
-@inproceedings{Burleigh2008,
-author = {Burleigh, Scott},
-year = {2008},
-month = {05},
-pages = {},
-title = {Dynamic Routing for Delay-Tolerant Networking in Space Flight Operations},
-isbn = {978-1-62410-167-0},
-doi = {10.2514/6.2008-3406}
-}
-
-@misc{JPL2009,
-  author = { Jet Propulsion Laboratory },
-  title = {	Distrubtion Tolerant Network Technology Flight Validation Report: DINET},
-  year = 2009,
-  month = Feb,
-}
-
-@techreport{burleigh-dtnrg-cgr-01,
-    number =    {draft-burleigh-dtnrg-cgr-01},
-    type =      {Internet-Draft},
-    institution =   {Internet Engineering Task Force},
-    publisher = {Internet Engineering Task Force},
-    note =      {Work in Progress},
-    url =       {https://datatracker.ietf.org/doc/draft-burleigh-dtnrg-cgr/01/},
-    author =    {Scott Burleigh},
-    title =     {{Contact Graph Routing}},
-    pagetotal = 17,
-    year =      2010,
-    month =     jul,
-    day =       8,
-}
-
-@misc{ilrs,
-  author = {CHINA NATIONAL SPACE ADMINISTRATION},
-  title = {	International Lunar  Research Station Guide for Partnership（V1.0） },
-  year = 2021,
-  month = Aug,
-  note = {\url{https://www.unoosa.org/documents/pdf/copuos/2021/AM_3._China_ILRS_Guide_for_Partnership_V1.0Presented_by_Ms.Hui_JIANG.pdf}（accessed 2025/01/18）},
-}
-
-@misc{内閣府2023,
-  author = {内閣府宇宙開発戦略推進事務局},
-  title = {	宇宙政策を巡る最近の動向と宇宙技術戦略の進め方 },
-  year = 2023,
-  month = Sep,
-  note = {\url{https://www8.cao.go.jp/space/comittee/dai107/siryou2_1.pdf}（accessed 2025/01/18）},
-}
-
-@misc{経産省2024,
-  author = {経済産業省製造産業局 航空機武器宇宙産業課 宇宙産業室},
-  title = {	国内外の宇宙産業の動向を踏まえた経済産業省の取組と今後について },
-  year = 2024,
-  month = Mar,
-  note = {\url{https://www.meti.go.jp/shingikai/sankoshin/seizo_sangyo/space_industry/pdf/001_05_00.pdf}（accessed 2025/01/18）},
-}
-
-@misc{threegpp-24301,
-  author = {{3rd Generation Partnership Project (3GPP)}},
-  title = {Non-Access-Stratum (NAS) protocol for Evolved Packet System (EPS); Stage 3},
-  howpublished = {3GPP TS 24.301},
-  year = {2024},
-  note = {Technical Specification 24.301}
-}
