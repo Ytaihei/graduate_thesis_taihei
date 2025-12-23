@@ -43,9 +43,32 @@
     % Annotations
     \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {4G/5G\\Dual SIM};
     \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\1.9GHz / 10MHz};
+
+        % 凡例
+        \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+            \begin{tabular}{@{}l@{}}
+                \csname textbf\endcsname{凡例}\\
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE\\
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ sXGP基地局\\
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換ゲートウェイ\\
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!30] (0,0) rectangle (0.18,0.18);\ 5GC\\
+                \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ Dockerホスト\\
+            \end{tabular}
+        };
   \end{tikzpicture}
-  \caption{実験環境構成図．GatewayとOpen5GSは同一物理サーバ上のDockerコンテナとして動作する．}
+    \caption{実験環境構成図}
   \label{fig:experiment_setup}
+\end{figure}
+
+GatewayとOpen5GSは同一物理サーバ上のDockerコンテナとして動作する．
+
+また，実空間の電波環境および実機接続での検証を行っていることを明確にするため，実験環境の外観を図\ref{fig:experiment_photo}に示す．
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{img/experiment_setup_converted.pdf}
+  \caption{実験環境の外観（UE，sXGP基地局，およびサーバ）}
+  \label{fig:experiment_photo}
 \end{figure}
 
 \subsection{検証アプローチとソフトウェア構成}
@@ -53,10 +76,10 @@
 
 \subsubsection{Open5GSとsrsRAN}
 Open5GS\cite{open5gs}は，3GPP Release 16/17に準拠した5GC機能（AMF, SMF, UPF等）を提供するOSSである．商用製品と異なり，内部のステートマシンやメッセージ処理ロジックを詳細に追跡・修正できるため，プロトコル変換の挙動検証に適している．
-また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェアで実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．ZeroMQ（ZMQ）モードを使用することで，物理的な無線ハードウェア（SDR）を用いずにPC内のみで動作検証が可能である．本研究では，sXGP実機を主たる検証環境とし，srsRAN 4GのZMQモードは初期の開発・デバッグ段階で補助的に使用した．
+また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェアで実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．ZeroMQ（ZMQ）モードを使用することで，物理的な無線ハードウェア（SDR: Software Defined Radio）を用いずにPC内のみで動作検証が可能である．本研究では，sXGP実機を主たる検証環境とし，srsRAN 4GのZMQモードは初期の開発・デバッグ段階で補助的に使用した．
 
 \subsubsection{sXGP採用理由と実機検証の意義}
-sXGP\cite{ARIB_STD_T118}を採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
+sXGPを採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
 \begin{itemize}
     \item \textbf{継続性}: 実機を用いた反復試験を継続して実施できる．
     \item \textbf{再現性}: 構成（RAN/コア/変換器）を固定し，ログ/pcapを併せて保存することで再現可能な評価を行いやすい．
@@ -105,18 +128,17 @@ sXGP\cite{ARIB_STD_T118}を採用する主目的は，評価を再現可能な�
 \end{tabular}
 \end{table}
 
-UEには市販のスマートフォンを使用し，商用網と同様の挙動（省電力制御，バックグラウンド通信など）を含めた検証を行った．
-RANにはsXGP対応の小型基地局を採用し，免許不要で利用可能なプライベートLTE環境を構築した．
+UEには市販のスマートフォンを，RANにはsXGP対応の小型基地局を採用し，免許不要で利用可能なプライベートLTE環境を構築した．
 GatewayおよびOpen5GSは同一物理サーバ上のDockerコンテナとして動作させ，コンテナ間通信によるオーバーヘッドを最小化した．
 実装の詳細および最適化方針については第\ref{chap:proposal}章で述べた．
 
 \subsection{ネットワーク構成}
 各NFはDockerコンテナとして構築し，Linuxブリッジ（\texttt{br-sXGP-5G}）上のサブネット\texttt{172.24.0.0/16}に固定IPアドレスで配置した．
-ホストマシンの物理NIC（\texttt{eno1}）を当該ブリッジに接続し，物理的に接続されたeNB（IPアドレス: \texttt{172.24.0.111}）とコンテナ群とのL2到達性を確保した．
+ホストマシンの物理NIC（Network Interface Card，\texttt{eno1}）を当該ブリッジに接続し，物理的に接続されたeNB（IPアドレス: \texttt{172.24.0.111}）とコンテナ群とのL2到達性を確保した．
 本実験は小規模な検証環境であるため，VLANやVRFによるネットワーク分離は行わず，単一セグメントで構成した．
 
-UEへのIPアドレス払い出しには，インターネット接続用APN（internet）に\texttt{192.168.100.0/24}，IMS用APN（ims）に\texttt{192.168.101.0/24}を割り当てた．
-外部ネットワークへの接続性を確保するため，UPFコンテナ内でiptablesによるNAPT（IPマスカレード）を設定した．
+UEへのIPアドレス払い出しには，インターネット接続用APN（Access Point Name，internet）に\texttt{192.168.100.0/}\allowbreak\texttt{24}を割り当てた．
+外部ネットワークへの接続性を確保するため，UPFコンテナ内でiptablesによるNAPT（Network Address Port Translation，IPマスカレード）を設定した．
 
 \subsection{監視・計測}
 制御面の動作検証には，Linuxブリッジ上で\texttt{tcpdump}によりパケットキャプチャを取得し，Wiresharkおよび\texttt{tshark}を用いてプロトコル解析を行った．
@@ -140,9 +162,17 @@ UEへのIPアドレス払い出しには，インターネット接続用APN（i
 
 \section{評価シナリオ}
 
-本研究では，モバイル通信の根幹機能である「認証（AAA）」「移動管理（Mobility Management）」「U-plane」が世代を超えて本質的に不変であるという仮説に基づき，これらを「世代共通機能」として抽象化・変換する設計を採用した（第\ref{chap:proposal}章参照）．本節の評価シナリオでは，この世代共通機能が4G-5G間で正しくマッピングされ，動作することを検証する．
+本研究では，モバイル通信の根幹機能である「AAA」「Mobility Management」「U-plane」が世代を超えて本質的に不変であるという仮説に基づき，これらを「世代共通機能」として抽象化・変換する設計を採用した（第\ref{chap:proposal}章参照）．本節の評価シナリオでは，この世代共通機能が4G-5G間で正しくマッピングされ，動作することを検証する．
 
 なお，ゲートウェイが取り扱う具体的なパラメータ（ID/NAS/TEID/QoS）と変換規則は，第\ref{chap:proposal}章のNASメッセージ変換（表\ref{tab:nas_conversion_ul}，表\ref{tab:nas_conversion_dl}），ID変換（表\ref{tab:id_conversion}），TEIDマッピング（表\ref{tab:teid_mapping}），QoSマッピング（表\ref{tab:qos_mapping}）に整理している．
+
+本研究は設計（変換ロジック）の妥当性評価を主目的とするため，単に「接続できた」ことに加えて，設計で定義したマッピングが実際の信号として成立していることを，以下の証跡から確認する．
+\begin{itemize}
+    \item \textbf{pcap（制御面／ユーザ面）}: Linuxブリッジ上で取得したパケットキャプチャを用い，S1AP/NGAP/NASおよびGTP-Uのメッセージ種別・主要フィールドが，意図した対応関係で出現することを確認する．
+    \item \textbf{ゲートウェイのログ}: 変換処理の入出力（メッセージ種別）と，UEコンテキスト（ID束），TEIDマッピング更新の履歴を確認する．
+    \item \textbf{Open5GSのログ}: 登録・認証・PDUセッション確立におけるエラー有無と，状態遷移が正常に完了していることを確認する．
+    \item \textbf{UE表示}: 接続状態（アンテナ表示）およびIPアドレス取得の成否を確認する（最終的なユーザ体感指標）．
+\end{itemize}
 
 表\ref{tab:generation_invariant_mapping}に，評価項目と世代共通機能の対応関係を示す．
 
@@ -154,20 +184,21 @@ UEへのIPアドレス払い出しには，インターネット接続用APN（i
 \hline
 \textbf{世代共通機能} & \textbf{4G（S1）} & \textbf{5G（NG）} & \textbf{評価項目} \\
 \hline
-認証（AAA） & Auth Req/Resp & Auth Req/Resp & シナリオ1 \\
+AAA & Auth Req/Resp & Auth Req/Resp & シナリオ1 \\
 & Security Mode Cmd & Security Mode Cmd & \\
 \hline
-移動管理 & Attach/TAU & Registration & シナリオ1 \\
-（Mobility） & S1 Setup & NG Setup & \\
+Mobility Management & Attach/TAU & Registration & シナリオ1 \\
+& S1 Setup & NG Setup & \\
+& E-RAB Setup & PDU Session Setup & \\
 \hline
 U-plane & GTP-U (S1-U) & GTP-U (N3) & シナリオ2 \\
-& E-RAB / QCI & PDU Session / 5QI & \\
+& TEID mapping & TEID mapping & \\
 \hline
 \end{tabular}
 \end{table}
 
 \subsection{シナリオ1: C-Plane接続検証}
-UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．このシナリオでは，世代共通機能のうち「認証（AAA）」および「移動管理」の変換が正しく行われることを検証する．
+UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．このシナリオでは，世代共通機能のうち「AAA」および「Mobility Management」の変換が正しく行われることを検証する．
 \begin{itemize}
     \item \textbf{確認項目}:
     \begin{itemize}
@@ -176,6 +207,12 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
         \item 認証（Authentication）およびセキュリティモード（Security Mode Command）の成功（AAA）
         \item Attach Accept（4G側）/ Registration Accept（5GC側）の正常な変換と転送（移動管理：登録完了）
         \item E-RAB Setup（4G側）/ PDU Session Establishment（5GC側）のシグナリング完了
+        \item \textbf{マッピング成立の確認（設計評価）}:
+        \begin{itemize}
+            \item \textbf{NAS種別の対応}: Attach Request/\allowbreak Accept等がRegistration Request/\allowbreak Accept等として観測されること（表\ref{tab:nas_conversion_ul}，表\ref{tab:nas_conversion_dl}の対応）．
+            \item \textbf{ID束の整合}: eNB側の(ENB-UE-S1AP-ID, MME-UE-S1AP-ID)と，5GC側の(RAN-UE-NGAP-ID, AMF-UE-NGAP-ID)が，ゲートウェイの同一UEコンテキストに紐づいて管理されていること（表\ref{tab:id_conversion}および実装のコンテキスト管理）．
+            \item \textbf{AAAの成立}: 認証要求／応答およびセキュリティモードが失敗せず完了し，Open5GSログ上で登録完了まで到達していること（AAAの成立）．
+        \end{itemize}
     \end{itemize}
     \item \textbf{成功基準}: UE画面上でアンテナピクトが表示され，データ通信可能な状態（IPアドレス取得）となること．Open5GSのログにおいてエラーが発生していないこと．
 \end{itemize}
@@ -188,6 +225,11 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
         \item GTP-UのTEIDマッピング（S1-U↔N3）が正常に機能すること
         \item ユーザデータが双方向に透過的に転送されること
         \item 変換処理によるスループット低下および遅延増大が，実用上無視できるレベルであること
+        \item \textbf{マッピング成立の確認（設計評価）}:
+        \begin{itemize}
+            \item \textbf{TEIDの対応}: ゲートウェイのTEIDマッピングテーブルが生成・更新され，上り方向でS1N2 TEIDがN3 TEIDへ書き換えられていること（表\ref{tab:teid_mapping}の設計）．
+            \item \textbf{QoSの対応}: 手順上必要なQoS情報（QCI/5QI）が，提案実装の方針（表\ref{tab:qos_mapping}の対応例およびフォールバック）と矛盾なく扱われていること．
+        \end{itemize}
     \end{itemize}
     \item \textbf{測定ツール}: Ping（遅延），iPerf3（スループット）
     \item \textbf{成功基準}: UEから対向サーバへのICMP Echo Request/Replyが損失なく交換されること．また，ベースライン環境（LTE Native）と比較して著しい性能劣化が見られず，変換処理が通信の律速要因となっていないこと．

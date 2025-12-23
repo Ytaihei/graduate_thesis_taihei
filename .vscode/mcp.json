@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "3gpp-charging": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "3gpp-mcp-charging@latest",
+                "serve"
+            ]
+        }
+    }
+}

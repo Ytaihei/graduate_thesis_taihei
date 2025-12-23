@@ -29,7 +29,7 @@ $(BUILD_DIR)/$(SRC_DIR):
 .PHONY: docker docker-clean
 # Dockerized build (no host TeX Live needed)
 docker:
-	docker run --rm -v $(CURDIR):/workdir texlive/texlive:latest sh -c 'cd /workdir && latexmk -pdfdvi $(MAIN_TEX)'
+	docker run --rm -v $(CURDIR):/workdir texlive/texlive:latest sh -c 'cd /workdir && rm -f build/thesis.fdb_latexmk build/thesis.synctex* output/thesis.dvi output/thesis.pdf && latexmk -synctex=0 -pdfdvi $(MAIN_TEX)'
 
 docker-clean:
 	docker run --rm -v $(CURDIR):/workdir texlive/texlive:latest sh -c 'cd /workdir && latexmk -C'

@@ -2,16 +2,16 @@
 \label{chap:proposal}
 
 \section{基本概念：世代共通機能に基づく疎結合化}
-本研究では，モバイル通信の根幹機能である「認証（AAA）」，「移動管理（Mobility Management）」，「U-plane」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，目的は共通している．
+本研究では，モバイル通信の根幹機能である「AAA（Authentication, Authorization, and Accounting）」，「Mobility Management」，「U-plane」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，目的は共通している．
 
 提案する「S1-N2変換ゲートウェイ」は，この世代共通機能を利用して，4G RAN（S1インターフェース）と5Gコア（N2/N3インターフェース）の間の差異を吸収・抽象化する．これにより，物理的なRANと論理的なCNを疎結合にし，RANのハードウェア更新を伴わずにCNのみを次世代化することを可能にする．
 
 \section{アーキテクチャ設計}
-提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/UPF）の間に配置され，以下の2つのプレーンで変換を行う．
+提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/\allowbreak UPF）の間に配置され，以下の2つのプレーンで変換を行う．
 
 \begin{itemize}
-\item \textbf{C-Plane（制御面）}: S1AP\cite{3GPP_TS36413}（S1-MME）とNGAP\cite{3GPP_TS38413}（N2）の相互変換．SCTP接続を終端し，メッセージ単位で変換を行う．
-\item \textbf{U-Plane（ユーザ面）}: GTP-U\cite{3GPP_TS29281}パケットのヘッダ書き換え（TEIDマッピング）およびQoSパラメータ（QCI/5QI）の変換を行う．プロトコル自体は共通（GTPv1-U）であるが，カプセル化情報の整合性を保つ．
+\item \textbf{C-Plane（制御面）}: S1AP（S1-MME）とNGAP（N2）の相互変換．SCTP（Stream Control Transmission Protocol）接続を終端し，メッセージ単位で変換を行う．
+\item \textbf{U-Plane（ユーザ面）}: GTP-Uパケットのヘッダ書き換え（TEIDマッピング）およびQoSパラメータ（QCI/5QI）の変換を行う．プロトコル自体は共通（GTPv1-U）であるが，カプセル化情報の整合性を保つ．
 \end{itemize}
 
 \begin{figure}[htbp]
@@ -38,6 +38,17 @@
     \node[below=0.2cm of enb, align=center, font=\scriptsize] {MMEとして\\接続};
     \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBとして\\接続};
     \node[below=1.4cm of conv, align=center, font=\scriptsize] {eNBに対してはMME，\\5GCに対してはgNBとして動作};
+
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+        \csname textbf\endcsname{凡例}\\
+        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ 4G RAN側（eNB）\\
+        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側\\
+        \csname tikz\endcsname[baseline=-0.6ex]\draw[dashed, thick] (0,0) rectangle (0.18,0.18);\ 変換ゲートウェイ領域\\
+        \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ インターフェース接続（S1/NG）\\
+      \end{tabular}
+    };
   \end{tikzpicture}
   \caption{提案システムの全体構成（S1-N2変換ゲートウェイ）}
   \label{fig:architecture}
@@ -104,6 +115,18 @@
     % ラベル
     \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
     \node[font=\scriptsize] at (3.5,1.6) {U-Plane};
+
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB側スタック\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側スタック\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ ゲートウェイ（終端/中継）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 変換層（S1↔NG/TEID管理）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ U-Plane経路\\
+      \end{tabular}
+    };
   \end{tikzpicture}
   \caption{システム構成とプロトコルスタック（IPアドレスは本実験環境の一例）}
   \label{fig:protocol_stack}
@@ -264,6 +287,17 @@ eKSI (3bit) & ngKSI (4bit, TSC=0) \\
     \node at (-1, -7) [rotate=90] {Time};
     \draw [->] (-0.5, -1) -- (-0.5, -14);
 
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!30] (0,0) rectangle (0.18,0.18);\ 変換器の能動処理（注釈）\\
+      \end{tabular}
+    };
+
   \end{tikzpicture}
   \caption{プロトタイプにおける接続シーケンス（Early S1 Setupを含む）}
   \label{fig:sequence_diagram}
@@ -362,6 +396,16 @@ TEIDマッピングエントリは，C-Planeのセッション確立手順と連
     \node[right] at (12, -2.5) {To eNB};
     \draw[->, thick] (proc_dl) -- (pkt4);
 
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!10] (0,0) rectangle (0.18,0.18);\ eNB側のパケット\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!10] (0,0) rectangle (0.18,0.18);\ UPF側のパケット\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!10] (0,0) rectangle (0.18,0.18);\ 変換器内処理\\
+      \end{tabular}
+    };
+
   \end{tikzpicture}
   \caption{U-Planeパケット処理とヘッダ変換フロー}
   \label{fig:uplane_processing}
@@ -433,6 +477,17 @@ TEIDマッピングエントリは，C-Planeのセッション確立手順と連
       \hspace{1em}$= \text{KDF}(CK||IK, \text{SN\_id}, \text{SQN}\oplus\text{AK})$
     };
     \draw[->, dashed] (6, 4.8) -- (6, 4.3) -- (calc.west);
+
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB/UE\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ 変換器内の計算処理\\
+      \end{tabular}
+    };
 
   \end{tikzpicture}
   \caption{認証フローと鍵導出プロセス（ゲートウェイによるK\_ASME生成）}
@@ -524,7 +579,7 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 異常系（IE不足/不整合等）については，原則としてログ出力の上でメッセージを破棄する．ただし，S1AP/NGAPのErrorIndicationやUE Context Release Request等のエラー関連メッセージを受信した場合は，対向側インターフェースへ変換・転送することで，両端ノード間のエラー通知を橋渡しする．
 
 \subsection{QoSパラメータのマッピング}
-4GのQCI（QoS Class Identifier，TS 23.203\cite{3GPP_TS23203}）と5GのQoS情報（5QI，TS 23.501\cite{3GPP_TS23501_R15}）は，数値の定義範囲や付随パラメータが完全には一致しない．
+4GのQCI（QoS Class Identifier，TS 23.203）と5GのQoS情報（5QI，TS 23.501）は，数値の定義範囲や付随パラメータが完全には一致しない．
 
 表\ref{tab:qos_mapping}にQCI/5QIの対応例を示す．本プロトタイプ実装では，NGAPメッセージ生成時（Uplink）にはQCI/5QIが1〜9の範囲であれば同一値として扱い，それ以外はデフォルト（5QI=9）へフォールバックするロジックを採用している．
 
@@ -577,7 +632,7 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 本節では，S1AP/NGAP間のプロトコル変換において生じる本質的な制約を整理する．
 
 \subsection{規格差分による制約}
-S1AP\cite{3GPP_TS36413}とNGAP\cite{3GPP_TS38413}は情報要素（IE）の集合と手順が一致しないため，完全な1対1変換は成立しない．S1APに対応する要素が存在しないIE（例: AMF Region情報）は，S1AP側へは反映されない．また，NGAPで必須となるNetwork Slice関連IE（AllowedNSSAI，S-NSSAI等）については，本プロトタイプ実装では固定値（SST=1等）で補完しており，厳密なマッピングは行っていない．
+S1APとNGAPは情報要素（IE）の集合と手順が一致しないため，完全な1対1変換は成立しない．S1APに対応する要素が存在しないIE（例: AMF Region情報）は，S1AP側へは反映されない．また，NGAPで必須となるNetwork Slice関連IE（AllowedNSSAI，S-NSSAI等）については，本プロトタイプ実装では固定値（SST=1等）で補完しており，厳密なマッピングは行っていない．
 
 必須IEの欠落など致命的な不整合では当該変換を中止するが，状況により原文メッセージを透過転送するフォールバックも用いる．
 
@@ -590,7 +645,8 @@ S1AP\cite{3GPP_TS36413}とNGAP\cite{3GPP_TS38413}は情報要素（IE）の集�
 本変換器は以下の5G固有機能に非対応である．
 \begin{itemize}
 \item \textbf{Network Slicing}: S-NSSAIに基づくスライス選択は4Gに対応概念がないため，本実装ではNGAP必須IEを満たすために固定値（SST=1）で補完している．
-\item \textbf{QoS Flow}: 5GのFlow単位QoS（GFBR/MFBR）から4GのBearer単位（GBR/MBR）への変換は未実装である．本プロトタイプ実装では，QCI/5QI/QFIの簡易設定（4.3.5節参照）と，UE Aggregate Maximum Bit Rate（UE-AMBR）相当の値をデフォルト（1Mbps）で付与するに留まる．
+\item \textbf{QoS Flow}:\\
+5GのFlow単位QoS\allowbreak （GFBR/MFBR）から4GのBearer単位\allowbreak （GBR/MBR）への変換は未実装である．本プロトタイプ実装では，QCI/5QI/QFIの簡易設定（4.3.5節参照）と，UE Aggregate Maximum Bit Rate（UE-AMBR）相当の値をデフォルト（1Mbps）で付与するに留まる．
 \end{itemize}
 
 \subsection{セキュリティに関する制約}

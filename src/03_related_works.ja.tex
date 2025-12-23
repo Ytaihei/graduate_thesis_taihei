@@ -49,18 +49,27 @@
   \draw[arrow] (legacy) -- node[above, font=\scriptsize] {S1} (gw);
   \draw[arrow] (gw) -- node[above, font=\scriptsize] {N2/N3} (5gc_d);
 
+  % 凡例
+  \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+    \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[gray!20] (0,0) rectangle (0.18,0.18);\ 変換GW（中継要素）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ CN間連携（N26）\\
+    \end{tabular}
+  };
+
   \end{tikzpicture}
   \caption{異世代間インターワーキング技術のアーキテクチャ比較}
   \label{fig:interworking_comparison}
 \end{figure}
 
 \subsection{N26インターフェースによるCN間連携}
-3GPP TS 23.501では，4G MMEと5G AMFを接続する「N26インターフェース」が定義されている\cite{3GPP_TS23501_R15}．N26を使用することで，UEのコンテキスト（認証状態やセッション情報）をCN間で転送し，4Gエリアと5Gエリア間のシームレスなハンドオーバー（シングルレジストレーションモード）が可能となる．
+3GPP TS 23.501では，4G MMEと5G AMFを接続する「N26インターフェース」が定義されている．N26を使用することで，UEのコンテキスト（認証状態やセッション情報）をCN間で転送し，4Gエリアと5Gエリア間のシームレスなハンドオーバー（シングルレジストレーションモード）が可能となる．
 
 しかし，N26はあくまで「4G RANはEPCへ，5G RANは5GCへ」接続されていることを前提とした技術である．UEが4G RAN配下にいる間は5GCネイティブな機能（スライシング等）をフルに利用できず，5GCへ接続するためには5Gエリアへ移動するか，RAN自体を5G対応に更新する必要がある．したがって，N26は移行期間中の移動性管理技術であり，レガシーRANを5GCに収容する技術ではない．
 
 \subsection{ng-eNBによるRANアップグレード}
-前章でも触れた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）\cite{3GPP_TS38300}．ng-eNBは5GCとの接続に必要なNG-APおよびNG-Uプロトコルをネイティブにサポートする．
+前章でも触れた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）．ng-eNBは5GCとの接続に必要なNG-APおよびNG-Uプロトコルをネイティブにサポートする．
 
 これは論理的には本研究に近い構成であるが，実現には基地局装置のファームウェアまたはハードウェアの更新が必須である．NTNや古いプライベートLTE設備のように，物理的な更新が困難な環境には適用できない．本研究のS1-N2変換ゲートウェイは，このng-eNBの機能を「外付け」で実現するアプローチと捉えることができる．
 
@@ -71,10 +80,10 @@
 \subsection{トランスレータ方式とカプセル化方式}
 異種ネットワーク接続には，パケットヘッダを書き換える「トランスレータ方式」（例：NAT64\cite{rfc6146}）と，パケットを別のプロトコルで包む「カプセル化方式」（例：IP-in-IP\cite{rfc2003}）が存在する．
 
-本研究におけるC-Plane（制御面）の変換は，S1-APメッセージ\cite{3GPP_TS36413}とNG-APメッセージ\cite{3GPP_TS38413}の意味的な対応関係に基づいて相互に変換を行う．さらに，NAS（Non-Access Stratum）メッセージについても，4G NAS（EPS-NAS）と5G NAS（5GS-NAS）の間で変換を行い，NG-APのペイロードとして搬送する．このように，本手法はAS層（S1-AP/NG-AP）およびNAS層の両方でプロトコル変換を行う，一貫したトランスレータ方式を採用している．
+本研究におけるC-Plane（制御面）の変換は，S1-APメッセージとNG-APメッセージの意味的な対応関係に基づいて相互に変換を行う．さらに，NAS（Non-Access Stratum）メッセージについても，4G NAS（EPS-NAS）と5G NAS（5GS-NAS）の間で変換を行い，NG-APのペイロードとして搬送する．このように，本手法はAS層（S1-AP/NG-AP）およびNAS層の両方でプロトコル変換を行う，一貫したトランスレータ方式を採用している．
 
 \subsection{モバイル網におけるプロトコル変換の研究}
-モバイルコアネットワークにおけるプロトコル変換の研究としては，3G/4G間のインターワーキングや，Wi-Fi等の非3GPPアクセス収容（N3IWF）に関するものがある．特にN3IWF（Non-3GPP InterWorking Function）は，信頼できないアクセス網を介して5GCに接続するためのゲートウェイであり，IPsecトンネルを用いてセキュリティを確保する\cite{3GPP_TS23501_R15}．
+モバイルコアネットワークにおけるプロトコル変換の研究としては，3G/4G間のインターワーキングや，Wi-Fi等の非3GPPアクセス収容（N3IWF）に関するものがある．特にN3IWF（Non-3GPP InterWorking Function）は，信頼できないアクセス網を介して5GCに接続するためのゲートウェイであり，IPsecトンネルを用いてセキュリティを確保する．
 
 本研究のS1-N2変換ゲートウェイは，N3IWFの概念を「信頼できるレガシー3GPPアクセス（LTE）」に拡張したものと解釈できる．ただし，N3IWFがIPレベルの接続を前提とし，UE側にIPsecクライアント機能を要求するのに対し，本手法はS1-AP/SCTPという制御プレーンプロトコルレベルでの変換を行い，UE側の改修を一切必要としない点で技術的アプローチが異なる．
 
