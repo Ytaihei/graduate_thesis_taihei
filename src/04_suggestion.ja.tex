@@ -1,12 +1,97 @@
 \chapter{提案手法：S1-N2変換ゲートウェイ}
 \label{chap:proposal}
 
+\section{提案の理論的基盤}
+\label{sec:proposal_theoretical_foundation}
+
+本章では，第\ref{chap:background}章で述べた技術背景を踏まえ，4G RANを改修なしに5Gコア（5GC）へ収容可能にするS1-N2変換ゲートウェイを提案する．本節では，提案手法の根拠となる2つの重要な分析フレーム---「機能的共通性」と「5GC固有機能の階層的分析」---を述べる．
+
+\subsection{4G/5G間の機能的共通性 (Functional Commonality)}
+\label{subsec:functional_commonality}
+
+モバイル通信システムは世代ごとにプロトコル仕様が大きく異なるが，提供される基本的な制御機能の役割（Role）には高い共通性が存在する\cite{Watanabe_ADMobile2025}．本手法は，このプロトコル形式の違いを乗り越え，「機能的な等価性」に基づいて相互運用を実現するものである．
+
+\subsubsection{制御プレーン機能の対応関係}
+
+CS（Circuit Switched）領域が廃止されオールIP化された4G以降，制御プレーン（C-Plane）の主要機能は「移動管理（Mobility Management: MM）」と「セッション管理（Session Management: SM）」に大別される．
+
+\begin{itemize}
+\item \textbf{移動管理 (MM)}: 端末の位置登録，認証，およびハンドオーバー制御を行う機能．4GのMMEが担っていた役割は，5GではAMFに継承されている．両者ともNAS（Non-Access Stratum）プロトコルの終端点として機能し，ステートマシン（例: EMM-REGISTERED $\leftrightarrow$ 5GMM-REGISTERED）にも明確な対応関係が存在する．
+\item \textbf{セッション管理 (SM)}: データ転送経路（ベアラ/フロー）の確立・解放を行う機能．4GではMMEとS-GW/P-GWが連携して行っていたが，5GではSMFとして独立したNFに集約されている．手続き上の差異はあるものの，「IPアドレスを割り当て，トンネルを設定する」という基本的動作は共通している．
+\end{itemize}
+
+\subsubsection{ユーザプレーン機能の対応関係}
+
+ユーザデータの転送を行うユーザプレーン（U-Plane）においても，4Gと5Gは共にGTP-U（GPRS Tunneling Protocol User Plane）プロトコルを採用しており，基本的な転送メカニズムは維持されている．
+
+4GのS-GW/P-GWと5GのUPFは，共にパケットのルーティング，カプセル化/非カプセル化，および課金情報の収集を行うという点で機能的に等価である．したがって，トンネルID（TEID）の管理方法さえ整合させれば，データパケットの相互運用は比較的容易に実現可能である．
+
+この根本的な「機能の共通性」が存在するからこそ，以下で述べるようなプロトコル変換によるインターワーキングが可能となる．
+
+\subsection{5GC固有機能の階層的分析}
+\label{subsec:5gc_layered_design_framework}
+
+異世代間の相互運用性を実現する一方で，5Gのみが提供する新しい機能が存在する．本手法の設計にあたり，これらの5GC固有機能を「基盤層」「制御メカニズム層」「応用サービス層」の3層に分類し，設計優先度を整理する．
+
+図\ref{fig:5gc_layered_model}に5GC機能の階層モデルを示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.85, transform shape, every node/.style={font=\small}]
+    % Layer 3: Service / Outcome
+    \node[draw, rounded corners, fill=GoogleGreen!15, minimum width=14cm, minimum height=2.2cm] (layer3) at (0,5.2) {};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer3.north west) {3. 応用サービス層 (Service / Outcome)};
+    \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer3.north west) {
+      \textbf{機能例}: ネットワークスライシング，NEF (API公開)，MEC\\
+      \textbf{要件}: マルチテナンシー，異業種連携 (Vertical Integration)};
+
+    % Layer 2: Mechanism
+    \node[draw, rounded corners, fill=GoogleYellow!15, minimum width=14cm, minimum height=2.2cm] (layer2) at (0,2.6) {};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer2.north west) {2. 制御メカニズム層 (Mechanism)};
+    \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer2.north west) {
+      \textbf{機能例}: Flow-based QoS，ULCL (Uplink Classifier)\\
+      \textbf{要件}: 全く異なる要求条件（超低遅延・多数同時接続等）を持つトラフィックの混在収容};
+
+    % Layer 1: Infrastructure
+    \node[draw, rounded corners, fill=GoogleBlue!15, minimum width=14cm, minimum height=2.2cm] (layer1) at (0,0) {};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer1.north west) {1. 基盤層 (Infrastructure / Enabler)};
+    \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer1.north west) {
+      \textbf{機能例}: SBA (Service Based Architecture)，CUPS (分離アーキテクチャ)\\
+      \textbf{要件}: クラウドネイティブ環境への適応，開発サイクルの高速化};
+
+    % Connections
+    \draw[->, thick, gray] (layer1.north) -- (layer2.south);
+    \draw[->, thick, gray] (layer2.north) -- (layer3.south);
+
+  \end{tikzpicture}
+  \caption{5GC機能の3層構造モデル（設計分析フレーム）}
+  \label{fig:5gc_layered_model}
+\end{figure}
+
+\subsubsection{基盤層 (Architecture / Enabler)}
+
+基盤層は，CNのアーキテクチャそのものの変革を指す．代表的な技術として，SBA (Service Based Architecture) やCUPS (Control and User Plane Separation) が挙げられる．本層における5GCの要件は，\textbf{クラウドネイティブ環境への適応}と\textbf{開発サイクルの高速化}である．物理ハードウェアに依存しないソフトウェア化により，機能の追加やスケーリングを迅速に行うことが可能となる．
+
+\subsubsection{制御メカニズム層 (Mechanism)}
+
+制御メカニズム層は，アーキテクチャ上で動作する通信制御の仕組みを指す．4Gではベアラ (Bearer) 単位であったQoS制御が，5Gではフロー (Flow-based QoS) 単位へと細分化されたほか，特定のトラフィックをエッジ側で折り返すULCL (Uplink Classifier) などの機能が導入された．本層における要件は，超低遅延や多数同時接続など，\textbf{全く異なる要求条件を持つトラフィックが混在する状態への対応}である．
+
+本研究では，共通機能の確実な実現を最優先とし，このメカニズム層の一部（Flow-based QoS）は段階的な拡張の対象とする．
+
+\subsubsection{応用サービス層 (Service / Outcome)}
+
+応用サービス層は，ユーザーや事業者が享受する最終的なメリットを創出する層である．論理的に分割されたネットワークを提供するネットワークスライシングや，ネットワーク機能を外部公開するNEF (Network Exposure Function)，およびMEC (Multi-access Edge Computing) との連携が含まれる．本層における要件は，\textbf{マルチテナンシー}と\textbf{異業種連携 (Vertical Integration)}の実現である．
+
+本実装では，共通機能の検証に集中するため，本層の機能は初版では部分的なサポートとし，プロトタイプの段階を超えた次段階で完全なサポートを想定する．
+
 \section{基本概念：世代共通機能に基づく疎結合化}
+\label{sec:basic_concept_v2}
 本研究では，モバイル通信の根幹機能である「AAA（Authentication, Authorization, and Accounting）」，「Mobility Management」，「U-plane」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，目的は共通している．
 
 提案する「S1-N2変換ゲートウェイ」は，この世代共通機能を利用して，4G RAN（S1インターフェース）と5Gコア（N2/N3インターフェース）の間の差異を吸収・抽象化する．これにより，物理的なRANと論理的なCNを疎結合にし，RANのハードウェア更新を伴わずにCNのみを次世代化することを可能にする．
 
 \section{アーキテクチャ設計}
+\label{sec:architecture_design}
 提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/\allowbreak UPF）の間に配置され，以下の2つのプレーンで変換を行う．
 
 \begin{itemize}
@@ -134,6 +219,7 @@
 ゲートウェイは，C-Planeではトランスポート層（SCTP）を終端してシグナリングプロトコル（S1AP/NGAP）間でメッセージ変換を行い，U-PlaneではGTP-Uのヘッダ情報（TEID）を書き換えて転送する．これにより，eNBとAMF/UPFは互いに相手側のプロトコルを意識することなく通信できる．
 
 \section{詳細設計}
+\label{sec:detailed_design}
 
 \subsection{C-Plane変換ロジック}
 

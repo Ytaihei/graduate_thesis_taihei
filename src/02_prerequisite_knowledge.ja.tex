@@ -1,393 +1,395 @@
-\chapter{モバイルネットワークの進化と世代間ギャップ}
+\chapter{モバイルネットワークの技術背景と異世代間の差異}
 \label{chap:background}
 
-本章では，本研究の背景となるモバイルネットワークの技術的変遷と，そこで生じている「世代間のギャップ」について詳述する．第\ref{chap:introduction}章で述べた3つの課題（NTN等の物理的制約，R\&Dにおける低コスト検証環境のギャップ，商用導入におけるマイグレーション戦略の柔軟性欠如）について，本章ではその技術的背景と既存移行技術の限界を整理し，なぜ「S1-N2変換」が必要とされるのかを明らかにする．
+本章では，本研究の前提となるモバイルネットワークの技術的背景と，4G/5G間に存在する技術的な差異について詳述する．
+第\ref{chap:introduction}章で述べた「CNとRANの進化の乖離」という問題背景を踏まえ，本章ではまずモバイルネットワークの基本構成を示した後，4Gと5Gのシステムアーキテクチャの違いを整理する．次に，既存の移行技術（NSA/SA等）がなぜレガシーRANの収容に適さないのかを説明し，最後に，本研究が解決すべき具体的な技術的障壁（プロトコルレベルの差異）を明らかにする．
 
-\section{4G LTEと5G NR/5GCの技術的変遷}
+\section{モバイルネットワークの基本構成}
 
-\subsection{4G EPC: 専用装置による統合アーキテクチャ}
-第4世代移動通信システム（4G LTE）のコアネットワークであるEPC（Evolved Packet Core）は，移動管理を行うMME（Mobility Management Entity），ユーザデータ転送を行うS-GW（Serving Gateway）/P-GW（PDN Gateway），および加入者情報を管理するHSS（Home Subscriber Server）といった専用のネットワークノードによって構成される\cite{3GPP_TS23401}．これらは多くの場合，専用ハードウェアアプライアンスとして実装され，機能とハードウェアが密結合していた．
+本節では，本研究の前提となるモバイルシステムの論理的な構成要素と，それらの役割について概説する．
 
-図\ref{fig:epc_architecture}に4G EPCの基本構成を示す．
+モバイルネットワークは，図\ref{fig:mobile_network_generic}に示すように，\textbf{UE（User Equipment）}，\textbf{RAN（Radio Access Network）}，\textbf{TN（Transport Network）}，\textbf{CN（Core Network）}，\textbf{DN（Data Network）}の5つの主要要素から構成される．
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+  \begin{tikzpicture}[scale=0.88, every node/.style={font=\small}]
     % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,0) {UE};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=1.1cm, align=center] (ue) at (0,0) {\textbf{UE}};
 
-    % eNB
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (enb) at (3,0) {eNB};
+    % RAN
+    \node[draw, rounded corners, fill=GoogleBlue!40, minimum width=2.2cm, minimum height=1.1cm, align=center] (ran) at (3.5,0) {\textbf{RAN}};
 
-    % MME
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (mme) at (6.5,1.5) {MME};
+    % TN
+    \node[draw, rounded corners, fill=GoogleYellow!40, minimum width=2.2cm, minimum height=1.1cm, align=center] (tn) at (7,0) {\textbf{TN}};
 
-    % S-GW
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (sgw) at (6.5,0) {S-GW};
+    % CN
+    \node[draw, rounded corners, fill=GoogleGreen!40, minimum width=2.2cm, minimum height=1.1cm, align=center] (cn) at (10.5,0) {\textbf{CN}};
 
-    % P-GW
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (pgw) at (10,0) {P-GW};
+    % DN
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2.2cm, minimum height=1.3cm, fill=GoogleLightGray!50, align=center] (dn) at (14,0) {\textbf{DN}};
 
-    % HSS
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (hss) at (10,1.5) {HSS};
+    % 接続線
+    \draw[-, very thick, dashed] (ue) -- (ran);
+    \draw[-, very thick] (ran) -- (tn);
+    \draw[-, very thick] (tn) -- (cn);
+    \draw[-, very thick] (cn) -- (dn);
 
-    % Internet/DN
-    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (13,0) {DN};
-
-    % EPC枠
-    \draw[dashed, thick, GoogleBlue] (5.2,-1) rectangle (11.3,2.5);
-    \node[above, GoogleBlue] at (8.25,2.5) {\textbf{EPC (4G Core)}};
-
-    % 接続線（C-Plane）
-    \draw[->, thick] (ue) -- (enb) node[midway, above] {\scriptsize LTE-Uu};
-    \draw[->, thick] (enb) -- (mme) node[midway, above, sloped] {\scriptsize S1-MME};
-    \draw[->, thick] (mme) -- (hss) node[midway, above] {\scriptsize S6a};
-    \draw[->, thick] (mme) -- (sgw) node[midway, right] {\scriptsize S11};
-
-    % 接続線（U-Plane）
-    \draw[->, thick, GoogleGreen] (enb) -- (sgw) node[midway, below] {\scriptsize S1-U};
-    \draw[->, thick, GoogleGreen] (sgw) -- (pgw) node[midway, below] {\scriptsize S5/S8};
-    \draw[->, thick, GoogleGreen] (pgw) -- (dn) node[midway, below] {\scriptsize SGi};
-
-    % 凡例
-    \node[font=\scriptsize] at (1.5,-1.5) {C-Plane: 黒線};
-    \node[font=\scriptsize, GoogleGreen] at (4.5,-1.5) {U-Plane: 緑線};
-
-    % 色凡例
-    \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at ([xshift=2pt,yshift=-2pt]current bounding box.north west) {
-      \begin{tabular}{@{}l@{}}
-        \csname textbf\endcsname{凡例（色）}\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE/DN\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ RANおよびEPC枠\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ EPC主要ノード\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 加入者DB（HSS）\\
+    % 説明枠
+    \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=3pt, text width=13.5cm] at ([yshift=-10pt]current bounding box.south west) {
+      \begin{tabular}{@{}ll@{}}
+        \textbf{UE:} & 端末（スマートフォン，IoTデバイス等）\\
+        \textbf{RAN:} & 無線アクセス網（基地局群）\\
+        \textbf{TN:} & RANとCNを接続する伝送ネットワーク（IP網，専用線等）\\
+        \textbf{CN:} & コアネットワーク（認証，移動管理，データ転送制御等）\\
+        \textbf{DN:} & 外部データネットワーク（インターネット，企業網等）\\
       \end{tabular}
     };
   \end{tikzpicture}
-  \caption{4G EPC（Evolved Packet Core）の基本構成}
-  \label{fig:epc_architecture}
+  \caption{モバイルネットワークの普遍的な基本構成}
+  \label{fig:mobile_network_generic}
 \end{figure}
 
-RAN側（eNB: evolved Node B）とCN側（MME/S-GW）は，S1インターフェース（S1-MME, S1-U）で接続される\cite{3GPP_TS36413}．このアーキテクチャは安定した通信を提供する一方で，C-Plane（制御信号処理）とU-Plane（データ転送）が物理ノードに紐付いているため独立したスケーリングが困難であり，新機能の追加にはハードウェアの増設や交換を伴うことが多く，柔軟性に欠ける側面があった．
+各構成要素の役割を以下に示す：
 
-\subsection{5Gコア: ソフトウェア化とSBA}
-第5世代（5G）のコアネットワークである5GCは，アーキテクチャが根本的に刷新された．最大の特徴は，サービスベースアーキテクチャ（SBA: Service Based Architecture）の採用である．
-移動管理を行うAMF（Access and Mobility Management Function），セッション管理を行うSMF（Session Management Function），ユーザデータ転送を行うUPF（User Plane Function），加入者情報を管理するUDM（Unified Data Management），認証を行うAUSF（Authentication Server Function）といった各機能はソフトウェアモジュール（Network Function: NF）として定義され，汎用サーバやクラウド基盤上でコンテナとして動作する．NF間の通信にはHTTP/2ベースのSBI（Service Based Interface）が用いられる．
-また，UPFがC-Planeから独立したことで，トラフィック需要に応じたU-Planeの柔軟なスケーリングが可能となった（CUPS: Control and User Plane Separation）．
+\begin{itemize}
+  \item \textbf{UE（User Equipment）}: ユーザが直接操作する移動端末を指す．スマートフォン，タブレット，IoTデバイス等が含まれる．UEには加入者の識別情報や認証鍵等が格納される\textbf{SIM（Subscriber Identity Module）}が搭載され，RANとの無線インターフェースを介してネットワークに接続する．
+  \item \textbf{RAN（Radio Access Network）}: 無線アクセスネットワークであり，UEとCNの間で無線通信を提供する基地局群を指す．RANはモバイルシステムの世代ごとに無線方式（変調，符号化，周波数帯等の技術仕様等）が異なり、これらの仕様を総称して\textbf{RAT（Radio Access Technology）}と呼ぶ．
+  \item \textbf{TN（Transport Network）}: RANとCNを接続する伝送ネットワークを指し，IP網，専用線，MPLS等の技術を用いて実装され，RANとCN間のデータを伝送する．
+  \item \textbf{CN（Core Network）}: 認証・課金，移動管理，セッション管理，ルーティング制御といった中核機能を提供する．
+  \item \textbf{DN（Data Network）}: 外部データネットワークを指し，インターネット，企業内ネットワーク，IMS（IP Multimedia Subsystem）等が含まれる．UEは最終的にDN上のサービス（Webアクセス，ビデオストリーミング，VoIP等）を利用する．
+\end{itemize}
 
-図\ref{fig:5gc_architecture}に5GCのSBAアーキテクチャを示す．
+\section{4Gと5Gのアーキテクチャ}
+
+本節では，\textbf{4Gシステム（EPS: Evolved Packet System）}と\textbf{5Gシステム（5GS: 5G System）}のアーキテクチャを，特にRANとCNの境界インターフェースに焦点を当てて比較する．
+
+\subsection{4G EPS: eNBとEPCの接続}
+
+4Gシステム（EPS）は，無線アクセスネットワーク（RAN）を担う\textbf{E-UTRAN（Evolved Universal Terrestrial Radio Access Network）}と，コアネットワークである\textbf{EPC（Evolved Packet Core）}から構成される\cite{3GPP_TS23401}．E-UTRANのRATは\textbf{LTE（Long Term Evolution）}と呼ばれ，基地局ノードとして\textbf{eNB（evolved Node B）}が配置される．EPCの主要ノードとして，移動管理を行うMME（Mobility Management Entity），ユーザデータ転送を行うS-GW（Serving Gateway）/P-GW（PDN Gateway），および加入者情報を管理するHSS（Home Subscriber Server）が存在する．これらの機能は，従来，専用ハードウェアアプライアンス上で提供されていた\cite{etsi_nfv_2012}．
+また，EPCへの接続端点としては，UEと，外部ネットワーク（インターネットや企業ネットワーク）を表すDNがある．UEはeNBを経由して無線アクセスでEPCに接続し，P-GWを通じてDNの各種サービスにアクセスする．
+
+図\ref{fig:epc_architecture}に4G EPSの基本構成を示す．
 
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
     % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,0) {UE};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (-1,-2) {UE};
 
-    % gNB (Next Generation Node B)
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (gnb) at (3,0) {gNB};
+    % eNB
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (enb) at (3,-2) {eNB};
 
-    % SBA Bus
-    \draw[very thick, GoogleBlue] (5.5,2.5) -- (13,2.5);
-    \node[above, GoogleBlue, font=\scriptsize] at (9.25,2.5) {SBI (Service Based Interface)};
+    % E-UTRAN枠（RAN; RAT: LTE）
+    \node[draw, dashed, thick, GoogleBlue, fit={(1.5,-2.9) (4.5,-1.1)}, inner sep=0pt] (eutran) {};
+    \node[above, GoogleBlue] at (3,-1.1) {\textbf{E-UTRAN}};
 
-    % NFs on SBA bus
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (nrf) at (6,3.3) {NRF};
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (ausf) at (7.8,3.3) {AUSF};
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (udm) at (9.6,3.3) {UDM};
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.2cm, minimum height=0.6cm] (pcf) at (11.4,3.3) {PCF};
+    % MME
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (mme) at (6.5,-0.5) {MME};
 
-    % AMF/SMF (connected to bus)
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (amf) at (7,1) {AMF};
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (smf) at (10,1) {SMF};
+    % S-GW
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sgw) at (6.5,-2) {S-GW};
 
-    % UPF
-    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.5cm, minimum height=0.8cm] (upf) at (10,0) {UPF};
+    % P-GW
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (pgw) at (10,-2) {P-GW};
+
+    % HSS
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (hss) at (10,-0.5) {HSS};
+
+    % Internet/DN
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (13,-2) {DN};
+
+    % EPC枠
+    \draw[dashed, thick, GoogleGreen] (5.2,-3) rectangle (11.3,0.5);
+    \node[above, GoogleGreen] at (8.25,0.5) {\textbf{EPC}};
+
+    % 接続線（C-Plane）
+    \draw[-, thick, dashed] (ue) -- (enb) node[midway, above] {\scriptsize LTE-Uu};
+    \draw[-, thick] (enb) -- (mme) node[midway, above, sloped] {\scriptsize S1-MME};
+    \draw[-, thick] (mme) -- (hss) node[midway, above] {\scriptsize S6a};
+    \draw[-, thick] (mme) -- (sgw) node[midway, right] {\scriptsize S11};
+
+    % 接続線（U-Plane）
+    \draw[-, thick, GoogleRed] (enb) -- (sgw) node[midway, below] {\scriptsize S1-U};
+    \draw[-, thick, GoogleRed] (sgw) -- (pgw) node[midway, below] {\scriptsize S5/S8};
+    \draw[-, thick, GoogleRed] (pgw) -- (dn) node[midway, below] {\scriptsize SGi};
+
+    % 凡例（色と線を統合、縦並び）
+    \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at (-1,2.5) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE/DN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ E-UTRAN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ EPC\\
+      C-Plane: 黒線\\
+      \textcolor{GoogleRed}{U-Plane: 赤線}
+      \end{tabular}
+    };
+  \end{tikzpicture}
+  \caption{4Gシステム（EPS: Evolved Packet System）の基本構成}
+  \label{fig:epc_architecture}
+\end{figure}
+
+\subsubsection{RANとCNの境界: S1インターフェース}
+eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており，論理的な境界点として\textbf{S1インターフェース}が定義されている\cite{3GPP_TS23401}．S1は制御面（C-Plane）とユーザ面（U-Plane）に分離されており，それぞれ異なるプロトコルで実装される：
+\begin{itemize}
+  \item \textbf{S1-MME（C-Plane）}: eNBとMME間の制御信号を伝送．プロトコルとして\textbf{S1AP（S1 Application Protocol）}がSCTP（Stream Control Transmission Protocol）上で動作する\cite{3GPP_TS36413}．位置登録，認証，ベアラ確立などの手順を制御する．
+  \item \textbf{S1-U（U-Plane）}: eNBとS-GW間のユーザデータを伝送．プロトコルとして\textbf{GTP-U（GPRS Tunnelling Protocol - User Plane）}がUDP/IP上で動作する\cite{3GPP_TS29281}．
+\end{itemize}
+
+このアーキテクチャにより，MME（制御）とS-GW（転送）というノード間の機能分離は実現されている．しかし，従来のEPC実装では，データ転送を担うゲートウェイノード（S-GW/P-GW）がC-Plane機能とU-Plane機能を同一ハードウェア内で実装したモノリシック構成となる場合が多かった．その結果，トラフィック増大時にU-Planeリソースのみを独立して拡張することが困難であった．
+
+\subsubsection{CUPS（Control and User Plane Separation）： CU分離によるスケーラビリティの向上}
+上述のスケーラビリティの課題を解決するために，3GPPのRelease 14仕様では，EPSに\textbf{CUPS（Control and User Plane Separation）}が導入され，S-GWおよびP-GWをC-Plane（S-GW-C/ P-GW-C）とU-Plane（S-GW-U/ P-GW-U）へ論理的に分離するアーキテクチャ拡張が規定された\cite{3GPP_TS23214}．C-PlaneノードとU-Planeノード間はSxインターフェースで接続され，プロトコルとしてPFCP（Packet Forwarding Control Protocol）が用いられる\cite{3GPP_TS29244}．CUPSにより，U-Plane資源のみの独立スケーリングや地理分散配置が可能となり，CUPS以前のモノリシックなスケール制約が大幅に緩和された．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,0.8) {UE};
+
+    % eNB
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.6cm, minimum height=0.8cm] (enb) at (3,0.8) {eNB};
+
+    % EPC Control Plane box（EPC枠は緑）
+    \draw[dashed, thick, GoogleGreen] (5.4,3.6) rectangle (12.3,5.1);
+    \node[above, GoogleGreen] at (8.85,5.0) {\textbf{EPC：Control Plane}};
+
+    % EPC User Plane box（SGW-U/PGW-Uのみを囲む）  % 後続で定義
+    % MME (Control)
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.6cm, minimum height=0.8cm] (mme) at (6.5,4.2) {MME};
+
+    % SGW-C / PGW-C (Control)
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.4cm, minimum height=0.8cm] (sgwc) at (8.8,4.2) {SGW-C};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.4cm, minimum height=0.8cm] (pgwc) at (11.0,4.2) {PGW-C};
+
+    % SGW-U / PGW-U (User)
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.4cm, minimum height=0.8cm] (sgwu) at (8.8,0.8) {SGW-U};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.4cm, minimum height=0.8cm] (pgwu) at (11.0,0.8) {PGW-U};
+
+    % EPC User Plane box（SGW-U/PGW-UとS5-U/S8-Uラベルを囲む）
+    \node[draw, dashed, thick, GoogleGreen, fit=(sgwu)(pgwu), inner xsep=4pt, inner ysep=12pt] (epc_u) {};
+    \node[above, GoogleGreen, yshift=-2pt] at (epc_u.north) {\textbf{EPC：User Plane}};
 
     % DN
-    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (13.5,0) {DN};
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2.0cm, minimum height=1.0cm, fill=GoogleLightGray!50] (dn) at (14,0.8) {DN};
 
-    % 5GC枠
-    \draw[dashed, thick, GoogleGreen] (5,-0.8) rectangle (12.5,4);
-    \node[below, GoogleGreen] at (8.75,-0.8) {\textbf{5GC (5G Core)}};
+    % S1-MME (C-Plane)
+    \draw[-, thick, dashed] (ue) -- (enb) node[midway, above] {\scriptsize LTE-Uu};
+    \draw[-, thick] (enb) -- (mme) node[midway, above, sloped] {\scriptsize S1-MME};
 
-    % SBA connections
-    \draw[thick] (nrf) -- (6,2.5);
-    \draw[thick] (ausf) -- (7.8,2.5);
-    \draw[thick] (udm) -- (9.6,2.5);
-    \draw[thick] (pcf) -- (11.4,2.5);
-    \draw[thick] (amf) -- (7,2.5);
-    \draw[thick] (smf) -- (10,2.5);
+    % S11 and S5-C/S8-C (C-Plane)
+    \draw[-, thick] (mme) -- (sgwc) node[pos=0.52, above=10pt] {\scriptsize S11};
+    \draw[-, thick] (pgwc) -- (sgwc) node[pos=0.55, above=8pt] {\scriptsize S5-C/S8-C};
 
-    % N2/N3 connections
-    \draw[->, thick] (ue) -- (gnb) node[midway, above] {\scriptsize NR-Uu};
-    \draw[->, thick] (gnb) -- (amf) node[midway, above, sloped] {\scriptsize N2};
-    \draw[->, thick, GoogleGreen] (gnb) -- (upf) node[midway, below] {\scriptsize N3};
-    \draw[->, thick] (amf) -- (smf) node[midway, above] {\scriptsize N11};
-    \draw[->, thick] (smf) -- (upf) node[midway, right] {\scriptsize N4};
-    \draw[->, thick, GoogleGreen] (upf) -- (dn) node[midway, below] {\scriptsize N6};
+    % S1-U (U-Plane) - red
+    \draw[-, thick, GoogleRed] (enb) -- (sgwu) node[pos=0.55, below=3pt] {\scriptsize S1-U};
+    \draw[-, thick, GoogleRed] (sgwu) -- (pgwu) node[pos=0.5, below=10pt] {\scriptsize S5-U/S8-U};
+    \draw[-, thick, GoogleRed] (pgwu) -- (dn) node[pos=0.48, below=10pt] {\scriptsize SGi};
 
-    % 凡例
+    % Sx (PFCP) links - solid black (C-Plane)
+    \draw[-, thick] (sgwc) -- (sgwu) node[midway, right=0.1cm] {\scriptsize Sxa};
+    \draw[-, thick] (pgwc) -- (pgwu) node[midway, right=0.1cm] {\scriptsize Sxb};
+
+    % 凡例（色と線を統合、縦並び）
     \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at ([xshift=2pt,yshift=-2pt]current bounding box.north west) {
       \begin{tabular}{@{}l@{}}
       \csname textbf\endcsname{凡例}\\
       \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE/DN\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ gNB/5GC枠\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ NF群（AMF/SMF/UPF等）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[very thick, GoogleBlue] (0,0) -- (0.6,0);\ SBI\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ シグナリング系接続\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, GoogleGreen] (0,0) -- (0.6,0);\ U-Plane（N3/N6）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ RAN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ CN\\
+      C-Plane: 黒線\\
+      \textcolor{GoogleRed}{U-Plane: 赤線}
+      \end{tabular}
+    };
+
+    % E-UTRAN枠（RAN; RAT: LTE）
+    \node[draw, dashed, thick, GoogleBlue, fit={(2.0,0.0) (4.0,1.6)}, inner sep=0pt] (eutran) {};
+    \node[above, GoogleBlue] at (3,1.6) {\textbf{E-UTRAN}};
+  \end{tikzpicture}
+  \caption{Release 14で定義されたEPSにおけるCUPS構成}
+  \label{fig:eps_cups_architecture}
+\end{figure}
+
+\subsection{5GS: gNBと5GCの接続}
+\label{sec:5gc_architecture}
+5Gシステム（5GS）は，無線アクセスネットワーク（RAN）を担う\textbf{NG-RAN（Next Generation Radio Access Network）}と，コアネットワークである\textbf{5GC（5G Core）}から構成される\cite{3GPP_TS23501_R15}．NG-RANのRATは\textbf{NR（New Radio）}と呼ばれ，基地局ノードとして\textbf{gNB（next generation Node B）}が配置される．
+5GCの主要ノードとして，移動管理を行うAMF（Access and Mobility Management Function），セッション管理を行うSMF（Session Management Function），ユーザデータ転送を行うUPF（User Plane Function），加入者情報の管理ロジックを担うUDM（Unified Data Management）およびデータストアとして機能するUDR（Unified Data Repository），認証を行うAUSF（Authentication Server Function）といった\textbf{Network Function（NF）}が存在する．
+5GCでは，アーキテクチャが根本的に刷新され，NFV（Network Functions Virtualisation）による仮想化基盤の採用，C-PlaneとU-Planeの分離のネイティブ化（前述のCUPSの思想を基本設計として内包），およびSBA（Service Based Architecture）によるサービス指向設計が特徴となっている．これらの詳細は後述の各小節で述べる．
+
+図\ref{fig:5gc_architecture}に5GCの基本構成を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.8cm] (ue) at (0,-0.5) {UE};
+
+    % gNB (Next Generation Node B)
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (gnb) at (3,-0.5) {gNB};
+
+    % NG-RAN枠（RAN; RAT: NR）
+    \node[draw, dashed, thick, GoogleBlue, fit=(gnb), inner sep=8pt] (ngran) {};
+    \node[above, GoogleBlue] at (ngran.north) {\textbf{NG-RAN}};
+
+    % SBA Bus (lowered)
+    \draw[very thick] (5.5,2.2) -- (13,2.2);
+    \node[above, font=\scriptsize] at (9.25,2.2) {SBI (Service Based Interface)};
+
+    % NFs on SBA bus（5GCノードは緑）
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.2cm, minimum height=0.6cm] (nrf) at (6,3.3) {NRF};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.2cm, minimum height=0.6cm] (ausf) at (7.8,3.3) {AUSF};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.2cm, minimum height=0.6cm] (udm) at (9.6,3.3) {UDM};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.2cm, minimum height=0.6cm] (pcf) at (11.4,3.3) {PCF};
+
+    % AMF/SMF (connected to bus)
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (amf) at (7,1) {AMF};
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (smf) at (10,1) {SMF};
+
+    % UPF
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (upf) at (10,-0.5) {UPF};
+
+    % DN
+    \node[draw, cloud, cloud puffs=10, cloud ignores aspect, minimum width=2cm, minimum height=1cm, fill=GoogleLightGray!50] (dn) at (14,-0.5) {DN};
+
+    % 5GC枠（緑）
+    \draw[dashed, thick, GoogleGreen] (5,-1.2) rectangle (12.5,4.1);
+    \node[below, GoogleGreen] at (8.75,-1.2) {\textbf{5GC}};
+
+    % SBA connections (to lowered bus y=2.2)
+    \draw[thick] (nrf) -- (6,2.2);
+    \draw[thick] (ausf) -- (7.8,2.2);
+    \draw[thick] (udm) -- (9.6,2.2);
+    \draw[thick] (pcf) -- (11.4,2.2);
+    \draw[thick] (amf) -- (7,2.2);
+    \draw[thick] (smf) -- (10,2.2);
+
+    % N2/N3 connections
+    \draw[-, thick, dashed] (ue) -- (gnb) node[midway, above] {\scriptsize NR-Uu};
+    \draw[-, thick] (gnb) -- (amf) node[midway, above, sloped] {\scriptsize N2};
+    \draw[-, thick, GoogleRed] (gnb) -- (upf) node[midway, below] {\scriptsize N3};
+    \draw[-, thick] (amf) -- (smf) node[midway, above] {\scriptsize N11};
+    \draw[-, thick] (smf) -- (upf) node[midway, right] {\scriptsize N4};
+    \draw[-, thick, GoogleRed] (upf) -- (dn) node[midway, below] {\scriptsize N6};
+
+    % 凡例（色と線を統合、縦並び）
+    \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at ([xshift=2pt,yshift=-2pt]current bounding box.north west) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE/DN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ NG-RAN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 5GC\\
+      C-Plane: 黒線\\
+      \textcolor{GoogleRed}{U-Plane: 赤線}
       \end{tabular}
     };
   \end{tikzpicture}
-  \caption{5GC（5G Core）のSBAアーキテクチャ}
+  \caption{5Gシステム（5GS: 5G System）の基本構成}
   \label{fig:5gc_architecture}
 \end{figure}
 
-このソフトウェア化により，5GCはハードウェアに依存せず，ソフトウェアアップデートのみで新機能（ネットワークスライシング，MEC連携等）を迅速に導入可能となった．これが，次節で述べる「進化のギャップ」の根本原因である．
+\subsubsection{RANとCNの境界: NGインターフェース}
+gNBと5GCは\textbf{NGインターフェース}で接続される\cite{3GPP_TS38413}．4GのS1インターフェースと同様にC-PlaneとU-Planeに分離されているが，使用するプロトコルが異なる：
+\begin{itemize}
+  \item \textbf{N2（C-Plane）}: gNBとAMF間の制御信号を伝送．プロトコルとして\textbf{NGAP（NG Application Protocol）}が採用される．
+  \item \textbf{N3（U-Plane）}: gNBとUPF間のユーザデータを伝送．基本プロトコルはGTP-Uであるが，5GC特有の情報（QoSフロー）を運搬する拡張ヘッダが付与される．
+\end{itemize}
 
-\section{物理的制約によるRANの更新困難性}
+4GのS1インターフェース（S1AP/GTP-U）と5GのN2/N3インターフェース（NGAP/GTP-U拡張ヘッダ）の相違点については，後述の2.3節で詳しく取り扱う．
+\subsubsection{NFV（Network Functions Virtualisation）：専用機からの解放とコスト削減}
+先述の通り，従来のEPCではMMEやS-GW/P-GW等の主要ノードはベンダー独自の専用ハードウェアアプライアンスとして実装されており，ハードウェアとソフトウェアが密結合していた\cite{etsi_nfv_2012}．その結果，高額な設備投資，ベンダーロックイン，および新機能導入時の物理的制約といった課題が生じていた．
 
-CN側がソフトウェアとして進化する一方で，RAN側は依然として物理的な制約を強く受ける．本節では，第\ref{chap:introduction}章で述べた「NTN等の物理的制約」および「R\&Dにおける低コスト検証環境のギャップ」に対応する技術的背景を整理する．
+この課題を解決するため，5GCでは\textbf{NFV（Network Functions Virtualisation）}技術が全面的に採用され，ネットワーク機能をハードウェアから分離し汎用サーバ上のソフトウェアとして実装する\cite{etsi_nfv_2012}．NFVにより，設備投資・運用コストの削減，ソフトウェアデプロイによる迅速なサービス提供，トラフィック需要に応じた動的スケーリングや，マルチベンダー対応が可能となった．
+\subsubsection{SBA（Service Based Architecture）：サービス指向による柔軟性の向上}
+従来のEPCでは，ノード間の接続がS6a，S11といった参照点方式で定義されており，各インターフェースが1対1の固定的な関係として実装されていた\cite{3GPP_TS23401}．このため，新機能の追加や既存機能の変更には複数のノード間の仕様調整が必要となり，開発・展開の柔軟性が制約されていた．また，Diameter等の専用プロトコルを用いており，Web標準プロトコルとの連携が難しかった．
 
-\subsection{NTN (Non-Terrestrial Network) における制約}
-衛星通信やHAPS（High Altitude Platform Station）を用いるNTNは，5G/6Gのカバレッジ拡張技術として重要視されている．しかし，これらの「空の基地局」は一度打ち上げられると，物理的な改修や交換は難しい．
+この課題を解決するため，5GCでは\textbf{SBA（Service Based Architecture）}が採用されている\cite{3GPP_TS23501_R15}．SBAでは，各NFがHTTP/2およびJSONベースのRESTful APIを用いて\textbf{SBI（Service Based Interface）}上でサービスとして公開され，\textbf{NRF（Network Repository Function）}を介した動的なサービス探索により，疎結合な連携が実現される．このアーキテクチャにより，新NF追加時の既存ノードへの影響を最小限に抑えることができ，NFごとの独立スケーリングが設計上保証され，汎用的なWeb技術やツールが活用できるようになった．SBAにより，5GCは従来のEPCに比べて進化速度と運用柔軟性を大幅に向上させた．
 
-図\ref{fig:ntn_architecture}にNTNの概念構成を示す．
+\section{4Gから5Gへの移行シナリオ}
+5Gネットワークの展開形態は，一般に\textbf{SA（Standalone）}と\textbf{NSA（Non-Standalone）}に大別される\cite{5G_NSA_SA_Primer}．
 
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
-    % 地上エリア
-    \fill[GoogleLightGray!50] (-0.5,-0.5) rectangle (12,0.8);
-    \node at (0.5,0.15) {\textbf{地上}};
+SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセスネットワークのみが，EPC もしくは 5GC のいずれかに接続される構成を指す．特に \textbf{5G SA} は 5G NR と 5GC を組み合わせた構成であり，ネットワークスライシングや高度なQoS制御といった5GC固有の機能をフルに活用できる．
 
-    % 地上局/ゲートウェイ
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
-
-    % 地上のCN
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
-    \draw[->, thick] (gw) -- (core);
-
-    % 衛星（宇宙）
-    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.2cm] (sat) at (5,5) {衛星};
-    \node[above] at (5,5.7) {\textbf{宇宙}};
-    \node[below, text width=2cm, align=center] at (5,4.2) {\scriptsize 4G RAN搭載};
-
-    % HAPS（成層圏）
-    \node[draw, ellipse, fill=GoogleYellow!50, minimum width=1.8cm, minimum height=0.7cm] (haps) at (9,3.5) {HAPS};
-    \node[above] at (9,4.1) {\textbf{成層圏}};
-    \node[below, text width=2cm, align=center] at (9,2.9) {\scriptsize 4G RAN搭載};
-
-    % UE（地上）
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue1) at (5,0.15) {UE};
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue2) at (8,0.15) {UE};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat) -- (gw) node[midway, above, sloped] {\scriptsize Feeder};
-    \draw[->, thick] (sat) -- (ue1) node[midway, right] {\scriptsize Service};
-    \draw[->, thick] (haps) -- (ue2);
-    \draw[->, thick, dashed] (haps) -- (gw);
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ 地上\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ 地上局\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 地上CN\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ 非地上PF（衛星/HAPS）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ Feeder link\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ Service link\\
-      \end{tabular}
-    };
-
-
-  \end{tikzpicture}
-  \caption{NTN（非地上系ネットワーク）の概念構成}
-  \label{fig:ntn_architecture}
-\end{figure}
-
-NTNのアーキテクチャには，衛星が単なる中継器（ベントパイプ）として動作する「トランスペアレント（Transparent）型」と，衛星上で基地局機能（ベースバンド処理やL2/L3制御）を実行する「再生（Regenerative）型」が存在する．
-図\ref{fig:ntn_payload_comparison}に両アーキテクチャの比較を示す．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.72, every node/.style={font=\small}]
-    % ========== トランスペアレント型（左側）==========
-    \node[font=\normalsize\bfseries] at (3,7) {Transparent型};
-
-    % 衛星（ベントパイプ）
-    \node[draw, circle, fill=GoogleLightGray!50, minimum size=1.6cm] (sat-t) at (3,4.8) {};
-    \node[align=center, font=\scriptsize] at (3,4.8) {衛星\\(中継のみ)};
-    \node[above, font=\scriptsize] at (3,5.8) {RF増幅・周波数変換};
-
-    % 地上局（gNB設置）
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=0.8cm] (gw-t) at (0.8,2) {gNB};
-    \node[below, font=\scriptsize] at (0.8,1.4) {地上局};
-
-    % 5GC
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-t) at (0.8,0.3) {5GC};
-
-    % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-t) at (5.2,0.3) {UE};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat-t) -- (gw-t) node[midway, left, font=\scriptsize] {Feeder Link};
-    \draw[->, thick] (sat-t) -- (ue-t) node[midway, right, font=\scriptsize] {Service Link};
-    \draw[<->, thick] (gw-t) -- (core-t) node[midway, left, font=\scriptsize] {N2/N3};
-
-    % 特徴（下部）
-    \node[draw, rounded corners, fill=GoogleGreen!10, text width=4.5cm, align=left, font=\scriptsize] at (3,-1.3) {
-      \textbf{特徴:}\\
-      • gNBは地上に設置\\
-      • 地上設備の更新で世代交代可能\\
-      • 遅延: Feeder + Service
-    };
-
-    % ========== 区切り線 ==========
-    \draw[thick, dashed, gray] (7.5,7.5) -- (7.5,-2.5);
-
-    % ========== 再生型（右側）==========
-    \node[font=\normalsize\bfseries] at (12,7) {Regenerative型};
-
-    % 衛星（gNB搭載）
-    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.8cm] (sat-r) at (12,4.8) {};
-    \node[align=center, font=\scriptsize] at (12,4.8) {衛星\\(gNB搭載)};
-    \node[above, font=\scriptsize, text width=3cm, align=center] at (12,5.9) {ベースバンド処理\\L2/L3制御};
-
-    % 地上局（GWのみ）
-    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm] (gw-r) at (9.5,2) {Gateway};
-    \node[below, font=\scriptsize] at (9.5,1.4) {地上局};
-
-    % 5GC
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-r) at (9.5,0.3) {5GC};
-
-    % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-r) at (14.5,0.3) {UE};
-
-    % ISL（衛星間リンク）オプション
-    \node[draw, circle, fill=GoogleYellow!30, minimum size=1.1cm, font=\scriptsize] (sat-r2) at (15.5,4.2) {衛星};
-    \draw[<->, thick, dotted, GoogleBlue] (sat-r) -- (sat-r2) node[midway, above, font=\scriptsize] {ISL};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat-r) -- (gw-r) node[midway, left, font=\scriptsize] {Feeder};
-    \draw[->, thick] (sat-r) -- (ue-r) node[midway, right, font=\scriptsize] {Service};
-    \draw[<->, thick] (gw-r) -- (core-r) node[midway, left, font=\scriptsize] {N2/N3};
-
-    % 特徴（下部）
-    \node[draw, rounded corners, fill=GoogleRed!10, text width=5cm, align=left, font=\scriptsize] at (12,-1.3) {
-      \textbf{特徴:}\\
-      • gNBは衛星上に搭載\\
-      • \textcolor{GoogleRed}{\textbf{打ち上げ後のHW更新不可}}\\
-      • 遅延: Service Linkのみ\\
-      • ISLによるメッシュ構築可能
-    };
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ Transparent型（中継衛星/UE）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ Regenerative型（gNB搭載衛星）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 地上側（gNB/5GC）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ 地上局・ISL関連\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 注意点（物理更新困難など）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ Feeder link\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ Service link\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dotted, GoogleBlue] (0,0) -- (0.6,0);\ ISL\\
-      \end{tabular}
-    };
-  \end{tikzpicture}
-  \caption{NTNペイロードアーキテクチャの比較（TR 38.821に基づく）}
-  \label{fig:ntn_payload_comparison}
-\end{figure}
-
-トランスペアレント型であれば，地上のゲートウェイ局（GW）に設置された基地局設備を更新することで世代交代が可能である．一方，再生型アーキテクチャでは，衛星自体にeNB/gNB機能がハードウェアとして搭載されているため，打ち上げ後にこれを最新世代のハードウェア（例えば4G用プロセッサから5G/6G用プロセッサへ）に交換することは事実上不可能である．
-特に，伝送遅延の低減や衛星間通信（ISL: Inter-Satellite Link）によるメッシュネットワーク構築の観点から，次世代の低軌道（LEO）衛星コンステレーションにおいては再生型アーキテクチャの採用が期待されているが，これは同時に「軌道上のインフラがレガシー化しやすい」という課題を内包している．
-
-現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている．地上のネットワークが5G，そして6Gへと進化した際，宇宙空間にあるeNBを回収して5G gNBに交換することはできない．ソフトウェア更新による対応も，FPGAやRFフロントエンドの制約により限界がある．したがって，NTN環境では「レガシーRAN」が長期間にわたって残存することが不可避である．
-
-\subsection{研究開発における低コスト検証環境のギャップ}
-第\ref{chap:introduction}章で述べた通り，次世代CN機能（ネットワークスライシング，URLLC等）の研究開発には5GCが必要である．しかし，5GCに接続可能な5G gNBは高価であり，さらに無線免許の取得手続きも伴う．このため，大学や中小企業の研究者にとって，5GCの新機能を実環境で検証するための導入障壁は高い．
-
-現在，5GCの研究開発においては，ns-3等のネットワークシミュレータや，有線接続によるエミュレーション環境が広く用いられている．しかし，これらの環境では無線区間の物理的な特性（フェージング，ハンドオーバ時の瞬断，端末の実装依存挙動など）を十分に再現できない．
-
-また，オープンソースを用いた5G SA検証環境においても，SDRを用いた実機RAN構成と，エミュレーション／シミュレーション構成（RF SimulatorやUERANSIM等）では，スループットや遅延，計算資源利用といった観点で性能が大きく異なり得ることが報告されている\cite{Rouili_NOMS2024_OpenSource5GTestbeds}．
-
-このように，ソフトウェアベースで進化するCNに対し，それを検証するためのRAN環境が追いついていないという「進化のギャップ」が，研究開発の現場においても顕在化している．
-
-\section{既存の移行・収容技術とその限界}
-
-4Gから5Gへの移行シナリオとして，3GPPはいくつかの構成（Option）を規定しているが，第\ref{chap:introduction}章で述べた「商用導入におけるマイグレーション戦略の柔軟性欠如」を解決するには不十分である．本節では，まず一般的な概念としてのSA/NSAを整理し，次に3GPPが規定する移行Optionとの対応を示した上で，ng-eNBを用いた構成の限界を述べる．
-
-\subsection{5G SAと5G NSA}
-5Gネットワークの展開形態は，一般に「SA（Standalone）」と「NSA（Non-Standalone）」に大別される．
-
-\textbf{5G SA}は，5G NR（New Radio）と5GC（5G Core）を組み合わせた構成を指す．RANとCNの両方が5G世代で統一されているため，ネットワークスライシングや高度なQoS制御といった5GC固有の機能をフルに活用できる．一方，\textbf{5G NSA}は，既存の4G LTE基盤を活用しながら5G NRを追加する構成を指す．4G EPCをCNとして継続利用するため，5GC機能は利用できないが，既存インフラへの投資を活かしつつ段階的に5Gサービスを開始できるという利点がある．
+一方，NSAはLTE と 5G NR の両方のRATが共存し，一方のアクセスネットワークが他方が EPC もしくは 5GC に接続するのを支援する構成を指す．NSAでは，一つのRATがMaster Node（MN）として主要なシグナリングを担当し，もう一つのRATがSecondary Node（SN）として補助的に機能する．この両RATが同時に1つのUEに接続する構成を\textbf{デュアルコネクティビティ（DC: Dual Connectivity）}と呼び，複数の周波数帯を活用することで通信容量と信頼性の向上を実現する．\textbf{5G NSA}では，既存の 4G LTE 基盤を活用しながら 5G NR を追加することにより，既存インフラへの投資を活かしつつ段階的に 5G サービスを開始できるという利点がある．
 
 図\ref{fig:nsa_sa_comparison}に両構成の概念的な比較を示す．なお，NSAには複数の実現形態があるため，図は代表例として商用で一般的なOption 3系（特にOption 3x）を示す．
 
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
+    \clip (-7,-3.5) rectangle (17,6);
     % NSA構成（左側）
-    \node[font=\normalsize\bfseries] at (2.5,4.5) {5G NSA（Option 3xの例）};
+    \node[font=\normalsize\bfseries] at (-2.5,5) {5G NSA（Option 3xの例）};
 
-    % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (nsa-ue) at (0,2) {UE};
+    % カバレッジエリア（楕円）
+    \draw[GoogleYellow!60, thick, fill=GoogleYellow!15] (-5.5,3.5) ellipse (1.5cm and 0.6cm);
+    \node[font=\scriptsize, text=GoogleYellow!60!black] at (-5.5,4.5) {LTEエリア};
+    \draw[GoogleBlue!60, thick, fill=GoogleBlue!15] (-5.5,1.5) ellipse (1.5cm and 0.6cm);
+    \node[font=\scriptsize, text=GoogleBlue!60!black] at (-5.5,0.5) {NRエリア};
 
-    % eNB
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-enb) at (2.5,3) {LTE eNB};
-    % gNB
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-gnb) at (2.5,1) {NR gNB};
+    % UE（エリア内に配置）
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.0cm, minimum height=0.5cm] (nsa-ue-lte) at (-5.5,3.5) {UE};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.0cm, minimum height=0.5cm] (nsa-ue-nr) at (-5.5,1.5) {UE};
 
-    % EPC
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.5cm, minimum height=0.8cm] (nsa-epc) at (5,2) {4G EPC};
+    % eNB / gNB / EPC
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.6cm, minimum height=0.8cm] (nsa-enb) at (-1.5,3.5) {eNB};
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.6cm, minimum height=0.8cm] (nsa-gnb) at (-1.5,1.5) {gNB};
+    \node[draw, rounded corners, fill=GoogleYellow!50, minimum width=1.6cm, minimum height=0.8cm] (nsa-epc) at (2,2.5) {EPC};
 
-    % 接続線（概念図）
-    % Control Plane（概念）
-    \draw[->, thick, dashed] (nsa-ue) -- (nsa-enb);
-    \draw[->, thick, dashed] (nsa-enb) -- (nsa-epc);
-    % User Plane（概念；Option 3xではgNBからEPCへ直接経路を持ち得る）
-    \draw[->, thick] (nsa-ue) -- (nsa-gnb);
-    \draw[->, thick] (nsa-gnb) -- (nsa-epc);
-    % eNB-gNB間（概念）
-    \draw[<->, thick, dashed] (nsa-gnb) -- (nsa-enb);
+    % カバレッジエリアからeNB/gNBへの線
+    \draw[-, thick, dashed, GoogleYellow!60] (-4,3.5) -- (nsa-enb.west) node[midway, above] {\scriptsize LTE-Uu};
+    \draw[-, thick, dashed, GoogleBlue!60] (-4,1.5) -- (nsa-gnb.west) node[midway, above] {\scriptsize NR-Uu};
+
+    % 接続線（Option 3x の具体）
+    % eNB -> EPC (S1-C と S1-U の両方)
+    \draw[-, thick] ($(nsa-enb.east)+(0,0.15)$) -- ($(nsa-epc.west)+(0,0.15)$) node[midway, above, sloped] {\scriptsize S1-C};
+    \draw[-, thick, GoogleRed] ($(nsa-enb.east)+(0,-0.15)$) -- ($(nsa-epc.west)+(0,-0.15)$) node[midway, below, sloped] {\scriptsize S1-U};
+
+    % User Plane: gNB -> EPC (S1-U)
+    \draw[-, thick, GoogleRed] ($(nsa-gnb.east)+(0,-0.15)$) -- ($(nsa-epc.west)+(0,-0.15)$) node[midway, below, sloped] {\scriptsize S1-U};
+
+    % eNB-gNB間（X2/デュアルコネクティビティの概念）
+    \draw[-, thick, dashed] (nsa-gnb.north) -- (nsa-enb.south) node[midway, right] {\scriptsize X2};
 
     % 説明
-    \node[text width=4cm, align=center] at (2.5,-0.5) {C-PlaneはLTE側\\U-PlaneはNR側};
+    \node[text width=10cm, align=center] at (-2,-0.5) {eNBはS1-C/S1-UでEPCに接続\\gNBはS1-UのみでEPCに接続};
 
     % 区切り線
-    \draw[thick, dashed, gray] (7,5) -- (7,-1);
+    \draw[thick, dashed, gray] (3.5,5.5) -- (3.5,-1);
 
     % SA構成（右側）
-    \node[font=\normalsize\bfseries] at (11,4.5) {5G SA};
+    \node[font=\normalsize\bfseries] at (9.5,5) {5G SA};
+
+    % カバレッジエリア（楕円）
+    \draw[GoogleBlue!60, thick, fill=GoogleBlue!15] (5.5,2.5) ellipse (1.5cm and 0.6cm);
+    \node[font=\scriptsize, text=GoogleBlue!60!black] at (5.5,3.5) {NRエリア};
 
     % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.5cm, minimum height=0.8cm] (sa-ue) at (8.5,2) {UE};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.0cm, minimum height=0.5cm] (sa-ue) at (5.5,2.5) {UE};
 
     % gNB
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-gnb) at (11,2) {NR gNB};
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.6cm, minimum height=0.8cm] (sa-gnb) at (9.5,2.5) {gNB};
 
     % 5GC
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.8cm] (sa-5gc) at (13.5,2) {5GC};
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.6cm, minimum height=0.8cm] (sa-5gc) at (13.5,2.5) {5GC};
+
+    % カバレッジエリアからgNBへの線
+    \draw[-, thick, dashed, GoogleBlue!60] (7,2.5) -- (sa-gnb.west) node[midway, above] {\scriptsize NR-Uu};
 
     % 接続線
-    \draw[->, thick] (sa-ue) -- (sa-gnb);
-    \draw[->, thick] (sa-gnb) -- (sa-5gc);
+    \draw[-, thick] (sa-gnb) -- (sa-5gc) node[midway, above] {\scriptsize N2/N3};
 
     % 説明
-    \node[text width=4cm, align=center] at (11,-0.5) {5G RANと5GCの組み合わせ\\5GC機能が利用可能};
+    \node[text width=5cm, align=center] at (9.5,-0.5) {5G RANと5GCの組み合わせ\\5GC機能が利用可能};
 
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+    % 凡例（図の下頃中央に配置）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at (4,-1.2) {
       \begin{tabular}{@{}l@{}}
       \csname textbf\endcsname{凡例}\\
       \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ LTE系（eNB/EPC）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ NR/5GC系（gNB/5GC）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ 概念上の制御系接続\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ 概念上のユーザ系接続\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ 4G系
+      \quad
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ 5G系\\
+      C-Plane: 黒線 \quad \textcolor{GoogleRed}{U-Plane: 赤線}
       \end{tabular}
     };
   \end{tikzpicture}
@@ -395,39 +397,58 @@ NTNのアーキテクチャには，衛星が単なる中継器（ベントパ�
   \label{fig:nsa_sa_comparison}
 \end{figure}
 
-\subsection{3GPPにおける移行Option}
-3GPPは，4G（LTE/EPC）から5G（NR/5GC）への段階的な移行を可能にするため，TR 38.801において複数の移行構成（Option 1〜7）を規定している．表\ref{tab:migration_options}にOption一覧を示す．
-
-\begin{table}[htbp]
-  \centering
-  \caption{3GPPが規定する移行Option一覧}
-  \label{tab:migration_options}
-  \begin{tabular}{c|c|c|c|l}
-    \hline
-    Option & RAN & CN & 分類 & 備考 \\
-    \hline\hline
-    1 & eNB & EPC & --- & 従来の4G LTE構成 \\
-    2 & gNB & 5GC & 5G SA & 純粋な5G構成 \\
-    3/3a/3x & eNB + gNB & EPC & 5G NSA & 商用で広く採用 \\
-    4/4a & gNB + ng-eNB & 5GC & --- & gNB主，ng-eNB副 \\
-    5 & ng-eNB & 5GC & --- & LTE RANで5GC接続 \\
-    7/7a/7x & ng-eNB + gNB & 5GC & --- & ng-eNBとgNBを併用 \\
-    \hline
-  \end{tabular}
-\end{table}
-
-ここで，末尾の「a」や「x」は，制御面・ユーザ面の終端点やアンカー方式等の細部が異なる派生構成を表す．
+\subsection{SA/NSAと移行Optionの位置づけ}
+3GPPは，4G（LTE/EPC）から5G（NR/5GC）への段階的な移行を可能にするため，TR 38.801において複数の移行構成（Option 1〜7）を規定している．表\ref{tab:migration_options}にOption一覧を示す．ここで，末尾の「a」や「x」は，C-Plane・U-Planeの終端点やアンカー方式等の細部が異なる派生構成を表す．
 
 前節で述べた一般的な5G SA/NSAの分類との対応は以下の通りである：
 \begin{itemize}
   \item \textbf{5G SA}に該当: Option 2（gNB+5GC）
   \item \textbf{5G NSA}に該当: Option 3系（eNB+gNB+EPC）
 \end{itemize}
-なお，Option 1は従来の4G構成であり5Gではない．Option 4/5/7はng-eNBを用いて5GCに接続する構成であり，5GC機能を利用可能という点では5G SAに近いが，RANがLTEであるため純粋な5G SAとは区別される．
 
-現在，商用導入で最も広く用いられているのはOption 3系（特にOption 3x）である\cite{Malik_INSPECT2024_5GTactical}．これは，LTE eNBがEPCに接続されたまま，NR gNBを追加してデュアルコネクティビティ（DC）によりサービスを提供する構成である．既存の4Gインフラを活用できるため導入が容易である一方，CNがEPCのままであるため，5GCを前提とする機能（3GPPが定義するネットワークスライシング等）は利用できないという限界がある．
+各Optionの特徴は以下のように整理できる．
 
-\subsection{ng-eNBを用いた構成とその限界}
+\textbf{Option 1}は従来の4G構成（eNB+EPC）であり，5G技術を含まない純粋なLTEネットワークである．
+
+\textbf{Option 2}は5G SA構成（gNB+5GC）であり，RAN・CN共に5G技術で構成され，5G固有機能を完全に利用可能である．
+
+\textbf{Option 3系}はEN-DC（E-UTRA-NR DC）によって実現される．この構成では，eNBがMNとしてC-Planeの主要機能を担当し，CNはEPCに接続される．一方，gNBはSNとして追加され，NR周波数帯によるU-Planeの高速化に寄与する．
+
+\textbf{Option 4系}はNE-DC（NR-E-UTRA DC）によって実現される．この構成では，gNBがMNとして5GCに接続し，C-Plane・U-Planeの主要機能を担当する．NGインターフェースを終端できるように改修されたLTE基地局のng-eNBがSNとして追加され，LTE周波数帯を活用した補助的なU-Planeを提供する．5GCを利用するため，gNBのカバーエリアでは5G固有の機能を利用可能である．
+
+\textbf{Option 7系}はNGEN-DC（NG-RAN E-UTRA-NR DC）によって実現される．この構成では，ng-eNBがMNとして5GCに接続し，C-Plane・U-Planeの主要機能を担当する．gNBはSNとして追加され，NR周波数帯による高速なU-Planeを提供する．Option 4系と同様にgNBのカバーエリアでは5G固有の機能を利用可能であるが，MNがLTE基地局である点が異なる．
+
+\textbf{Option 5}はng-eNBが単独で5GCに接続する構成であり，DCを伴わない．
+
+\begin{table}[htbp]
+  \centering
+  \caption{3GPPが規定する移行Option一覧}
+  \label{tab:migration_options}
+  \begin{tabular}{c|c|c|c|c|l}
+    \hline
+    Option & CN & RAN: MN & RAN: SN & 分類 & 備考 \\
+    \hline\hline
+    1 & EPC & eNB & --- & --- & 従来の4G構成（DCなし） \\
+    2 & 5GC & gNB & --- & SA & 5G SA構成（DCなし） \\
+    3/3a/3x & EPC & eNB & gNB & NSA & EN-DC \\
+    4/4a & 5GC & gNB & ng-eNB & NSA & NE-DC \\
+    5 & 5GC & ng-eNB & --- & SA & LTE+5GCのSA（DCなし） \\
+    7/7a/7x & 5GC & ng-eNB & gNB & NSA & NGEN-DC \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\section{異世代相互接続の技術的障壁}
+
+第\ref{sec:5gc_architecture}節で述べたように，5GCはNFVによる仮想化とSBAによるサービス指向アーキテクチャを採用しており，ソフトウェアベースで柔軟に機能追加・更新が可能である．一方，RANは物理的な基地局設備を伴い，設置場所の制約や設備投資の大きさから，CNと同じペースでの刷新は困難である．このRAN-CN間の進化速度の非対称性を踏まえれば，\textbf{CNを先行して5GCへ移行し，5GC固有の高度な機能（ネットワークスライシング等）を早期に活用する「CN先行アプローチ」}は，事業者にとって合理的な選択肢となり得る．
+
+前節で述べた移行Optionのうち，現在最も普及しているOption 3系はCNがEPCのままであり，5GC固有機能を先行利用したいオペレータのニーズに応えられない．一方，5GCを利用するOption 4/5/7はいずれもng-eNB（LTE eNBを改修してNG-RANインターフェースを実装したノード）を前提としている．
+
+しかしながら，現行の3GPP標準仕様は，RANとCNが同一世代で同期することを前提とした\textbf{密結合モデル}として設計されている．具体的には，4G RANは4G CN（EPC）と，5G RANは5G CN（5GC）と接続することが想定されており，異なる世代のRANとCNを直接接続するための標準的なインターフェースは定義されていない．ng-eNBは5GCとの接続を可能にするが，これはLTE eNBの改修を前提としており，\textbf{既存のレガシーRANを無改修のまま5GCに収容する手段は，3GPP標準には存在しない}．
+
+本節では，この「CN先行アプローチ」を実現する上での技術的障壁を整理する．まず，3GPP標準における移行手段（ng-eNB）の限界を示し，次に，レガシーeNBを無改修で5GCに接続するために克服すべきプロトコルレベルの障壁を明らかにする．
+
+\subsection{3GPP標準における移行手段の限界}
 Option 3系ではCNがEPCのままであるため5GC機能が利用できない．これに対し，3GPPはLTE基地局を5GCに接続するためのノードとしてng-eNBを定義している．
 
 ng-eNBは，無線インターフェースはLTE（E-UTRA）のままであるが，CNとのインターフェースとしてNG-C（NGAP）およびNG-Uをサポートし，5GCに直接接続可能である．ng-eNBを用いた移行Optionとしては以下が規定されている：
@@ -437,14 +458,80 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
   \item \textbf{Option 7/7a/7x}: ng-eNBが5GCに接続し（Master Node），gNBを副ノード（Secondary Node）として追加してデュアルコネクティビティを提供する構成
 \end{itemize}
 
-しかし，既存のレガシーeNBをng-eNB化するには，基地局側でNGインターフェース（少なくともNG-C/NGAP）を終端・処理する実装が必要となるため，基地局ソフトウェア（ファームウェア）の改修が前提となる．したがって，ng-eNBは「RANの更新」を前提としたソリューションであり，物理的に更新困難な環境への適用は限定的である．
+しかし，既存のレガシーeNBをng-eNB化するには，基地局側でNGインターフェース（少なくともNG-C/NGAP）を終端・処理する実装が必要となるため，基地局ソフトウェア（ファームウェア）の改修が前提となる．さらに，現場適用において以下の具体的障壁が存在する：
+\begin{itemize}
+  \item \textbf{プロトコル非互換性}: 標準のLTE eNBはS1インターフェース（S1AP/GTP-U）のみを実装しているが，5GCはN2/N3インターフェース（NGAP/GTP-U＋拡張ヘッダ）を要求する．S1APとNGAPはメッセージ構造・手順が非互換であり，単純な設定変更では対応できない．
+  \item \textbf{ハードウェア資源の制約}: ng-eNB化には新しいプロトコルスタックやQoS制御（SDAP相当機能を含む）を処理する計算資源が必要になる．古いeNBのCPU/メモリでは処理能力が不足し，アップグレードが不可能または性能劣化を招くケースがある．
+  \item \textbf{ベンダーロックインとサポート終了（EOL）}: 古い装置はメーカーサポートが終了している場合が多く，ファームウェア更新が提供されない，あるいは新規設備投資に匹敵するコストが必要となる．
+\end{itemize}
 
-\section{異世代相互接続の技術的障壁}
+\paragraph{小括} 以上より，\textbf{ng-eNBを用いた移行Optionは論理的には有効}であるものの，既存レガシー資産（Legacy eNB）を無改修で活用する手段としては\textbf{適用範囲が限定的}である．したがって，\textbf{eNBには一切手を加えず，S1インターフェースのまま5GCへ透過的に接続するための「非標準的な移行パス」}が求められる．
 
-前節までで述べたように，NTN等の物理的制約（第\ref{chap:introduction}章で述べた課題1・3）や，R\&Dにおける低コスト検証環境のギャップ（課題2），そしてng-eNBがRAN改修を前提とする点を踏まえると，これらの課題に共通するのは「RANの物理的更新を前提としない移行手段が存在しない」という点である．
-したがって，レガシーeNB（S1インターフェースのみサポート）を，改修なしにそのままの状態で5GCに収容する技術が求められる．本節では，これを実現する上で克服すべき技術的障壁を整理する．
+\subsection{レガシーeNB収容に必要なプロトコル変換}
 
-図\ref{fig:inter_generation_gap}に，レガシーRANと5GCの間に存在する技術的なギャップを示す．
+前項で述べたように，ng-eNBを用いた構成はRANの改修を前提としており，「CN先行アプローチ」の要件を満たさない．したがって，レガシーeNB（S1インターフェースのみサポート）を改修なしに5GCへ収容するには，S1インターフェースとN2/N3インターフェースの間でプロトコル変換を行う中間ノードが必要となる．本項では，この変換において克服すべき技術的障壁を整理する．
+
+図\ref{fig:protocol_stack_comparison}に4G（S1インターフェース）と5G（N2/N3インターフェース）のC-PlaneおよびU-Planeにおけるプロトコルスタックの比較を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.85, every node/.style={font=\small},
+    layer/.style={draw, minimum width=2.8cm, minimum height=0.7cm, align=center},
+    label/.style={font=\bfseries\small}]
+
+    % === 4G S1 C-Plane ===
+    \node[label] at (1.4, 4.2) {4G S1 C-Plane};
+    \node[layer, fill=GoogleBlue!30] (s1ap) at (1.4, 3.5) {S1AP};
+    \node[layer, fill=GoogleBlue!20] (sctp4) at (1.4, 2.8) {SCTP};
+    \node[layer, fill=GoogleLightGray!50] (ip4c) at (1.4, 2.1) {IP};
+
+    % === 5G N2 C-Plane ===
+    \node[label] at (5.0, 4.2) {5G N2 C-Plane};
+    \node[layer, fill=GoogleGreen!30] (ngap) at (5.0, 3.5) {NGAP};
+    \node[layer, fill=GoogleGreen!20] (sctp5) at (5.0, 2.8) {SCTP};
+    \node[layer, fill=GoogleLightGray!50] (ip5c) at (5.0, 2.1) {IP};
+
+    % === 4G S1 U-Plane ===
+    \node[label] at (9.2, 4.2) {4G S1-U};
+    \node[layer, fill=GoogleBlue!30] (gtpu4) at (9.2, 3.5) {GTP-U};
+    \node[layer, fill=GoogleBlue!20] (udp4) at (9.2, 2.8) {UDP};
+    \node[layer, fill=GoogleLightGray!50] (ip4u) at (9.2, 2.1) {IP};
+
+    % === 5G N3 U-Plane ===
+    \node[label] at (12.8, 4.2) {5G N3};
+    \node[layer, fill=GoogleGreen!30] (gtpu5) at (12.8, 3.5) {GTP-U + Ext};
+    \node[layer, fill=GoogleGreen!20] (udp5) at (12.8, 2.8) {UDP};
+    \node[layer, fill=GoogleLightGray!50] (ip5u) at (12.8, 2.1) {IP};
+
+    % Difference annotations
+    \draw[<->, thick, GoogleRed] (s1ap.east) -- (ngap.west) node[midway, above, font=\scriptsize, text=GoogleRed] {非互換};
+    \draw[<->, thick, GoogleRed] (gtpu4.east) -- (gtpu5.west) node[midway, above, font=\scriptsize, text=GoogleRed] {拡張ヘッダ};
+
+    % Separator
+    \draw[dashed, gray] (7.0, 1.6) -- (7.0, 4.5);
+
+    % Labels
+    \node[font=\scriptsize] at (3.2, 1.4) {\textbf{制御面 (C-Plane)}};
+    \node[font=\scriptsize] at (11.0, 1.4) {\textbf{ユーザ面 (U-Plane)}};
+
+    % Legend
+    \node[draw, fill=white, anchor=south west, font=\scriptsize, inner sep=3pt] at (-0.5, 0.3) {
+      \begin{tabular}{@{}l@{}}
+        \csname textbf\endcsname{凡例}\\
+        \csname tikz\endcsname[baseline=-0.5ex]\fill[GoogleBlue!30] (0,0) rectangle (0.25,0.25);\ 4G (S1)\\
+        \csname tikz\endcsname[baseline=-0.5ex]\fill[GoogleGreen!30] (0,0) rectangle (0.25,0.25);\ 5G (N2/N3)\\
+        \csname tikz\endcsname[baseline=-0.5ex]\draw[<->, thick, GoogleRed] (0,0.1) -- (0.5,0.1);\ 変換が必要な箇所\\
+      \end{tabular}
+    };
+
+  \end{tikzpicture}
+  \caption{4G（S1）と5G（N2/N3）のプロトコルスタック比較}
+  \label{fig:protocol_stack_comparison}
+\end{figure}
+
+図\ref{fig:protocol_stack_comparison}に示すように，トランスポート層（SCTP/UDP over IP）は4G/5Gで共通であるが，アプリケーション層のプロトコル（S1AP vs NGAP，GTP-U vs GTP-U+拡張ヘッダ）に非互換性が存在する．以下，各層における具体的な障壁を整理する．
+
+図\ref{fig:inter_generation_gap}に，レガシーRANと5GCの間に存在する技術的なギャップの全体像を示す．
 
 \begin{figure}[htbp]
   \centering
@@ -507,14 +594,24 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
   \label{fig:inter_generation_gap}
 \end{figure}
 
-\subsection{C-Plane: S1-APとNG-APの非互換性}
+\subsection{C-Plane: 制御信号と識別子の非互換性}
 4Gの制御プロトコルであるS1-APと，5GのNG-APは，共にASN.1で記述されているものの，メッセージ構造やパラメータ（Information Element）が異なる．
 例えば，4Gでは「Attach」手順で接続とベアラ確立を一括して行うが，5Gでは「Registration」と「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
+加えて，5GCの特徴である\textbf{ネットワークスライシング識別子（S-NSSAI）}を運搬するフィールドがS1-APには存在しない．5Gでは，UEが希望するスライス情報をRAN経由でAMF選択に反映する（NSSF/NNSFによるスライス選択）が，レガシーeNBはこの情報を保持・転送できないため，単純なプロトコル変換だけではスライス選択機能を提供できない．デフォルトスライスへのフォールバックやゲートウェイ側でのスライス選択代行など，アーキテクチャ上の工夫が必要となる．
+
 \subsection{NAS: セキュリティと鍵管理の相違}
-端末（UE: User Equipment）とCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}は異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
+UEとCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}は異なる．特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4G UEは5Gの認証手順（5G AKA）を知らないため，CN側で4G互換の認証ベクトルを生成するか，変換ゲートウェイが代理で認証を行う必要がある．
 
 \subsection{U-Plane: QoSモデルの変革}
 ユーザデータ転送（GTP-U: GPRS Tunnelling Protocol - User Plane）\cite{3GPP_TS29281}自体は互換性が高いが，QoS（Quality of Service）モデルが大きく異なる．4Gは「ベアラ（Bearer）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．変換ゲートウェイは，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，GTP-Uパケットヘッダ（拡張ヘッダ等）を書き換える必要がある．
 
-本研究では，これらの障壁を「S1-N2変換ゲートウェイ」によって解消し，RANの改修なしに5GCへの収容を実現する．
+さらに，5GCのN3インターフェースではQoS情報を運ぶ\textbf{GTP-U拡張ヘッダ（PDU Session Container）}の付与が必須となる．標準仕様のLTE eNBは未知の拡張ヘッダをドロップまたは無視する実装が多く，変換なしではダウンリンクパケットが適切に処理されないリスクがある．ゲートウェイで拡張ヘッダを終端し，4G互換のGTP-Uに再封入する処理が求められる．
+
+\subsection{RRCステート管理の不整合（Optional）}
+5Gでは省電力と低遅延復帰を両立する\textbf{RRC Inactive}状態が導入されており，5GCはこの状態を前提にページングや状態遷移を制御する．一方，レガシーLTE eNBはIdle/Connectedの2状態を前提としており，RRC Inactiveを解釈できない．このステート管理の非対称性は，5GCからの状態指示がeNBで実装されないことによる状態同期ずれを引き起こし得るため，運用上の制約として考慮が必要である（本研究の実装対象外だが，課題として認識する）．
+
+\subsection{小括：本研究のアプローチ}
+本節では，「CN先行アプローチ」を実現する上での技術的障壁を整理した．3GPP標準のng-eNBを用いた移行手段はRANの改修を前提としており，既存レガシー資産の活用には適さない．また，レガシーeNBを無改修で5GCに接続するには，C-Plane（S1AP↔NGAP），NAS（セキュリティコンテキスト），U-Plane（QoSモデル，GTP-U拡張ヘッダ）の各層でプロトコル変換が必要となる．
+
+本研究では，これらの障壁を\textbf{「S1-N2/N3変換ゲートウェイ」}によって解消し，RANの改修なしに5GCへの収容を実現するアプローチを提案する．次章では，関連研究を整理した上で，第\ref{chap:proposal}章で本研究の提案手法を詳述する．

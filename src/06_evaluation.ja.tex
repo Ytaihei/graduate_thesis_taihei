@@ -173,16 +173,180 @@ RAN側がスライスを直接選択できない場合でも，CN側では加入
 
 総じて，5GC機能を前提とした運用設計においては，コア側配置を基本としつつ，NTNやMECなど特殊要件がある場合に限り分散配置を検討する，という方針が妥当であると考えられる．
 
-\subsection{序論で提示した課題への貢献}
-第\ref{chap:introduction}章で提示した3つの課題に対し，本研究の成果がどのように貢献しうるかを以下に整理する．
+\subsection{応用可能性（ユースケース）}
+本研究で提案した疎結合アーキテクチャは，基本的なプロトコル変換の実証を主目的としているが，その応用範囲は広い．本節では，提案手法が貢献しうる代表的なユースケースを整理する．
 
-\paragraph{R\&D：低コスト検証環境のギャップ解消}
-本実験環境自体が，この課題に対する一つの回答となっている．sXGP（免許不要のプライベートLTE）とOpen5GS（OSS 5GC）という低コストな構成で，5GCの機能検証が可能であることを実証した．従来，5GC検証には高価な5G gNBが必要とされたが，本手法により既存の4G基地局を活用した検証が可能となる．前節で述べたコア側配置を採用すれば，PC1台でAll-in-One構成が可能であり，R\&D環境の構築障壁を大幅に低減できる．
+\subsubsection{研究開発における低コスト検証環境}
+次世代コアネットワーク機能（ネットワークスライシング，超高信頼低遅延通信等）の研究開発において，5GCの機能検証が求められる場面は多い．
 
-\paragraph{商用導入：マイグレーション戦略への示唆}
-本研究は，eNBのハードウェア改修なしに5GCへ接続可能であることを示した．これは，レガシーeNBを段階的に5GC配下へ移行する「CN先行移行」戦略の技術的実現可能性を示すものである．コア側配置により，数千局規模のeNBに対しても現地作業なしで移行が可能となる．ただし，商用環境での適用には，大規模接続時の性能検証，運用監視機能の拡充，キャリアグレードの信頼性確保など，本プロトタイプの範囲外となる課題が残る．
+現在，5GCの機能検証にはns-3等のネットワークシミュレータや，UERANSIM等のエミュレータが広く活用されている．これらは大規模なトポロジ検証やプロトコルロジックの確認において極めて有用である一方，物理層や無線区間をモデル化・抽象化しているため，実空間特有の電波伝搬の揺らぎや商用端末のチップセット実装依存の挙動を含めた検証には限界がある．
 
-\paragraph{NTN：物理更新困難な環境への適用可能性}
+一方，商用の5G基地局（gNB）を用いた環境は機器が高価であり，無線免許の取得や電波暗室の用意といった設備投資が必要となる．このため，大学や中小企業の研究者が日常的にアクセスすることは困難である．
+
+本研究で構築した検証環境は，sXGP（免許不要のプライベートLTE）とOpen5GS（OSS 5GC）という低コストな構成により，「実空間・実端末を用いた低コストな検証環境」を実現する．前節で述べたコア側配置を採用すれば，PC1台でAll-in-One構成が可能であり，R\&D環境の構築障壁を大幅に低減できる．
+
+\subsubsection{商用導入におけるマイグレーション戦略}
+商用網やプライベートネットワークにおいて，すべての基地局を一斉に更新する一括移行はリスクが高く現実的ではない．3GPPは段階移行のためのOption（Option 3, 5, 7等）を定義しているが，これらの移行期間中は旧RANエリアにおいて新CN機能が利用できない．
+
+本研究は，eNBのハードウェア改修なしに5GCへ接続可能であることを示した．これは，レガシーeNBを段階的に5GC配下へ移行する「CN先行移行」戦略の技術的実現可能性を示すものである．コア側配置により，数千局規模のeNBに対しても現地作業なしで移行が可能となる．
+
+ただし，商用環境での適用には，大規模接続時の性能検証，運用監視機能の拡充，キャリアグレードの信頼性確保など，本プロトタイプの範囲外となる課題が残る．
+
+\subsubsection{NTN等の物理的制約環境}
+非地上系ネットワーク（Non-Terrestrial Network: NTN）では，衛星や成層圏プラットフォーム（High Altitude Platform Station: HAPS）に搭載された基地局が広域カバレッジを提供する．
+
+図\ref{fig:ntn_architecture}にNTNの概念構成を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
+    % 地上エリア
+    \fill[GoogleLightGray!50] (-0.5,-0.5) rectangle (12,0.8);
+    \node at (0.5,0.15) {\textbf{地上}};
+
+    % 地上局/ゲートウェイ
+    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
+
+    % 地上のCN
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
+    \draw[->, thick] (gw) -- (core);
+
+    % 衛星（宇宙）
+    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.2cm] (sat) at (5,5) {衛星};
+    \node[above] at (5,5.7) {\textbf{宇宙}};
+    \node[below, text width=2cm, align=center] at (5,4.2) {\scriptsize 4G RAN搭載};
+
+    % HAPS（成層圏）
+    \node[draw, ellipse, fill=GoogleYellow!50, minimum width=1.8cm, minimum height=0.7cm] (haps) at (9,3.5) {HAPS};
+    \node[above] at (9,4.1) {\textbf{成層圏}};
+    \node[below, text width=2cm, align=center] at (9,2.9) {\scriptsize 4G RAN搭載};
+
+    % UE（地上）
+    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue1) at (5,0.15) {UE};
+    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue2) at (8,0.15) {UE};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat) -- (gw) node[midway, above, sloped] {\scriptsize Feeder};
+    \draw[->, thick] (sat) -- (ue1) node[midway, right] {\scriptsize Service};
+    \draw[->, thick] (haps) -- (ue2);
+    \draw[->, thick, dashed] (haps) -- (gw);
+
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ 地上\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ 地上局\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 地上CN\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ 非地上PF（衛星/HAPS）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ Feeder link\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ Service link\\
+      \end{tabular}
+    };
+  \end{tikzpicture}
+  \caption{NTN（非地上系ネットワーク）の概念構成}
+  \label{fig:ntn_architecture}
+\end{figure}
+
+NTNのアーキテクチャには，衛星が単なる中継器（ベントパイプ）として動作する「トランスペアレント（Transparent）型」と，衛星上で基地局機能（ベースバンド処理やL2/L3制御）を実行する「再生（Regenerative）型」が存在する．
+図\ref{fig:ntn_payload_comparison}に両アーキテクチャの比較を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.72, every node/.style={font=\small}]
+    % ========== トランスペアレント型（左側）==========
+    \node[font=\normalsize\bfseries] at (3,7) {Transparent型};
+
+    % 衛星（ベントパイプ）
+    \node[draw, circle, fill=GoogleLightGray!50, minimum size=1.6cm] (sat-t) at (3,4.8) {};
+    \node[align=center, font=\scriptsize] at (3,4.8) {衛星\\(中継のみ)};
+    \node[above, font=\scriptsize] at (3,5.8) {RF増幅・周波数変換};
+
+    % 地上局（gNB設置）
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=0.8cm] (gw-t) at (0.8,2) {gNB};
+    \node[below, font=\scriptsize] at (0.8,1.4) {地上局};
+
+    % 5GC
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-t) at (0.8,0.3) {5GC};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-t) at (5.2,0.3) {UE};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat-t) -- (gw-t) node[midway, left, font=\scriptsize] {Feeder Link};
+    \draw[->, thick] (sat-t) -- (ue-t) node[midway, right, font=\scriptsize] {Service Link};
+    \draw[<->, thick] (gw-t) -- (core-t) node[midway, left, font=\scriptsize] {N2/N3};
+
+    % 特徴（下部）
+    \node[draw, rounded corners, fill=GoogleGreen!10, text width=4.5cm, align=left, font=\scriptsize] at (3,-1.3) {
+      \textbf{特徴:}\\
+      • gNBは地上に設置\\
+      • 地上設備の更新で世代交代可能\\
+      • 遅延: Feeder + Service
+    };
+
+    % ========== 区切り線 ==========
+    \draw[thick, dashed, gray] (7.5,7.5) -- (7.5,-2.5);
+
+    % ========== 再生型（右側）==========
+    \node[font=\normalsize\bfseries] at (12,7) {Regenerative型};
+
+    % 衛星（gNB搭載）
+    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.8cm] (sat-r) at (12,4.8) {};
+    \node[align=center, font=\scriptsize] at (12,4.8) {衛星\\(gNB搭載)};
+    \node[above, font=\scriptsize, text width=3cm, align=center] at (12,5.9) {ベースバンド処理\\L2/L3制御};
+
+    % 地上局（GWのみ）
+    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm] (gw-r) at (9.5,2) {Gateway};
+    \node[below, font=\scriptsize] at (9.5,1.4) {地上局};
+
+    % 5GC
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-r) at (9.5,0.3) {5GC};
+
+    % UE
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-r) at (14.5,0.3) {UE};
+
+    % ISL（衛星間リンク）オプション
+    \node[draw, circle, fill=GoogleYellow!30, minimum size=1.1cm, font=\scriptsize] (sat-r2) at (15.5,4.2) {衛星};
+    \draw[<->, thick, dotted, GoogleBlue] (sat-r) -- (sat-r2) node[midway, above, font=\scriptsize] {ISL};
+
+    % 接続線
+    \draw[->, thick, dashed] (sat-r) -- (gw-r) node[midway, left, font=\scriptsize] {Feeder};
+    \draw[->, thick] (sat-r) -- (ue-r) node[midway, right, font=\scriptsize] {Service};
+    \draw[<->, thick] (gw-r) -- (core-r) node[midway, left, font=\scriptsize] {N2/N3};
+
+    % 特徴（下部）
+    \node[draw, rounded corners, fill=GoogleRed!10, text width=5cm, align=left, font=\scriptsize] at (12,-1.3) {
+      \textbf{特徴:}\\
+      • gNBは衛星上に搭載\\
+      • \textcolor{GoogleRed}{\textbf{打ち上げ後のHW更新不可}}\\
+      • 遅延: Service Linkのみ\\
+      • ISLによるメッシュ構築可能
+    };
+
+    % 凡例
+    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
+      \begin{tabular}{@{}l@{}}
+      \csname textbf\endcsname{凡例}\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ Transparent型（中継衛星/UE）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ Regenerative型（gNB搭載衛星）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 地上側（gNB/5GC）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ 地上局・ISL関連\\
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 注意点（物理更新困難など）\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ Feeder link\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ Service link\\
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dotted, GoogleBlue] (0,0) -- (0.6,0);\ ISL\\
+      \end{tabular}
+    };
+  \end{tikzpicture}
+  \caption{NTNペイロードアーキテクチャの比較（TR 38.821に基づく）}
+  \label{fig:ntn_payload_comparison}
+\end{figure}
+
+トランスペアレント型であれば，地上のゲートウェイ局（GW）に設置された基地局設備を更新することで世代交代が可能である．一方，再生型アーキテクチャでは，衛星自体にeNB/gNB機能がハードウェアとして搭載されているため，打ち上げ後にこれを最新世代のハードウェア（例えば4G用プロセッサから5G/6G用プロセッサへ）に交換することは事実上不可能である．
+
+現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている．地上のネットワークが5G，そして6Gへと進化した際，これら「非地上系ネットワーク上のレガシーRAN」をどのように次世代CNへ収容するかが課題となる．
+
 本ゲートウェイはソフトウェアとして地上側に配置可能であり，衛星やHAPS上のRANを改修することなく，地上のCNのみを5Gへ移行できる可能性を示した．NTN地上局が僻地に設置されるケースでは，コア側配置により保守性を確保できる．高遅延環境（長RTT）における実証は今後の課題であるが，SCTP終端による再送制御の分離など，NTN特有の要件に対応しうる設計となっている．
 
 \subsection{課題と今後の展望}
@@ -205,6 +369,6 @@ RAN側がスライスを直接選択できない場合でも，CN側では加入
 \section{評価のまとめ}
 本章では，提案する「S1-N2変換ゲートウェイ」の機能検証および性能評価を行った．
 C-Plane接続検証により，4G RANを5GCに論理的に収容できることを確認した．U-Plane性能評価により，ベースライン環境との比較を通じて変換処理のオーバーヘッドを評価した．
-考察では，疎結合アーキテクチャの有効性，NTN環境への適用可能性，およびデプロイメント戦略について議論し，序論で提示した3つの課題への貢献を整理した．
+考察では，疎結合アーキテクチャの有効性，5GC固有機能を前提とした設計価値，およびデプロイメント戦略について議論した．また，本アーキテクチャの応用可能性として，研究開発における低コスト検証環境，商用導入におけるマイグレーション戦略，およびNTN等の物理的制約環境への適用について整理した．
 今後の課題として，実装面ではセキュリティ同期やスライシング対応，評価面では高遅延環境での実証やスケーラビリティ検証を挙げた．
 次章では，これらの評価結果を踏まえ，本研究全体の結論と今後の展望を述べる．
