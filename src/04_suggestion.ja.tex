@@ -1,32 +1,342 @@
 \chapter{提案手法：S1-N2変換ゲートウェイ}
 \label{chap:proposal}
 
+本章では，第\ref{chap:background}章で述べた技術背景を踏まえ，4G RANを改修なしに5Gコア（5GC）へ収容可能にするS1-N2変換ゲートウェイを提案する．まず\ref{sec:proposal_theoretical_foundation}節で提案の理論的基盤を述べる．提案手法を実現するためのアーキテクチャ設計，詳細設計，プロトタイプ実装，およびプロトコル仕様上の制約については，第\ref{chap:design}章で述べる．
+
 \section{提案の理論的基盤}
 \label{sec:proposal_theoretical_foundation}
 
-本章では，第\ref{chap:background}章で述べた技術背景を踏まえ，4G RANを改修なしに5Gコア（5GC）へ収容可能にするS1-N2変換ゲートウェイを提案する．本節では，提案手法の根拠となる2つの重要な分析フレーム---「機能的共通性」と「5GC固有機能の階層的分析」---を述べる．
+本節では，提案手法の根拠となる2つの重要な分析フレーム---「機能的共通性」と「5GC固有機能の階層的分析」---を述べる．
 
-\subsection{4G/5G間の機能的共通性 (Functional Commonality)}
+\subsection{4G/5G間の機能的共通性}
 \label{subsec:functional_commonality}
 
-モバイル通信システムは世代ごとにプロトコル仕様が大きく異なるが，提供される基本的な制御機能の役割（Role）には高い共通性が存在する\cite{Watanabe_ADMobile2025}．本手法は，このプロトコル形式の違いを乗り越え，「機能的な等価性」に基づいて相互運用を実現するものである．
+モバイル通信システムは世代ごとにプロトコル仕様が大きく異なるが，提供される基本的な制御機能の役割には高い共通性が存在する．Watanabeらは，AAA，移動管理，およびユーザデータ転送といった本質的な機能要件は世代を超えて不変であると指摘し，C-PlaneとRANの機能を抽象化・融合した自律分散型アーキテクチャを提案している\cite{Watanabe_ADMobile2025}．しかし，具体的にどのプロトコルパラメータがこれらの共通機能に対応するかについては詳細な分析を行っていない．
 
-\subsubsection{制御プレーン機能の対応関係}
+本研究は，この観察を理論的基盤として採用する．ただし，Watanabeらの研究がコアネットワーク自体の自律分散型への移行を志向しているのに対し，本研究は既存の5GC標準アーキテクチャを維持したまま，RANとCNの間にプロトコル変換層を挿入するアプローチを取る．これにより，プロトコル形式の違いを乗り越え，「機能的な等価性」に基づく相互運用を実現する．
 
-CS（Circuit Switched）領域が廃止されオールIP化された4G以降，制御プレーン（C-Plane）の主要機能は「移動管理（Mobility Management: MM）」と「セッション管理（Session Management: SM）」に大別される．
+以下では，まずモバイルシステムの本質的機能要件を定義し，次に機能・ノード・プロトコル・状態・インタフェース・ライフサイクルの6つの観点から，EPSと5GSの対応関係を多角的に分析する．その上で，プロトコル変換によるインターワーキングの実現可能性を論じる．
+
+\subsubsection{モバイルシステムの本質的機能要件}
+
+モバイル通信は世代を超えて，本質的に以下の3つの機能を提供する必要がある．
+
+\begin{enumerate}
+\item \textbf{認証・認可・課金（AAA）}: ユーザの身元確認，サービス利用権限の検証，および通信料金の計算・請求を行う機能．通信事業者のビジネスモデルを成立させるために不可欠である．
+
+\item \textbf{移動管理}: 端末が地理的に移動する際に，その現在位置を把握し，位置情報に基づいてシグナリングやデータをルーティングする機能．移動体通信の基本的価値である「場所を問わない接続性」の実現に不可欠である．
+
+\item \textbf{ユーザデータ転送（U-Plane）}: 実際のユーザデータ（音声，映像，パケットデータ等）をネットワークを介して転送する機能．通信サービスの本体であり，いかなる世代においても必須である．
+\end{enumerate}
+
+これら3つの機能は，個々の通信プロトコルやノード構成が異なるとしても，モバイルシステムの定義上避けられない基本要件である．4Gと5Gのプロトコル仕様は大きく異なるが，これらの機能要件そのものは変わらない．
+
+\subsubsection{本質的機能の多角的分析}
+
+本質的機能が普遍的である以上，その機能を実現するシステムの各側面にも対応関係が存在する．ここでは，モバイルシステムを分析するための6つの観点---\textbf{機能}，\textbf{ノード}，\textbf{プロトコル}，\textbf{状態}，\textbf{インタフェース}，\textbf{ライフサイクル}---からEPSと5GSの対応関係を整理する．
+
+\paragraph{機能の対応}
+
+前節で定義した3つの本質的機能（AAA・移動管理・U-Plane転送）は，EPSでも5GSでも必ず実装されている．表\ref{tab:function_terminology}に，各機能がEPSと5GSの仕様においてどのような用語で記述されているかを示す．
+
+\begin{table}[htbp]
+\centering
+\caption{本質的機能に対応するEPS/5GSの仕様用語}
+\label{tab:function_terminology}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+認証: EPS AKA\newline
+認可: 加入者プロファイル参照\newline
+課金: オンライン/オフライン &
+認証: 5G AKA\newline
+認可: 加入者プロファイル参照\newline
+課金: オンライン/オフライン \\
+\hline
+移動管理 &
+サブレイヤ: EMM\newline
+初期接続: Attach\newline
+切断: Detach\newline
+エリア更新: TAU &
+サブレイヤ: 5GMM\newline
+初期接続: Registration\newline
+切断: Deregistration\newline
+エリア更新: Registration Update \\
+\hline
+U-Plane &
+サブレイヤ: ESM\newline
+セッション: EPS Bearer\newline
+転送プロトコル: GTP-U &
+サブレイヤ: 5GSM\newline
+セッション: PDU Session\newline
+転送プロトコル: GTP-U \\
+\hline
+\end{tabular}
+\end{table}
+
+以下に各機能の用語について解説する．
 
 \begin{itemize}
-\item \textbf{移動管理 (MM)}: 端末の位置登録，認証，およびハンドオーバー制御を行う機能．4GのMMEが担っていた役割は，5GではAMFに継承されている．両者ともNAS（Non-Access Stratum）プロトコルの終端点として機能し，ステートマシン（例: EMM-REGISTERED $\leftrightarrow$ 5GMM-REGISTERED）にも明確な対応関係が存在する．
-\item \textbf{セッション管理 (SM)}: データ転送経路（ベアラ/フロー）の確立・解放を行う機能．4GではMMEとS-GW/P-GWが連携して行っていたが，5GではSMFとして独立したNFに集約されている．手続き上の差異はあるものの，「IPアドレスを割り当て，トンネルを設定する」という基本的動作は共通している．
+  \item \textbf{AAA機能}: EPSではEPS AKA（Authentication and Key Agreement）で相互認証を行い，加入者プロファイルを参照して認可を行う．課金はオンラインまたはオフライン方式で実施される．5GSでは5G AKAが認証を担い，同様に加入者プロファイルを参照して認可を行う．課金方式も同様にオンライン/オフラインが存在する．
+  \item \textbf{移動管理機能}: EPSではNASプロトコルの中にEMM（EPS Mobility Management）サブレイヤが定義されている．主要な手続きとして，初期接続時のAttach，切断時のDetach，エリア更新時のTAU（Tracking Area Update）がある．5GSでは5GMM（5GS Mobility Management）サブレイヤが同等の機能を提供し，AttachはRegistrationに，DetachはDeregistrationに，TAUはRegistration Updateにそれぞれ対応する．
+  \item \textbf{U-Plane機能}: EPSではNASプロトコルの中にESM（EPS Session Management）サブレイヤが定義されている．セッションとしてEPS Bearerを確立し，転送プロトコルとしてGTP-Uを使用する．5GSでは5GSM（5GS Session Management）サブレイヤが同等の機能を提供し，EPS BearerはPDU Sessionに対応する．GTP-Uは両世代で共通であり，この点がU-Plane変換を比較的容易にしている．
 \end{itemize}
 
-\subsubsection{ユーザプレーン機能の対応関係}
+\paragraph{ノードの対応}
 
-ユーザデータの転送を行うユーザプレーン（U-Plane）においても，4Gと5Gは共にGTP-U（GPRS Tunneling Protocol User Plane）プロトコルを採用しており，基本的な転送メカニズムは維持されている．
+3つの本質的機能がEPSと5GSにおいてどのノードによって実装されているかを表\ref{tab:essential_functions_mapping}に示す．
 
-4GのS-GW/P-GWと5GのUPFは，共にパケットのルーティング，カプセル化/非カプセル化，および課金情報の収集を行うという点で機能的に等価である．したがって，トンネルID（TEID）の管理方法さえ整合させれば，データパケットの相互運用は比較的容易に実現可能である．
+\begin{table}[htbp]
+\centering
+\caption{本質的機能要件とEPS/5GSにおける実装ノードの対応}
+\label{tab:essential_functions_mapping}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+認証: HSS\newline
+認可: HSS\newline
+課金: PCRF/OCS &
+認証: AUSF\newline
+認可: UDM/UDR\newline
+課金: CHF \\
+\hline
+移動管理 &
+C-Plane制御: MME\newline
+（セッション管理も兼務） &
+C-Plane制御: AMF\newline
+セッション管理: SMF \\
+\hline
+U-Plane &
+データ転送: S-GW/P-GW\newline
+（C-Plane処理も兼務） &
+データ転送: UPF\newline
+C-Plane制御: SMF \\
+\hline
+\end{tabular}
+\end{table}
 
-この根本的な「機能の共通性」が存在するからこそ，以下で述べるようなプロトコル変換によるインターワーキングが可能となる．
+以下に各機能のノード対応について解説する．
+
+\begin{itemize}
+  \item \textbf{AAA機能}: EPSではHSSが認証・認可を統一的に管理し，課金はPCRF/OCSが担う．5GSではAUSFが認証を，UDM/UDRが認可（加入者プロファイル管理）を，CHFが課金をそれぞれ専任で担当する．
+  \item \textbf{移動管理機能}: EPSではMMEがC-Plane制御とセッション管理を兼務する．5GSではAMFがC-Plane制御を専任し，セッション管理はSMFに分離されている．
+  \item \textbf{U-Plane機能}: EPSではS-GW/P-GWがデータ転送とC-Plane処理を兼務する．5GSではUPFがデータ転送を専任し，C-Plane制御はSMFに分離されている．
+\end{itemize}
+
+このように，EPSでは1つのノードが複数機能を兼務していたのに対し，5GSでは各機能が独立したNFに分解されている．ノード構成は大きく異なるが，機能とノードの対応関係を明示すれば，変換時のルーティング先を決定できる．
+
+\paragraph{プロトコルの対応}
+
+各本質的機能を実現するプロトコル要素（パラメータ，手続き，符号化）にも対応関係が存在する．表\ref{tab:protocol_parameters}に本質的機能ごとの主要プロトコル要素の対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{本質的機能ごとの主要プロトコル要素のEPS/5GS対応}
+\label{tab:protocol_parameters}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+パラメータ: IMSI, GUTI\newline
+手続き: EPS AKA\newline
+符号化: NAS独自形式 &
+パラメータ: SUPI/SUCI, 5G-GUTI\newline
+手続き: 5G AKA\newline
+符号化: NAS独自形式 \\
+\hline
+移動管理 &
+パラメータ: TAI\newline
+手続き: Attach, TAU, Detach\newline
+符号化: S1AP (ASN.1/PER) &
+パラメータ: TAI（同一構造）\newline
+手続き: Registration, Reg. Update, Dereg.\newline
+符号化: NGAP (ASN.1/PER) \\
+\hline
+U-Plane &
+パラメータ: APN, QCI, EBI\newline
+手続き: Bearer確立/解放\newline
+符号化: GTP-U &
+パラメータ: DNN, 5QI, QFI\newline
+手続き: PDU Session確立/解放\newline
+符号化: GTP-U \\
+\hline
+\end{tabular}
+\end{table}
+
+以下に各機能のプロトコル対応について解説する．
+
+\begin{itemize}
+  \item \textbf{AAA}: ユーザ識別子としてIMSI⇔SUPI/SUCI，一時識別子としてGUTI⇔5G-GUTIが対応する．認証手続きはEPS AKA⇔5G AKAが対応し，いずれもNAS層で独自形式により符号化される．
+  \item \textbf{移動管理}: エリア識別子TAIは両者で同一構造である．手続きとしてAttach⇔Registration，TAU⇔Registration Update，Detach⇔Deregistrationが対応する．AS層はS1AP/NGAPともにASN.1/PERで符号化される．
+  \item \textbf{U-Plane}: 接続先としてAPN⇔DNN，品質クラスとしてQCI⇔5QI，識別子としてEBI⇔QFIが対応する．セッション手続きとしてBearer確立⇔PDU Session確立が対応する．GTP-Uは両者で共通のため変換が容易である．
+\end{itemize}
+
+\paragraph{状態の対応}
+
+モバイルシステムは状態機械として動作し，各本質的機能に対応する状態遷移を管理する．表\ref{tab:state_mapping}に本質的機能ごとの状態対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{本質的機能ごとの状態のEPS/5GS対応}
+\label{tab:state_mapping}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+認証成功: EMM-REGISTEREDへ遷移\newline
+認証失敗: 接続拒否 &
+認証成功: 5GMM-REGISTEREDへ遷移\newline
+認証失敗: 接続拒否 \\
+\hline
+移動管理 &
+未登録: EMM-DEREGISTERED\newline
+登録済: EMM-REGISTERED &
+未登録: 5GMM-DEREGISTERED\newline
+登録済: 5GMM-REGISTERED \\
+\hline
+U-Plane &
+未接続: ECM-IDLE\newline
+接続中: ECM-CONNECTED &
+未接続: CM-IDLE\newline
+接続中: CM-CONNECTED \\
+\hline
+\end{tabular}
+\end{table}
+
+以下に各機能の状態対応について解説する．
+
+\begin{itemize}
+  \item \textbf{AAA}: 認証結果に応じて状態が遷移する．認証成功時はEMM-REGISTERED/5GMM-REGISTEREDへ遷移し，失敗時は接続が拒否される．認証自体は独立した状態機械を持たないが，移動管理状態の遷移条件として機能する．
+  \item \textbf{移動管理}: EPSではEMM-DEREGISTERED/EMM-REGISTEREDで端末の登録有無を管理する．5GSでは5GMM-DEREGISTERED/5GMM-REGISTEREDが対応する．Attach完了⇔Registration完了で登録済み状態へ遷移する．
+  \item \textbf{U-Plane}: EPSではECM-IDLE/ECM-CONNECTEDでセッション接続状態を管理する．5GSではCM-IDLE/CM-CONNECTEDが対応する．プロトコル変換ゲートウェイは，これらの状態遷移を追跡し，4G側の状態を5G側にマッピングする必要がある．
+\end{itemize}
+
+\paragraph{インタフェース境界の対応}
+
+各本質的機能が使用するインタフェース境界にも対応関係が存在する．表\ref{tab:interface_mapping}に本質的機能ごとのインタフェース対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{本質的機能ごとのインタフェースのEPS/5GS対応}
+\label{tab:interface_mapping}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+RAN--CN: S1-MME（S1AP内NAS）\newline
+CN内部: S6a（Diameter） &
+RAN--CN: N2（NGAP内NAS）\newline
+CN内部: SBI（HTTP/2） \\
+\hline
+移動管理 &
+RAN--CN: S1-MME（S1AP）\newline
+CN内部: S11（GTP-C） &
+RAN--CN: N2（NGAP）\newline
+CN内部: SBI（HTTP/2） \\
+\hline
+U-Plane &
+RAN--CN: S1-U（GTP-U）\newline
+CN--DN: SGi &
+RAN--CN: N3（GTP-U）\newline
+CN--DN: N6 \\
+\hline
+\end{tabular}
+\end{table}
+
+以下に各機能のインタフェース対応について解説する．
+
+\begin{itemize}
+  \item \textbf{AAA}: 認証情報はRAN--CN境界ではS1AP/NGAP内のNASメッセージとして搬送される．CN内部ではEPSがS6a（Diameter）でHSSと通信し，5GSはSBI（HTTP/2）でAUSF/UDMと通信する．
+  \item \textbf{移動管理}: RAN--CN境界ではS1-MME（S1AP）⇔N2（NGAP）が対応する．両者ともASN.1/PERで符号化されるが，メッセージ構造が異なるため変換が必要である．
+  \item \textbf{U-Plane}: RAN--CN境界ではS1-U⇔N3が対応し，両者ともGTP-Uを使用する．5GSでは拡張ヘッダ（PDU Session Container）が追加されている．本研究が対象とするのは\textbf{RAN--CN境界（S1⇔N2/N3）}の変換である．
+\end{itemize}
+
+\paragraph{ライフサイクルの対応}
+
+端末のライフサイクルに沿って，各本質的機能が発動するタイミングにも対応関係が存在する．表\ref{tab:lifecycle_mapping}に本質的機能ごとのライフサイクル対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{本質的機能ごとのライフサイクル段階のEPS/5GS対応}
+\label{tab:lifecycle_mapping}
+\begin{tabular}{|p{3cm}|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{本質的機能} & \textbf{EPS (4G)} & \textbf{5GS (5G)} \\
+\hline
+AAA &
+発動: 初期接続時\newline
+手続き: EPS AKA &
+発動: 初期接続時\newline
+手続き: 5G AKA \\
+\hline
+移動管理 &
+初期接続: Attach\newline
+エリア移動: TAU/Handover\newline
+切断: Detach &
+初期接続: Registration\newline
+エリア移動: Registration Update/Handover\newline
+切断: Deregistration \\
+\hline
+U-Plane &
+セッション確立: Bearer確立\newline
+データ転送: GTP-U\newline
+セッション解放: Bearer解放 &
+セッション確立: PDU Session確立\newline
+データ転送: GTP-U\newline
+セッション解放: PDU Session解放 \\
+\hline
+\end{tabular}
+\end{table}
+
+以下に各機能のライフサイクル対応について解説する．
+
+\begin{itemize}
+  \item \textbf{AAA}: 初期接続時に認証が発動する．EPSではEPS AKA，5GSでは5G AKAが対応する．認証成功後に移動管理の登録状態へ遷移する．
+  \item \textbf{移動管理}: 初期接続（Attach⇔Registration），エリア移動（TAU/Handover⇔Registration Update/Handover），切断（Detach⇔Deregistration）の各段階で発動する．端末のライフサイクル全体を通じて状態を管理する．
+  \item \textbf{U-Plane}: セッション確立（Bearer確立⇔PDU Session確立），データ転送（GTP-U共通），セッション解放の各段階で発動する．GTP-Uが両者で共通であることがU-Plane変換を容易にしている．
+\end{itemize}
+
+\subsubsection{機能的共通性に基づくインターワーキングの実現可能性}
+
+以上の多角的分析から，次の結論が得られる．
+
+\begin{enumerate}
+\item \textbf{本質的機能は普遍的である}: モバイルシステムが提供すべき「AAA」「移動管理」「U-Plane転送」という3つの機能要件は，4G（EPS）から5G（5GS）への進化を通じても変わらない．
+
+\item \textbf{6つの観点すべてに対応関係が存在する}: 表\ref{tab:six_aspects_summary}に示す通り，機能・ノード・プロトコル・状態・インタフェース・ライフサイクルのいずれの観点においても，EPSと5GSの間に明確な対応関係が存在する．
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\caption{6つの観点におけるEPS/5GS対応関係の要約}
+\label{tab:six_aspects_summary}
+\begin{tabular}{|p{2.8cm}|p{4.5cm}|p{4.5cm}|p{2.5cm}|}
+\hline
+\textbf{観点} & \textbf{EPS (4G) 例} & \textbf{5GS (5G) 例} & \textbf{対応の性質} \\
+\hline
+機能 & AAA, 移動管理, U-Plane & AAA, 移動管理, U-Plane & 完全一致 \\
+\hline
+ノード & HSS, MME, S-GW/P-GW & AUSF/UDM, AMF/SMF, UPF & 1対多分解 \\
+\hline
+プロトコル & IMSI, Attach, GTP-U & SUPI, Registration, GTP-U & 意味的等価 \\
+\hline
+状態 & EMM/ECM状態 & 5GMM/CM状態 & 1対1対応 \\
+\hline
+インタフェース境界 & S1-MME, S1-U, SGi & N2, N3, N6 & 機能的等価 \\
+\hline
+ライフサイクル & Attach→Bearer→転送→Detach & Registration→PDU→転送→Dereg & 順序対応 \\
+\hline
+\end{tabular}
+\end{table}
+
+この包括的な対応関係の存在が，本研究で提案するプロトコル変換方式による4G RANの5GC収容を実現する理論的根拠となる．変換ゲートウェイは，これら6つの観点における対応関係を活用し，S1インタフェースの通信をN2/N3インタフェースの通信に変換する．具体的には，各本質的機能（AAA，移動管理，U-Plane）について，対応するノード，プロトコル，状態，インタフェース，ライフサイクル段階のマッピングルールを適用することで，4G端末からの通信を5GCが処理可能な形式に変換する．
 
 \subsection{5GC固有機能の階層的分析}
 \label{subsec:5gc_layered_design_framework}
@@ -68,672 +378,21 @@ CS（Circuit Switched）領域が廃止されオールIP化された4G以降，�
   \label{fig:5gc_layered_model}
 \end{figure}
 
-\subsubsection{基盤層 (Architecture / Enabler)}
+\subsubsection{基盤層}
 
 基盤層は，CNのアーキテクチャそのものの変革を指す．代表的な技術として，SBA (Service Based Architecture) やCUPS (Control and User Plane Separation) が挙げられる．本層における5GCの要件は，\textbf{クラウドネイティブ環境への適応}と\textbf{開発サイクルの高速化}である．物理ハードウェアに依存しないソフトウェア化により，機能の追加やスケーリングを迅速に行うことが可能となる．
 
-\subsubsection{制御メカニズム層 (Mechanism)}
+\subsubsection{制御メカニズム層}
 
 制御メカニズム層は，アーキテクチャ上で動作する通信制御の仕組みを指す．4Gではベアラ (Bearer) 単位であったQoS制御が，5Gではフロー (Flow-based QoS) 単位へと細分化されたほか，特定のトラフィックをエッジ側で折り返すULCL (Uplink Classifier) などの機能が導入された．本層における要件は，超低遅延や多数同時接続など，\textbf{全く異なる要求条件を持つトラフィックが混在する状態への対応}である．
 
 本研究では，共通機能の確実な実現を最優先とし，このメカニズム層の一部（Flow-based QoS）は段階的な拡張の対象とする．
 
-\subsubsection{応用サービス層 (Service / Outcome)}
+\subsubsection{応用サービス層}
 
 応用サービス層は，ユーザーや事業者が享受する最終的なメリットを創出する層である．論理的に分割されたネットワークを提供するネットワークスライシングや，ネットワーク機能を外部公開するNEF (Network Exposure Function)，およびMEC (Multi-access Edge Computing) との連携が含まれる．本層における要件は，\textbf{マルチテナンシー}と\textbf{異業種連携 (Vertical Integration)}の実現である．
 
-本実装では，共通機能の検証に集中するため，本層の機能は初版では部分的なサポートとし，プロトタイプの段階を超えた次段階で完全なサポートを想定する．
+本提案では，共通機能の検証に集中するため，本層の機能は初版では部分的なサポートとし，将来的な拡張として位置づける．
 
-\section{基本概念：世代共通機能に基づく疎結合化}
-\label{sec:basic_concept_v2}
-本研究では，モバイル通信の根幹機能である「AAA（Authentication, Authorization, and Accounting）」，「Mobility Management」，「U-plane」が，4Gと5Gの世代を超えて本質的に不変であることに着目する．これらの機能はプロトコル表現（メッセージ名やパラメータ形式）こそ異なるものの，目的は共通している．
-
-提案する「S1-N2変換ゲートウェイ」は，この世代共通機能を利用して，4G RAN（S1インターフェース）と5Gコア（N2/N3インターフェース）の間の差異を吸収・抽象化する．これにより，物理的なRANと論理的なCNを疎結合にし，RANのハードウェア更新を伴わずにCNのみを次世代化することを可能にする．
-
-\section{アーキテクチャ設計}
-\label{sec:architecture_design}
-提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/\allowbreak UPF）の間に配置され，以下の2つのプレーンで変換を行う．
-
-\begin{itemize}
-\item \textbf{C-Plane（制御面）}: S1AP（S1-MME）とNGAP（N2）の相互変換．SCTP（Stream Control Transmission Protocol）接続を終端し，メッセージ単位で変換を行う．
-\item \textbf{U-Plane（ユーザ面）}: GTP-Uパケットのヘッダ書き換え（TEIDマッピング）およびQoSパラメータ（QCI/5QI）の変換を行う．プロトコル自体は共通（GTPv1-U）であるが，カプセル化情報の整合性を保つ．
-\end{itemize}
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
-    % Nodes
-    \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
-    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
-
-    % Converter Box
-    \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
-    \node[above] at (5,1.3) {\textbf{提案コンバータ}};
-
-    % Internal Logic
-    \node[draw, fill=white, minimum width=1.2cm] (s1) at (3.8,0) {S1};
-    \node[draw, fill=white, minimum width=1.2cm] (ng) at (6.2,0) {NG};
-    \draw[<->, thick] (s1) -- (ng) node[midway, above] {\scriptsize 変換};
-
-    % Connections
-    \draw[<->, thick] (enb) -- (s1) node[midway, above] {S1};
-    \draw[<->, thick] (ng) -- (core) node[midway, above] {N2/N3};
-
-    % Roles
-    \node[below=0.2cm of enb, align=center, font=\scriptsize] {MMEとして\\接続};
-    \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBとして\\接続};
-    \node[below=1.4cm of conv, align=center, font=\scriptsize] {eNBに対してはMME，\\5GCに対してはgNBとして動作};
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-        \csname textbf\endcsname{凡例}\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ 4G RAN側（eNB）\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側\\
-        \csname tikz\endcsname[baseline=-0.6ex]\draw[dashed, thick] (0,0) rectangle (0.18,0.18);\ 変換ゲートウェイ領域\\
-        \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ インターフェース接続（S1/NG）\\
-      \end{tabular}
-    };
-  \end{tikzpicture}
-  \caption{提案システムの全体構成（S1-N2変換ゲートウェイ）}
-  \label{fig:architecture}
-\end{figure}
-
-\subsection{プロトコルスタック}
-ゲートウェイは，4G側と5G側で独立したプロトコルスタックを持つ（図\ref{fig:protocol_stack}）．
-\begin{itemize}
-\item \textbf{C-Plane（4G側）}: S1AP / SCTP / IP (eNB向け，ポート36412)
-\item \textbf{C-Plane（5G側）}: NGAP / SCTP / IP (AMF向け，ポート38412)
-\item \textbf{U-Plane}: GTP-U / UDP / IP (ポート2152)．eNB-UPF間のユーザデータを中継する．
-\end{itemize}
-なお，各ポート番号は環境変数により設定可能であり，上記は本実装のデフォルト値（慣例的に用いられる既定値）である．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
-    % eNB側
-    \node[font=\normalsize\bfseries] at (1.5,5.5) {eNB};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,4.5) {S1AP};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.8) {SCTP};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.1) {IP (172.24.0.111)};
-
-    % GTP-U
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,2.0) {GTP-U};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.3) {UDP:2152};
-
-    % Converter左側
-    \node[font=\normalsize\bfseries] at (5.5,5.5) {S1N2 Converter};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,4.5) {S1AP};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.8) {SCTP:36412};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.1) {IP (172.24.0.30)};
-
-    % 変換ロジック
-    \node[draw, thick, fill=GoogleRed!10, minimum width=2.5cm, minimum height=1.2cm, align=center] at (5.5,2.6) {変換層\\{\scriptsize S1↔NG}\\{\scriptsize TEID管理}};
-
-    % GTP Proxy
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,1.3) {GTP Proxy};
-
-    % Converter右側
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,4.5) {NGAP};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.8) {SCTP:38412};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.1) {IP (172.24.0.30)};
-
-    % AMF/UPF側
-    \node[font=\normalsize\bfseries] at (13,5.5) {AMF};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,4.5) {NGAP};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.8) {SCTP};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.1) {IP (172.24.0.12)};
-
-    \node[font=\normalsize\bfseries] at (13,1.8) {UPF};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,1.0) {GTP-U};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.3) {IP (172.24.0.21)};
-
-    % 接続線 C-Plane
-    \draw[<->, thick] (2.75,4.5) -- (4.25,4.5);
-    \draw[<->, thick] (6.75,4.5) -- (8.25,4.5);
-    \draw[<->, thick] (10.75,4.5) -- (11.75,4.5);
-
-    % 接続線 U-Plane
-    \draw[<->, thick, dashed] (2.75,1.3) -- (4.25,1.3);
-    \draw[<->, thick, dashed] (6.75,1.3) -- (11.75,1.0);
-
-    % ラベル
-    \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
-    \node[font=\scriptsize] at (3.5,1.6) {U-Plane};
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB側スタック\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側スタック\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ ゲートウェイ（終端/中継）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 変換層（S1↔NG/TEID管理）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ U-Plane経路\\
-      \end{tabular}
-    };
-  \end{tikzpicture}
-  \caption{システム構成とプロトコルスタック（IPアドレスは本実験環境の一例）}
-  \label{fig:protocol_stack}
-\end{figure}
-ゲートウェイは，C-Planeではトランスポート層（SCTP）を終端してシグナリングプロトコル（S1AP/NGAP）間でメッセージ変換を行い，U-PlaneではGTP-Uのヘッダ情報（TEID）を書き換えて転送する．これにより，eNBとAMF/UPFは互いに相手側のプロトコルを意識することなく通信できる．
-
-\section{詳細設計}
-\label{sec:detailed_design}
-
-\subsection{C-Plane変換ロジック}
-
-\subsubsection{S1 Setupシーケンス（ID変換）}
-eNBの起動時に行われるS1 Setup手順において，ゲートウェイは以下のID変換を行う．
-\begin{itemize}
-  \item \textbf{Global eNB ID $\rightarrow$ Global gNB ID}: 設計としては，4Gの基地局IDを5Gの基地局ID形式にマッピングする．ただし，本プロトタイプ実装ではS1SetupRequestからPLMN（MCC/MNC）を抽出して引き継ぐ一方で，gNB-IDは固定値を用いて生成する．
-  \item \textbf{TAC (Tracking Area Code)}: S1SetupRequestのSupportedTAsからTACを抽出して設定し，エリア情報を維持する．ただし，取得できない場合は環境変数により設定したTACへフォールバックする．
-\end{itemize}
-これにより，AMFは接続元を「5G基地局（gNB）」として認識し，NG Setupを完了させる（ただし，現状のgNB-IDはeNB-ID由来ではない）．
-
-\subsubsection{Registrationシーケンス（NASメッセージ変換）}
-UEからのAttach Request（4G NAS）は，ゲートウェイによって5G NASメッセージ（Registration Request）に変換され，AMFへ転送される．
-\begin{itemize}
-	\item \textbf{Initial UE Message}: S1APのInitial UE MessageをNGAPのInitial UE Messageに変換．
-	\item \textbf{NAS Transport}: 4G NASコンテナ内の情報を抽出し，原則として5G NAS形式に変換する（変換できない場合は4G NASをそのまま転送するフォールバック動作となる）．
-	\item \textbf{認証・セキュリティ}: ゲートウェイが事前に保持するUEの秘密鍵（Ki, OPc）を用いて，AMFからの認証要求に対する応答（RES*生成）を代行し，セキュリティコンテキストを確立する．
-\end{itemize}
-
-\subsubsection{NASメッセージ変換対応表}
-表\ref{tab:nas_conversion_ul}および表\ref{tab:nas_conversion_dl}に，主要なNASメッセージの変換対応を示す．
-
-\begin{table}[htbp]
-\centering
-\caption{NASメッセージ変換対応表（上り：UE→CN）}
-\label{tab:nas_conversion_ul}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{4G NAS} & \textbf{5G NAS} \\
-\hline
-Attach Request & Registration Request \\
-\hline
-Auth Response (RES) & Auth Response (RES*へ変換) \\
-\hline
-Security Mode Complete & Security Mode Complete \\
-\hline
-Attach Complete + ESM情報 & Registration Complete + PDU Session Est Req \\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{NASメッセージ変換対応表（下り：CN→UE）}
-\label{tab:nas_conversion_dl}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{5G NAS} & \textbf{4G NAS} \\
-\hline
-Auth Request (ngKSI) & Auth Request (eKSI) \\
-\hline
-Security Mode Cmd (NEA/NIA) & Security Mode Cmd (EEA/EIA) \\
-\hline
-Registration Accept + 5G-GUTI & Attach Accept + GUTI \\
-\hline
-PDU Session Est Accept (5QI, DNN) & Act Def EPS Bearer (QCI, APN) \\
-\hline
-\end{tabular}
-\end{table}
-
-また，ID変換については表\ref{tab:id_conversion}に示す対応関係に基づいて行う．
-
-\begin{table}[htbp]
-\centering
-\caption{ID変換対応表}
-\label{tab:id_conversion}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{4G} & \textbf{5G} \\
-\hline
-IMSI & SUCI (NULL scheme) \\
-\hline
-GUTI & 5G-GUTI \\
-\hline
-eKSI (3bit) & ngKSI (4bit, TSC=0) \\
-\hline
-\end{tabular}
-\end{table}
-
-\subsubsection{PDU Session Establishment（Early S1 Setup）}
-\label{sec:pdu_session_establishment}
-本提案の核心となる独自シーケンスである．
-
-\paragraph{課題}
-5GではRegistration完了後にPDUセッション確立が行われるのに対し，4GではAttach手順の一部としてDefault Bearer（データ経路）が確立される．4G UEはAttach Acceptを受信した時点でデータ通信可能な状態を期待するため，5G側のPDUセッション確立タイミングとの間にズレが生じる．このタイミングのズレを解消するため，以下の「Early S1 Setup」手順を導入した．
-
-\begin{enumerate}
-	\item \textbf{Registration Accept受信時}: AMFからのRegistration Acceptを受信した時点で，ゲートウェイはUEに対して「Attach Accept」と共に「Initial Context Setup Request (S1)」を先行して送信する．
-	\item \textbf{仮TEIDの割り当て}: この時点ではUPF側のTEIDが未定であるため，ゲートウェイは自身のTEID（S1N2 TEID）をeNBに通知し，U-Planeの経路を仮確立する．本プロトタイプ実装では暫定TEIDとして固定値\texttt{0x00000001}を使用している．
-	\item \textbf{PDU Session Establishment Request}: Registration完了後，ゲートウェイはUEに代わってPDUセッション確立要求を生成し，AMFへ送信する．設計上はUEから受信したAttach RequestのESM情報（APN等）を解析して使用することを想定するが，本プロトタイプ実装では環境変数で指定されたAPN（デフォルト: \texttt{internet}）を使用している．
-	\item \textbf{TEID Update}: UPFから正規のTEIDが通知された後，ゲートウェイは内部のマッピングテーブルを更新し，eNBからのパケットをUPFへ転送可能にする．
-\end{enumerate}
-
-図\ref{fig:sequence_diagram}に，実際のプロトタイプ動作におけるシーケンス図を示す．ここでは，Registration Accept受信時点（Registration Complete送信前）にEarly S1 Setupが実行され，その後Registration Complete検出を契機にゲートウェイがPDU Session Establishment RequestをAMFへ送信し，AMFからNGAP InitialContextSetupRequest（PDU Session Resource Setupを含む）が返される様子を示している．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.85, transform shape, every node/.style={font=\small}]
-    % Nodes
-    \node (enb) at (0,0) [draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm] {eNB};
-    \node (conv) at (6,0) [draw, rounded corners, fill=GoogleYellow!20, minimum width=2cm] {Converter};
-    \node (amf) at (12,0) [draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm] {AMF};
-
-    % Lifelines
-    \draw [thick, dotted] (enb) -- (0,-14.5);
-    \draw [thick, dotted] (conv) -- (6,-14.5);
-    \draw [thick, dotted] (amf) -- (12,-14.5);
-
-    % Time steps
-    \footnotesize
-
-    % Step 1: Attach / Reg
-    \draw [->, thick] (0,-1) -- (6,-1) node [midway, above] {Initial UE Msg (Attach Req)};
-    \draw [->, thick] (6,-1.5) -- (12,-1.5) node [midway, above] {Initial UE Msg (Reg Req)};
-
-    % Step 2: Auth
-    \draw [<-, thick] (6,-2.5) -- (12,-2.5) node [midway, above] {Auth Request};
-    \draw [<-, thick] (0,-2.5) -- (6,-2.5) node [midway, above] {Auth Request};
-
-    \draw [->, thick] (0,-3.5) -- (6,-3.5) node [midway, above] {Auth Response};
-    \draw [->, thick] (6,-3.5) -- (12,-3.5) node [midway, above] {Auth Response};
-
-    % Step 3: Security
-    \draw [<-, thick] (6,-4.5) -- (12,-4.5) node [midway, above] {Sec Mode Command};
-    \draw [<-, thick] (0,-4.5) -- (6,-4.5) node [midway, above] {Sec Mode Command};
-
-    \draw [->, thick] (0,-5.5) -- (6,-5.5) node [midway, above] {Sec Mode Complete};
-    \draw [->, thick] (6,-5.5) -- (12,-5.5) node [midway, above] {Sec Mode Complete + Reg Req};
-
-    % Step 4: Registration Accept from AMF
-    \draw [<-, thick] (6,-6.5) -- (12,-6.5) node [midway, above] {DL NAS (Reg Accept)};
-
-    % Step 5: Early S1 Setup (Converter initiates upon Reg Accept detection)
-    \node [draw, fill=GoogleYellow!30, align=center, font=\scriptsize] at (-1.5,-7.9) {Early S1 Setup\\(Reg Accept検出時)};
-    \draw [<-, thick] (0,-7.5) -- (6,-7.5) node [midway, above] {Init Ctxt Setup Req + Attach Accept};
-    \draw [->, thick] (0,-8.3) -- (6,-8.3) node [midway, above] {Init Ctxt Setup Resp};
-
-    % Step 6: Attach Complete / Reg Complete
-    \draw [->, thick] (0,-9.3) -- (6,-9.3) node [midway, above] {UL NAS (Attach Cmp)};
-    \draw [->, thick] (6,-9.8) -- (12,-9.8) node [midway, above] {UL NAS (Reg Cmp)};
-
-    % Step 7: PDU Session Establishment (Converter generates on behalf of UE)
-    \node [draw, fill=GoogleYellow!30, align=center, font=\scriptsize] at (13.5,-10.8) {Reg Cmp検出後\\PDU Session要求};
-    \draw [->, thick] (6,-11.0) -- (12,-11.0) node [midway, above] {PDU Session Est Req};
-
-    % Step 8: AMF responds with PDU Session setup
-    \draw [<-, thick] (6,-12.2) -- (12,-12.2) node [midway, above] {NGAP ICS Req (PDU Session)};
-    \draw [->, thick] (6,-13.2) -- (12,-13.2) node [midway, above] {NGAP ICS Resp};
-
-    % Time axis label
-    \node at (-1, -7) [rotate=90] {Time};
-    \draw [->] (-0.5, -1) -- (-0.5, -14);
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!30] (0,0) rectangle (0.18,0.18);\ 変換器の能動処理（注釈）\\
-      \end{tabular}
-    };
-
-  \end{tikzpicture}
-  \caption{プロトタイプにおける接続シーケンス（Early S1 Setupを含む）}
-  \label{fig:sequence_diagram}
-\end{figure}
-
-\subsection{U-Plane変換とTEIDマッピング}
-U-Plane（ユーザ面）では，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインターフェースと5GのN3インターフェースは共にGTPv1-Uプロトコルを使用するため，プロトコル変換は不要であるが，トンネルエンドポイント識別子（TEID）と宛先IPアドレスの書き換えが必要となる．
-
-なお，本実装では方向別（Uplink用／Downlink用）のマッピングテーブルを持ち，各テーブル内でTEIDが一意であることを前提として，GTP-Uヘッダ内のTEIDのみを検索キーとしてマッピングを行う．
-
-\subsubsection{TEIDマッピングテーブル}
-ゲートウェイは以下のTEID変換テーブルを動的に管理する．
-
-\begin{table}[h]
-\centering
-\caption{TEIDマッピングテーブル}
-\label{tab:teid_mapping}
-\small
-\begin{tabularx}{\textwidth}{|l|X|X|}
-\hline
-方向 & 検索キー (TEID) & 出力 (Dst IP, TEID) \\
-\hline
-Uplink (eNB $\rightarrow$ 5GC) & S1N2 TEID \newline （S1-U側：GW割当） & (UPF IP, N3 TEID) \\
-\hline
-Downlink (5GC $\rightarrow$ eNB) & DLパケットのTEID \newline （eNB downlink TEIDと同値） & (eNB IP, TEID) \newline ※TEID書換なし \\
-\hline
-\end{tabularx}
-\end{table}
-
-パケット受信時，ゲートウェイはGTP-Uヘッダ内のTEIDを参照して転送処理を行う．UplinkではTEIDマッピングテーブルを参照し，GTP-UヘッダのTEIDフィールドをN3 TEIDに書き換えてUPFへ送出する．Downlinkでは，受信パケットのTEID（eNBが通知したdownlink TEIDと同値）を用いてUEコンテキストを特定し，対応するeNBのS1-U IPを取得して転送する．本プロトタイプ実装ではTransparent proxyとしてTEIDは書き換えない．転送はOSのネットワークスタックを介して行われるため，外部IP/UDPヘッダは新規に生成され，チェックサムもOSにより計算される．
-
-\subsubsection{マッピングエントリの生成}
-TEIDマッピングエントリは，C-Planeのセッション確立手順と連動して以下のタイミングで生成される．
-
-\begin{enumerate}
-\item \textbf{S1N2 TEIDの事前割当}: Initial Context Setup Request送信時（4.3.1.4参照），ゲートウェイは自身が管理するTEID（S1N2 TEID）をeNBに通知する（本実装では固定値を使用）．
-\item \textbf{eNB側TEIDの取得}: eNBからのInitial Context Setup Responseに含まれるS1-U TEIDを記録する．
-\item \textbf{N3側TEIDの取得}: PDU Session Resource Setup手順により通知されるUPF側のN3 TEIDを取得し，Uplink用のマッピングエントリを完成させる．なお，Downlinkについては前述の通りTransparent proxyとして動作するため，TEID変換は行わない．
-\end{enumerate}
-
-この設計により，eNBとUPFはそれぞれ対向ノードとしてゲートウェイのみを認識し，互いの存在（IPアドレス体系の違いなど）を意識することなく通信が可能となる．
-
-\subsubsection{GTP-Uパケット処理}
-具体的なパケット処理フローを以下に示す．
-
-\paragraph{Uplink処理}
-\begin{enumerate}
-\item eNBからGTP-Uパケットを受信（宛先TEID = S1N2 TEID）
-\item TEIDマッピングテーブルを検索し，対応するUPF情報を取得
-\item GTP-UヘッダのTEIDをN3 TEID（上り：UPF側）に書き換え
-\item UPFをUDP送信先として送出（外側IP/UDPヘッダはOSスタックで生成）
-\end{enumerate}
-
-\paragraph{Downlink処理}
-本プロトタイプ実装ではTransparent proxyとして動作し，TEID変換を行わない．具体的な処理フローは以下の通りである．
-\begin{enumerate}
-\item UPFからGTP-Uパケットを受信（TEID = eNBのdownlink TEID）
-\item UEコンテキストを参照し，送信先eNB（S1-U IP）を決定
-\item eNBをUDP送信先として送出（TEIDは透過，外側IP/UDPヘッダはOSスタックで生成）
-\end{enumerate}
-
-図\ref{fig:uplane_processing}に，U-Planeにおけるパケット処理とヘッダ変換の概要を示す．Uplinkではs1n2がeNBから受信したパケットのTEIDをN3用に書き換える．DownlinkではUPFがeNBのS1-U TEIDで送出するため，s1n2はTEIDを書き換えず宛先IPのみeNBに変更する．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.85, transform shape, every node/.style={font=\small}]
-    % Uplink Flow
-    \node[font=\bfseries] at (0, 2.5) {Uplink (eNB $\rightarrow$ UPF)};
-
-    % Packet 1 (eNB -> GW)
-    \node[draw, fill=GoogleBlue!10, minimum width=3.5cm, minimum height=0.8cm, align=center] (pkt1) at (0, 1.5) {IP: GW / UDP: 2152\\GTP: \textbf{S1-U TEID (UL)}};
-    \node[left] at (-2, 1.5) {From eNB};
-
-    % Processing Box
-    \node[draw, thick, fill=GoogleYellow!10, minimum width=3cm, minimum height=1.2cm, align=center] (proc_ul) at (5, 1.5) {TEID Mapping\\Search \& Rewrite};
-    \draw[->, thick] (pkt1) -- (proc_ul);
-
-    % Packet 2 (GW -> UPF)
-    \node[draw, fill=GoogleGreen!10, minimum width=3.5cm, minimum height=0.8cm, align=center] (pkt2) at (10, 1.5) {IP: UPF / UDP: 2152\\GTP: \textbf{N3 TEID}};
-    \node[right] at (12, 1.5) {To UPF};
-    \draw[->, thick] (proc_ul) -- (pkt2);
-
-    % Downlink Flow
-    \node[font=\bfseries] at (0, -1.5) {Downlink (UPF $\rightarrow$ eNB)};
-
-    % Packet 3 (UPF -> GW)
-    \node[draw, fill=GoogleGreen!10, minimum width=3.5cm, minimum height=0.8cm, align=center] (pkt3) at (0, -2.5) {IP: GW / UDP: 2152\\GTP: \textbf{eNB S1-U TEID}};
-    \node[left] at (-2, -2.5) {From UPF};
-
-    % Processing Box
-    \node[draw, thick, fill=GoogleYellow!10, minimum width=3cm, minimum height=1.2cm, align=center] (proc_dl) at (5, -2.5) {Transparent Proxy\\(Dst IP Change)};
-    \draw[->, thick] (pkt3) -- (proc_dl);
-
-    % Packet 4 (GW -> eNB)
-    \node[draw, fill=GoogleBlue!10, minimum width=3.5cm, minimum height=0.8cm, align=center] (pkt4) at (10, -2.5) {IP: eNB / UDP: 2152\\GTP: \textbf{eNB S1-U TEID}};
-    \node[right] at (12, -2.5) {To eNB};
-    \draw[->, thick] (proc_dl) -- (pkt4);
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!10] (0,0) rectangle (0.18,0.18);\ eNB側のパケット\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!10] (0,0) rectangle (0.18,0.18);\ UPF側のパケット\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!10] (0,0) rectangle (0.18,0.18);\ 変換器内処理\\
-      \end{tabular}
-    };
-
-  \end{tikzpicture}
-  \caption{U-Planeパケット処理とヘッダ変換フロー}
-  \label{fig:uplane_processing}
-\end{figure}
-
-\subsection{認証と鍵管理}
-
-\subsubsection{認証フローと鍵階層}
-5G AKA（Authentication and Key Agreement）では，以下の鍵階層に従って暗号鍵が導出される．
-
-\begin{enumerate}
-\item \textbf{ルート鍵}: USIMに保存されたK（共有秘密鍵）
-\item \textbf{中間鍵}: Milenageアルゴリズムによりf3(K, RAND), f4(K, RAND)からCK, IKを生成
-\item \textbf{KAUSF}: KDF(CK||IK, SN name, SQN⊕AK)により導出
-\item \textbf{KSEAF, KAMF}: 順次KDF適用により生成
-\item \textbf{NAS鍵}: KNASenc（暗号化用），KNASint（完全性保護用）
-\end{enumerate}
-
-5G AKAでは，CK/IKはHSS/UDMとUSIM間でのみ生成され，ネットワーク上には流れない．通常，4G-5G間のハンドオーバーではMMEとAMFがN26インターフェースを介して鍵コンテキストを共有するが，本提案のような単独のプロトコル変換器構成ではその手段がない．
-そのため，本研究の検証用プロトタイプ実装においては，\textbf{変換器がUEの秘密情報（Ki, OPc）を事前に保持し，擬似的な認証センターとして振る舞う}構成を採用した．
-変換器は，AMFから送られてくる認証リクエスト（RAND, AUTN）を受信し，保持しているKi, OPcを用いてMilenageアルゴリズムを実行することで，CK, IKを独自に導出する．
-
-その後，導出したCK, IKを用いて以下の式により4G互換の\textbf{KASME}を生成する（TS 33.401\cite{3GPP_TS33401} Annex A.2）．
-
-\texttt{KASME = KDF(CK||IK, FC=0x10, SN\_id, SQN⊕AK)}
-
-ここで，SQN⊕AKは5G認証リクエストのAUTNフィールドから抽出される．この処理により，変換器は4G側のeNBとの通信に必要な鍵コンテキストを確立できる．
-
-図\ref{fig:auth_key_derivation}に，本提案における認証フローと鍵導出のプロセスを示す．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.9, transform shape, every node/.style={font=\small}]
-    % Entities
-    \node[draw, fill=GoogleGreen!20, minimum width=2cm] (amf) at (0, 7) {AMF};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=1.5cm, align=center] (gw) at (6, 7) {Converter\\(Local Ki/OPc)};
-    \node[draw, fill=GoogleBlue!20, minimum width=2cm] (enb) at (12, 7) {eNB / UE};
-
-    % Lifelines
-    \draw[thick, dotted] (amf) -- (0, 2.5);
-    \draw[thick, dotted] (gw) -- (6, 2.5);
-    \draw[thick, dotted] (enb) -- (12, 2.5);
-
-    % Step 1: Auth Req from AMF to GW
-    \draw[->, thick] (0, 5.8) -- (6, 5.8) node[midway, above] {Auth Req (RAND, AUTN)};
-
-    % Step 2: Auth Req to eNB (4G)
-    \draw[->, thick] (6, 5.3) -- (12, 5.3) node[midway, above] {Auth Req (RAND, AUTN)};
-    \node[below, font=\scriptsize] at (9, 5.1) {(Transferred as 4G NAS)};
-
-    % Step 3: Auth Resp from UE
-    \draw[<-, thick] (6, 4.0) -- (12, 4.0) node[midway, above] {Auth Resp (RES)};
-
-    % Step 4: Auth Resp to AMF
-    \draw[<-, thick] (0, 3.5) -- (6, 3.5) node[midway, above] {Auth Resp (RES*)};
-    \node[below, font=\scriptsize] at (3, 3.3) {(RES* derived locally)};
-
-    % Internal Process in GW (positioned to the right, outside message flow)
-    \node[draw, dashed, fill=white, align=left, font=\scriptsize] (calc) at (10.5, 0.5) {
-      \textbf{Internal Calculation (at Converter):}\\
-      1. Extract RAND, AUTN\\
-      2. Load Ki, OPc (Local)\\
-      3. Run Milenage(Ki, RAND)\\
-      \hspace{1em}$\rightarrow$ CK, IK, RES, AK\\
-      4. Extract SQN$\oplus$AK from AUTN\\
-      5. \textbf{Derive RES*} (5G KDF)\\
-      \hspace{1em}$= \text{KDF}(CK||IK, \text{RES}, \text{SN\_name})$\\
-      6. \textbf{Derive K\_ASME} (4G KDF)\\
-      \hspace{1em}$= \text{KDF}(CK||IK, \text{SN\_id}, \text{SQN}\oplus\text{AK})$
-    };
-    \draw[->, dashed] (6, 4.8) -- (6, 4.3) -- (calc.west);
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB/UE\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ 変換器内の計算処理\\
-      \end{tabular}
-    };
-
-  \end{tikzpicture}
-  \caption{認証フローと鍵導出プロセス（ゲートウェイによるK\_ASME生成）}
-  \label{fig:auth_key_derivation}
-\end{figure}
-
-\subsubsection{SQN同期問題への対処}
-5G-to-4G変換における重要な課題は，シーケンス番号（SQN）の同期である．UEとネットワーク側のSQNが不一致の場合，認証失敗（Authentication Failure with Synch）が発生する．
-
-変換器は，以下の手順でSQN管理を実装する．
-
-\begin{enumerate}
-\item 5G認証リクエストからSQN⊕AKを抽出（AUTNフィールドの先頭6バイト）
-\item 抽出したSQN⊕AKをUEコンテキストにキャッシュ
-\item KASME導出時にキャッシュした値を使用
-\item 認証失敗時のAUTS（Authentication Token）を処理してSQN再同期
-\end{enumerate}
-
-この実装により，認証失敗回数を削減し，アタッチ手順の遅延を最小化できる．
-
-\subsubsection{NAS暗号化と完全性保護}
-\paragraph{暗号化アルゴリズムの選択とマッピング}
-変換器は，5GのNEA（NAS Encryption Algorithm）と4GのEEA（EPS Encryption Algorithm）間のマッピングを実装する．本研究では，両世代で共通のAES暗号プリミティブを使用するNEA2/EEA2を優先的に選択する．
-
-\begin{table}[h]
-\centering
-\caption{暗号化アルゴリズムのマッピング}
-\label{tab:algorithm_mapping}
-\begin{tabular}{|l|c|l|c|l|}
-\hline
-\textbf{5G} & \textbf{ID} & \textbf{4G} & \textbf{ID} & \textbf{暗号プリミティブ} \\
-\hline
-NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
-128-NEA1 & 1 & 128-EEA1 & 1 & SNOW 3G (ストリーム) \\
-\textbf{128-NEA2} & \textbf{2} & \textbf{128-EEA2} & \textbf{2} & \textbf{AES-CTR} \\
-128-NEA3 & 3 & 128-EEA3 & 3 & ZUC (ストリーム) \\
-\hline
-\end{tabular}
-\end{table}
-
-完全性保護についても同様に，NIA2↔EIA2のマッピングを実装する．両アルゴリズムともAES-CMACを使用するため，無損失変換が可能である．
-
-\paragraph{デュアルモードセキュリティコンテキスト}
-変換器は，5G側と4G側で異なる暗号鍵を並列に管理する必要がある．このため，UEごとに以下のセキュリティコンテキストを保持する．
-
-\begin{itemize}
-\item \textbf{5G鍵}（AMF通信用）: KNASenc(5G), KNASint(5G), NAS UL COUNT(5G)
-\item \textbf{4G鍵}（eNB通信用）: KNASenc(4G), KNASint(4G), NAS UL/DL COUNT(4G)
-\item \textbf{アルゴリズム選択}: 5G側（\texttt{selected\_alg\_5g}），4G側（\texttt{selected\_nas\_security\_alg}）
-\item \textbf{状態フラグ}: has\_5g\_nas\_keys, has\_nas\_keys
-\end{itemize}
-
-この並列鍵管理により，変換器は5G側からの暗号化メッセージを復号し，4G側用に再暗号化する処理を行う．ただし，本プロトタイプ実装ではNEA2/EEA2（AES系）を中心に対応しており，NEA1/EEA1（SNOW 3G）およびNEA3/EEA3（ZUC）は未実装である．
-
-\paragraph{双方向メッセージ暗号化処理}
-セキュリティモード確立後，NASメッセージは暗号化されて転送される．変換器は以下の手順で双方向変換を実行する．
-
-\textbf{ダウンリンク（5G→4G）}:
-\begin{enumerate}
-\item KNASenc(5G)を使用して5G NASメッセージを復号化（暗号化時）
-\item 平文5GMM → EMMメッセージタイプ変換
-\item KNASenc(4G)を使用して4G NASメッセージを暗号化（EEA2選択時）
-\item KNASint(4G)を使用して完全性保護MAC-Iを計算・付加
-\end{enumerate}
-
-\textbf{アップリンク（4G→5G）}:
-\begin{enumerate}
-\item KNASint(4G)を使用して4G NASメッセージの完全性を検証
-\item KNASenc(4G)を使用して4G NASメッセージを復号化（暗号化時）
-\item 平文EMM → 5GMMメッセージタイプ変換
-\item KNASint(5G)を使用して完全性保護MAC-Iを計算・付加
-\end{enumerate}
-
-なお，本プロトタイプ実装ではアップリンク方向の5G側暗号化（KNASenc(5G)によるciphering）は実装されておらず，完全性保護のみを適用している．また，Initial Context Setup Request等に埋め込まれるNAS-PDUについては，保護ヘッダ付きNASをそのまま保持して転送する方式を採用している．
-
-\subsection{コンテキスト管理とタイムアウト}
-変換器はUEごとに以下を保持する．
-\begin{itemize}
-  \item ID束: (ENB-UE-S1AP-ID, MME-UE-S1AP-ID) ↔ (RAN-UE-NGAP-ID, AMF-UE-NGAP-ID)
-  \item セッション情報: PDU Session ID，E-RAB ID，eNB/UPFのトンネル情報（TEID，IPアドレス）
-  \item タイムスタンプ: 作成時刻，最終更新時刻，ICS送信時刻等
-\end{itemize}
-本プロトタイプ実装では，汎用的なタイマ機構ではなく，以下のようなタイムスタンプベースの時間管理を採用している．
-\begin{itemize}
-  \item \textbf{TEIDマッピングの期限切れ}: 一定時間（1時間）未使用のTEIDマッピングを定期的にクリーンアップする．
-  \item \textbf{TAUガード}: TAU（Tracking Area Update）関連の処理において，60秒のガード時間を設けてフラグ管理を行う．
-  \item \textbf{ICS重複抑止}: Initial Context Setup Requestの重複送信を10秒間抑止し，一定時間経過後はリトライを許容する．
-\end{itemize}
-異常系（IE不足/不整合等）については，原則としてログ出力の上でメッセージを破棄する．ただし，S1AP/NGAPのErrorIndicationやUE Context Release Request等のエラー関連メッセージを受信した場合は，対向側インターフェースへ変換・転送することで，両端ノード間のエラー通知を橋渡しする．
-
-\subsection{QoSパラメータのマッピング}
-4GのQCI（QoS Class Identifier，TS 23.203）と5GのQoS情報（5QI，TS 23.501）は，数値の定義範囲や付随パラメータが完全には一致しない．
-
-表\ref{tab:qos_mapping}にQCI/5QIの対応例を示す．本プロトタイプ実装では，NGAPメッセージ生成時（Uplink）にはQCI/5QIが1〜9の範囲であれば同一値として扱い，それ以外はデフォルト（5QI=9）へフォールバックするロジックを採用している．
-
-\begin{table}[h]
-\centering
-\caption{QCIと5QIのマッピング例}
-\label{tab:qos_mapping}
-\begin{tabular}{|c|c|l|l|}
-\hline
-\textbf{QCI} & \textbf{5QI} & \textbf{リソースタイプ} & \textbf{用途例} \\
-\hline
-1 & 1 & GBR & 音声（VoLTE/VoNR） \\
-5 & 5 & Non-GBR & IMS Signaling \\
-6 & 6 & Non-GBR & ビデオ（バッファ型） \\
-9 & 9 & Non-GBR & デフォルト（ベストエフォート） \\
-\hline
-\end{tabular}
-\end{table}
-
-一方で，S1APメッセージ生成時（Downlink，Initial Context Setup Request等）においては，接続性の検証を主目的とするため動的なQoS変換は行わず，一律でデフォルト値（QCI=9）を固定で設定する構成とした．5G側から通知されるQoS Flow ID（QFI）については，コンテキストとして保持し応答メッセージ（PDU Session Resource Setup Response等）に含めることで，プロトコル上の整合性は維持する．
-
-\subsection{エラー処理とロギング}
-変換不可能なメッセージや未サポート機能に遭遇した場合，変換器はシステム全体の整合性を維持するため，フェイルセーフ（Fail-safe）な挙動をとる．具体的には以下の処理を行う．
-
-\begin{itemize}
-\item \textbf{IE不足/デコード失敗}: 必須パラメータが欠落またはデコードに失敗した場合，ログ出力の上で当該変換を中止する．ただし，NAS変換に失敗した場合は，原文メッセージをそのまま透過転送するフォールバック処理を行う場合もある．
-\item \textbf{リソース解放}: 長時間（1時間）未使用のTEIDマッピングは，5分間隔の定期クリーンアップにより解放し，メモリリークを防ぐ．
-\item \textbf{障害解析用ロギング}: エラー発生時は，関連ID（ENB-UE-S1AP-ID, RAN-UE-NGAP-ID等）やNAS/手順の種別をログに残し，調査の手がかりとする．
-\end{itemize}
-
-\subsection{実装の最適化}
-変換器の処理遅延は，主に以下の要素から構成される．
-\begin{itemize}
-\item \textbf{ASN.1デコード/エンコード}: S1APおよびNGAPメッセージのAPER（Aligned Packed Encoding Rules）処理．一般に計算コストが高い傾向がある．
-\item \textbf{NASメッセージ変換}: EMM↔5GMM，ESM↔5GSMのメッセージタイプと情報要素の再構成．
-\item \textbf{暗号化処理}: NAS暗号化（NEA2/EEA2）と完全性保護（NIA2/EIA2）の計算．ただし，暗号化は常時ではなく条件付き（アルゴリズム選択に依存）で適用される．
-\item \textbf{GTP-U TEIDフィールド書き換え}: 主にUplink方向でTEIDマッピングテーブル検索とTEIDフィールド（4バイト）の書き換えを行う．Downlinkは透過転送のため書き換えなし．
-\item \textbf{コンテキスト検索}: UE IDによるテーブル検索．
-\end{itemize}
-
-これらの遅延を低減するため，本実装では以下の方針を採用した．
-\begin{itemize}
-\item \textbf{配列ベースのUEコンテキスト管理}: UEコンテキストは固定長配列（\texttt{ue\_mappings}）で管理し，線形探索により検索する．実装は簡素であり，配列のメモリ局所性によりキャッシュ効率が期待できる．
-\item \textbf{TEIDマッピングのLRU管理}: TEIDマッピングテーブルはLRU（Least Recently Used）方式で管理し，長時間未使用のエントリを定期的にクリーンアップする．
-\item \textbf{OSネットワークスタックの活用}: GTP-Uパケットの送信にはOSのソケットAPI（\texttt{sendto}）を使用し，IP/UDPヘッダ生成やチェックサム計算をOSに委ねることで実装を簡素化した．
-\end{itemize}
-これらの実装により，プロトタイプとしての動作検証を優先しつつ，変換処理が通信全体の著しいボトルネックとならないことを目指した．
-
-\section{プロトコル仕様上の制約}
-本節では，S1AP/NGAP間のプロトコル変換において生じる本質的な制約を整理する．
-
-\subsection{規格差分による制約}
-S1APとNGAPは情報要素（IE）の集合と手順が一致しないため，完全な1対1変換は成立しない．S1APに対応する要素が存在しないIE（例: AMF Region情報）は，S1AP側へは反映されない．また，NGAPで必須となるNetwork Slice関連IE（AllowedNSSAI，S-NSSAI等）については，本プロトタイプ実装では固定値（SST=1等）で補完しており，厳密なマッピングは行っていない．
-
-必須IEの欠落など致命的な不整合では当該変換を中止するが，状況により原文メッセージを透過転送するフォールバックも用いる．
-
-\subsection{手順分離に起因する制約}
-5GではRegistration完了後にPDU Session確立が行われる一方，4GではAttach手順の一部としてデータ経路（Default Bearer）が確立される．この差分に対して，本研究では\S\ref{sec:pdu_session_establishment}で述べたEarly S1 Setup手順により，手順の逐次化と待ち合わせを行う．
-
-ただし，PDU Session確立に必要な情報（TEID等）が通知されるまでの待機が発生する．コア網の処理遅延が大きい環境では，確立成功率の低下や再試行による遅延増加が生じる可能性がある．
-
-\subsection{機能制限に関する制約}
-本変換器は以下の5G固有機能に非対応である．
-\begin{itemize}
-\item \textbf{Network Slicing}: S-NSSAIに基づくスライス選択は4Gに対応概念がないため，本実装ではNGAP必須IEを満たすために固定値（SST=1）で補完している．
-\item \textbf{QoS Flow}:\\
-5GのFlow単位QoS\allowbreak （GFBR/MFBR）から4GのBearer単位\allowbreak （GBR/MBR）への変換は未実装である．本プロトタイプ実装では，QCI/5QI/QFIの簡易設定（4.3.5節参照）と，UE Aggregate Maximum Bit Rate（UE-AMBR）相当の値をデフォルト（1Mbps）で付与するに留まる．
-\end{itemize}
-
-\subsection{セキュリティに関する制約}
-4.3.3節で述べたとおり，本検証環境では変換器がUEの秘密情報（Ki, OPc）を設定ファイル（auth\_keys.yaml）から読み込み，プロセス内に保持する構成を採用している．これは商用環境では一般に想定されない設計であり，実運用では標準の認証・鍵管理機構（コア網側の機能）に委ねる設計が必要となる．本研究の評価結果は，この前提条件の下で得られたものである点に留意されたい．
+% 旧4.2節「基本概念：世代共通機能に基づく疎結合化」は4.1.1節と内容が重複するため削除
+% 疎結合化の概念は4.1.1節の「機能的共通性」で説明済み

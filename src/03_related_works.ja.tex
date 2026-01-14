@@ -5,7 +5,7 @@
 
 \section{異世代間インターワーキングの標準技術}
 
-3GPP標準仕様においても，4Gシステム（EPS）と5Gシステム（5GS）の共存や移行に関する技術が規定されている．しかし，これらは主に「CN間連携」または「RAN更新」を前提としており，本研究が対象とする「レガシーRANの収容」とはアプローチが異なる．図\ref{fig:interworking_comparison}に，各技術のアーキテクチャを比較して示す．
+3GPP標準仕様においても，4Gシステム（EPS）と5Gシステム（5GS）の共存や移行に関する技術が規定されている．しかし，これらは主に「CN間連携」または「RAN更新」を前提としており，第\ref{chap:background}章で述べた「eNBを無改修のまま5GCへ収容する」という本研究の目的とはアプローチが異なる．図\ref{fig:interworking_comparison}に，各技術のアーキテクチャを比較して示す．
 
 \begin{figure}[htbp]
   \centering
@@ -43,7 +43,7 @@
 
   % (d) Proposed
   \node[label_node] at (-1, -7.5) {(d) 提案手法 (S1-N2変換)};
-  \node[box] (legacy) at (0, -8.7) {Legacy RAN};
+  \node[box] (legacy) at (0, -8.7) {eNB};
   \node[box, fill=gray!20] (gw) at (3, -8.7) {変換GW};
   \node[cloud_node] (5gc_d) at (6, -8.7) {5GC};
   \draw[arrow] (legacy) -- node[above, font=\scriptsize] {S1} (gw);
@@ -66,55 +66,49 @@
 \subsection{N26インターフェースによるCN間連携}
 3GPP TS 23.501では，4G MMEと5G AMFを接続する「N26インターフェース」が定義されている．N26を使用することで，UEのコンテキスト（認証状態やセッション情報）をCN間で転送し，4Gエリアと5Gエリア間のシームレスなハンドオーバー（シングルレジストレーションモード）が可能となる．
 
-しかし，N26はあくまで「4G RANはEPCへ，5G RANは5GCへ」接続されていることを前提とした技術である．UEが4G RAN配下にいる間は5GCネイティブな機能（スライシング等）をフルに利用できず，5GCへ接続するためには5Gエリアへ移動するか，RAN自体を5G対応に更新する必要がある．したがって，N26は移行期間中の移動性管理技術であり，レガシーRANを5GCに収容する技術ではない．
+しかし，N26はあくまで「4G RANはEPCへ，5G RANは5GCへ」接続されていることを前提とした技術である．UEが4G RAN配下にいる間は5GCネイティブな機能（スライシング等）をフルに利用できず，5GCへ接続するためには5Gエリアへ移動するか，RAN自体を5G対応に更新する必要がある．したがって，N26は移行期間中の移動性管理技術であり，eNBを無改修のまま5GCに収容する技術ではない．
 
 \subsection{ng-eNBによるRANアップグレード}
-前章でも触れた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）．ng-eNBは5GCとの接続に必要なNG-APおよびNG-Uプロトコルをネイティブにサポートする．
+第\ref{chap:background}章で述べた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）．これは論理的には本研究に近い構成であるが，実現には基地局装置のファームウェアまたはハードウェアの更新が必須である．NTNや古いプライベートLTE設備のように，物理的な更新が困難な環境には適用できない．本研究のS1-N2変換ゲートウェイは，このng-eNBの機能を「外付け」で実現するアプローチと捕えることができる．
 
-これは論理的には本研究に近い構成であるが，実現には基地局装置のファームウェアまたはハードウェアの更新が必須である．NTNや古いプライベートLTE設備のように，物理的な更新が困難な環境には適用できない．本研究のS1-N2変換ゲートウェイは，このng-eNBの機能を「外付け」で実現するアプローチと捉えることができる．
+\subsection{N3IWFによる非3GPPアクセス収容}
+N3IWF（Non-3GPP InterWorking Function）は，Wi-Fi等の非3GPPアクセス網を介して5GCに接続するためのゲートウェイである\cite{3GPP_TS23501_R15}．N3IWFはUEとの間にIPsecトンネルを確立し，信頼できないアクセス網上でもセキュリティを確保する．
 
-\section{プロトコル変換とゲートウェイ技術}
-
-異なるプロトコル間の変換技術は，インターネットの歴史において広く用いられてきた．
-
-\subsection{トランスレータ方式とカプセル化方式}
-異種ネットワーク接続には，パケットヘッダを書き換える「トランスレータ方式」（例：NAT64\cite{rfc6146}）と，パケットを別のプロトコルで包む「カプセル化方式」（例：IP-in-IP\cite{rfc2003}）が存在する．
-
-本研究におけるC-Plane（制御面）の変換は，S1-APメッセージとNG-APメッセージの意味的な対応関係に基づいて相互に変換を行う．さらに，NAS（Non-Access Stratum）メッセージについても，4G NAS（EPS-NAS）と5G NAS（5GS-NAS）の間で変換を行い，NG-APのペイロードとして搬送する．このように，本手法はAS層（S1-AP/NG-AP）およびNAS層の両方でプロトコル変換を行う，一貫したトランスレータ方式を採用している．
-
-\subsection{モバイル網におけるプロトコル変換の研究}
-モバイルコアネットワークにおけるプロトコル変換の研究としては，3G/4G間のインターワーキングや，Wi-Fi等の非3GPPアクセス収容（N3IWF）に関するものがある．特にN3IWF（Non-3GPP InterWorking Function）は，信頼できないアクセス網を介して5GCに接続するためのゲートウェイであり，IPsecトンネルを用いてセキュリティを確保する．
-
-本研究のS1-N2変換ゲートウェイは，N3IWFの概念を「信頼できるレガシー3GPPアクセス（LTE）」に拡張したものと解釈できる．ただし，N3IWFがIPレベルの接続を前提とし，UE側にIPsecクライアント機能を要求するのに対し，本手法はS1-AP/SCTPという制御プレーンプロトコルレベルでの変換を行い，UE側の改修を一切必要としない点で技術的アプローチが異なる．
-
-\section{モバイルシステムの世代共通機能}
-
-モバイルネットワークは世代ごとに無線方式やコアネットワークアーキテクチャが刷新されてきたが，提供される通信サービスの基本機能は共通している．Watanabeらは，AAA（Authentication, Authorization, Accounting），移動管理（Mobility Management），およびユーザデータ転送（U-plane）といった本質的な機能要件は世代を超えて不変であると指摘している\cite{Watanabe_ADMobile2025}．
-
-彼らはこの観察に基づき，C-PlaneとRANの機能を抽象化・融合した自律分散型アーキテクチャを提案しているが，具体的にどのプロトコルパラメータがこれらの共通機能に対応するかについては詳細な分析を行っていない．本研究は，この世代間で共通する機能要件を理論的基盤として採用し，4G（EPS）と5G（5GS）における具体的なパラメータ対応関係を明らかにすることで，実用的なインターワーキングの実現に貢献する．
+しかし，N3IWFは「非3GPPアクセス」を対象としており，LTE eNBのような既存の3GPP RANを収容することは想定されていない．また，UE側にIPsecクライアント機能を要求するため，既存の4G UEをそのまま利用することはできない．
 
 \section{本研究の独自性と位置づけ}
 
-以上の関連研究と本研究の比較を表\ref{tab:tech_comparison}に示す．これらを踏まえ，本研究の独自性は以下の点にある．
+% TODO: 学術論文における異世代間接続アプローチの比較を追加予定
+% - IEEE論文: Suthar et al. (Migration and Interworking between 4G and 5G, 2020)
+% - IEEE論文: Cagenius et al. (Hybrid 5G Core network architecture, 2024)
+% - IEEE論文: Lin et al. (Interoperability research and experiments, 2022)
+% - RFC論文: Wakikawa et al. (Separation of Control and User Plane for PMIPv6, 2014)
+% これらとの比較を通じて、本研究がなぜ疎結合アーキテクチャを採用したかを説明
+
+以上の関連技術と本研究の比較を表\ref{tab:tech_comparison}に示す．
 
 \begin{table}[htbp]
   \centering
   \caption{異世代間接続技術と提案手法の比較}
   \label{tab:tech_comparison}
   \small
-  \begin{tabularx}{\textwidth}{l|l|X|X|X} \hline
-    技術 & 接続形態 & RAN改修 & UE改修 & 適用シナリオ \\ \hline \hline
-    N26 & CN間連携 & 不要 (4Gのまま) & 不要 & 4G/5Gエリア間のハンドオーバー \\
-    ng-eNB & RAN更新 & 必須 (HW/SW) & 不要 & 5GCへの直接収容 \\
-    N3IWF & 非3GPP接続 & 不要 (Wi-Fi等) & 必須 (IPsec) & 公衆網/信頼できない網 \\ \hline
-    \textbf{提案手法} & \textbf{S1-N2変換} & \textbf{不要} & \textbf{不要} & \textbf{レガシーRANの収容} \\ \hline
+  \begin{tabularx}{\textwidth}{l|l|X|X|X|X} \hline
+    技術 & 接続形態 & CN改修 & RAN改修 & UE改修 & 適用シナリオ \\ \hline \hline
+    N26 & CN間連携 & 必須 (N26対応) & 不要 & 不要 & 4G/5Gエリア間HO \\
+    ng-eNB & RAN更新 & 不要 & 必須 & 不要 & 5GCへの直接収容 \\
+    N3IWF & 非3GPP接続 & 必須 (NF追加) & 不要 & 必須 (IPsec) & 公衆/非信頼網 \\ \hline
+    \textbf{提案手法} & \textbf{S1-N2変換} & \textbf{不要} & \textbf{不要} & \textbf{不要} & \textbf{eNB無改修収容} \\ \hline
   \end{tabularx}
 \end{table}
 
+表\ref{tab:tech_comparison}が示す通り，既存の標準技術はいずれもCN・RAN・UEのいずれかの改修を必要とする．これに対し，本研究の提案手法は，いずれの改修も必要とせず，eNBを無改修のまま5GCへ収容することを可能にする．
+
+本研究の独自性は以下の点にある．
+
 \begin{itemize}
     \item \textbf{「更新不能なRAN」への解法}: 既存の標準技術（ng-eNB）が適用できない物理的制約環境に対し，ハードウェア変更不要の解決策を提示する点．
-    \item \textbf{世代共通機能のパラメータマッピングの具体化}: Watanabeらが指摘した世代間で共通する機能要件\cite{Watanabe_ADMobile2025}に基づき，抽象的な共通機能（AAA, Mobility, U-plane）が，実際の4G/5Gプロトコル（S1AP/NAS, NGAP/5GS-NAS）のどのパラメータに対応するかを具体的に明らかにし，変換ロジックとして実装した点．
-    \item \textbf{ステートマシン不整合の解消}: 4GではAttach手順内でベアラ確立が完了するのに対し，5GではRegistration後にPDU Sessionを確立するという，シーケンスタイミングの不整合が存在する．単純なメッセージ変換では解決できないこの問題に対し，独自のシーケンス制御手法（Early S1 Setup）を導入して解決した点（詳細は第\ref{chap:proposal}章で述べる）．
+    \item \textbf{世代共通機能に基づく設計}: モバイル通信の基本機能（認証・課金，移動管理，U-Plane）は世代を超えて共通しているという観察に基づき，4G/5Gプロトコル間の具体的なパラメータ対応関係を明らかにし，変換ロジックとして実装した点（設計の詳細は第\ref{chap:proposal}章で述べる）．
+    \item \textbf{ステートマシンの違いの解消}: 第\ref{chap:background}章で述べた通り，4GではAttach手順内でベアラ確立が完了するのに対し，5GではRegistration後にPDU Session Establishmentを行うという，C-Planeの手順相違が存在する．単純なメッセージ変換では解決できないこの問題に対し，独自のシーケンス制御手法を導入して解決した点（詳細は第\ref{chap:proposal}章で述べる）．
 \end{itemize}
 
-本研究は，単なる実験環境の構築手法にとどまらず，将来の6G時代においても残存するレガシーインフラを，最新のコアネットワークに統合するための汎用的なアーキテクチャモデルを提案するものである．
+本研究は，単なる実験環境の構築手法にとどまらず，将来の6G時代においても残存する更新困難なRANを，最新のコアネットワークに統合するための汎用的なアーキテクチャモデルを提案するものである．
