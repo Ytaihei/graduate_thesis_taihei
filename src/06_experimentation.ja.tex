@@ -3,15 +3,44 @@
 
 \section{実験の目的}
 本章では，提案するS1-N2変換ゲートウェイの実用性と有効性を検証するための実験環境と評価手法について述べる．
-実験の主な目的は以下の通りである．
+
+第\ref{chap:proposal}章では，4G RANを無改修で5GCに収容するための疎結合アーキテクチャを提案し，以下の3つのアーキテクチャ要件（第\ref{subsec:architecture_requirements}節）を設定した．
+\begin{description}
+    \item[R1: 透過的介在] 既存RANと5GCの間に透過的に介在し，双方に改修を要求しない
+    \item[R2: プロトコル相互変換] 世代不変な本質的機能（AAA，移動管理，U-Plane）を維持しつつ変換
+    \item[R3: 5GC固有機能の整合] スライシング等の拡張機能への対応を可能にする
+\end{description}
+
+本章の評価では，第\ref{chap:proposal}章の論理設計と，第\ref{chap:design}章のプロトタイプ実装の双方を，上記要件に基づいて検証する．表\ref{tab:requirements_evaluation}に，アーキテクチャ要件と評価項目の対応を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{アーキテクチャ要件と評価項目の対応}
+\label{tab:requirements_evaluation}
+\begin{tabular}{|l|p{5cm}|p{4.5cm}|}
+\hline
+\textbf{要件} & \textbf{検証内容} & \textbf{評価シナリオ} \\
+\hline
+R1: 透過的介在 & eNB/5GCの無改修での接続成立 & シナリオ1（構成検証） \\
+\hline
+R2: プロトコル変換 & 世代共通機能（AAA，移動管理，U-Plane）の正常動作 & シナリオ1, 2 \\
+\hline
+R3: 5GC固有機能 & 固定値補完による最低限の整合 & 対象外（注） \\
+\hline
+\end{tabular}
+\end{table}
+
+（注）R3については，本プロトタイプがNetwork Slicing等の高度機能を固定値補完で実装しているため（第\ref{chap:design}章参照），機能検証は対象外とする．ただし，固定値補完によりNGAP必須IEを満たすことで接続が成立している点は，R1/R2の検証を通じて間接的に確認される．
+
+実験の具体的な目的は以下の通りである．
 
 \begin{enumerate}
-    \item \textbf{機能検証（世代共通機能の実証）}: 4G RAN（sXGP）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．具体的には，C-Planeにおける登録手順（Registration）とU-Planeにおけるデータ疎通（PDU Session）の成立を通じて，認証や移動管理といった「世代共通機能」がプロトコル変換を経ても正しく維持されることを検証する．
+    \item \textbf{機能検証（R1/R2の実証）}: 4G RAN（sXGP\footnote{shared eXtended Global Platform: 日本国内の1.9GHz帯で免許不要で利用可能なプライベートLTE規格．詳細は第\ref{subsubsec:sxgp}項を参照．}）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．具体的には，C-Planeにおける登録手順（Registration）とU-Planeにおけるデータ疎通（PDU Session）の成立を通じて，認証や移動管理といった「世代共通機能」がプロトコル変換を経ても正しく維持されることを検証する．
     \item \textbf{性能評価}: ゲートウェイの導入によるオーバーヘッド（遅延，スループット低下）を測定し，実用上の許容範囲内であることを確認する．
     \item \textbf{実機相互運用性}: シミュレータでは検証困難な，実際の無線機（sXGP）と商用スマートフォン（UE）を用いた環境において，プロトコルスタックが正常に動作することを実証する．
 \end{enumerate}
 
-本研究の評価はLTE互換RAN（sXGP）と5GC（Open5GS）を用いた実験環境で行う．したがって，5G NR特有のPHY/MAC機能や無線スケジューリング最適化は対象外とする．また，本プロトタイプ実装ではNetwork Slicing等の高度機能は固定値補完に留まるため，それらの機能実証は対象外とする．一方で，提案変換器はS1AP↔NGAPおよびS1-U↔N3の\textbf{コア境界}で動作するため，制御面（S1AP/NGAP/NAS）およびユーザ面（GTP-U）の手順整合性・状態管理・タイマ設定といったプロトコルレベルの評価は可能である．
+本研究の評価はLTE互換RAN（sXGP）と5GC（Open5GS）を用いた実験環境で行う．したがって，5G NR特有のPHY/MAC機能や無線スケジューリング最適化は対象外とする．一方で，提案変換器はS1AP↔NGAPおよびS1-U↔N3のコア境界で動作するため，制御面（S1AP/NGAP/NAS）およびユーザ面（GTP-U）の手順整合性・状態管理・タイマ設定といったプロトコルレベルの評価は可能である．
 
 \section{実験環境}
 実験環境の構成を図\ref{fig:experiment_setup}に示す．
@@ -44,23 +73,20 @@
     \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {4G/5G\\Dual SIM};
     \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\1.9GHz / 10MHz};
 
-        % 凡例
-        \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-            \begin{tabular}{@{}l@{}}
-                \csname textbf\endcsname{凡例}\\
-                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE\\
-                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ sXGP基地局\\
-                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換ゲートウェイ\\
-                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!30] (0,0) rectangle (0.18,0.18);\ 5GC\\
-                \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ Dockerホスト\\
+        % 凡例（下部中央）
+        \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+            \begin{tabular}{@{}l@{\hspace{0.8em}}l@{\hspace{0.8em}}l@{\hspace{0.8em}}l@{\hspace{0.8em}}l@{}}
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ UE &
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ sXGP &
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換GW &
+                \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!30] (0,0) rectangle (0.18,0.18);\ 5GC &
+                \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ Docker
             \end{tabular}
         };
   \end{tikzpicture}
     \caption{実験環境構成図}
   \label{fig:experiment_setup}
 \end{figure}
-
-GatewayとOpen5GSは同一物理サーバ上のDockerコンテナとして動作する．
 
 また，実空間の電波環境および実機接続での検証を行っていることを明確にするため，実験環境の外観を図\ref{fig:experiment_photo}に示す．
 
@@ -76,14 +102,17 @@ GatewayとOpen5GSは同一物理サーバ上のDockerコンテナとして動作
 
 \subsubsection{Open5GSとsrsRAN}
 Open5GS\cite{open5gs}は，3GPP Release 16/17に準拠した5GC機能（AMF, SMF, UPF等）を提供するOSSである．商用製品と異なり，内部のステートマシンやメッセージ処理ロジックを詳細に追跡・修正できるため，プロトコル変換の挙動検証に適している．
-また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェアで実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．ZeroMQ（ZMQ）モードを使用することで，物理的な無線ハードウェア（SDR: Software Defined Radio）を用いずにPC内のみで動作検証が可能である．本研究では，sXGP実機を主たる検証環境とし，srsRAN 4GのZMQモードは初期の開発・デバッグ段階で補助的に使用した．
+また，srsRAN 4G\cite{srsran}（旧srsLTE）は，4G eNBをソフトウェアで実装したOSSであり，S1APメッセージの送受信を含む基地局の挙動を再現できる．ZeroMQ\footnote{高性能な非同期メッセージングライブラリ．srsRANでは無線信号の代わりにソフトウェア間通信に使用．}（ZMQ）モードを使用することで，物理的な無線ハードウェア（SDR: Software Defined Radio）を用いずにPC内のみで動作検証が可能である．本研究では，sXGP実機を主たる検証環境とし，srsRAN 4GのZMQモードは初期の開発・デバッグ段階で補助的に使用した．
 
 \subsubsection{sXGP採用理由と実機検証の意義}
+\label{subsubsec:sxgp}
+sXGP（shared eXtended Global Platform）は，日本国内の1.9GHz帯（Band 39）で免許不要で利用可能なプライベートLTE規格であり，TD-LTE（時分割複信方式のLTE）に準拠している．標準的な4G端末およびS1インタフェースをそのまま使用できるため，本研究ではこのsXGPを4G RANとして採用する．
+
 sXGPを採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
 \begin{itemize}
     \item \textbf{継続性}: 実機を用いた反復試験を継続して実施できる．
-    \item \textbf{再現性}: 構成（RAN/コア/変換器）を固定し，ログ/pcapを併せて保存することで再現可能な評価を行いやすい．
-    \item \textbf{コストと入手性}: 商用網相当の環境に比べて実験基盤を構築しやすい．
+    \item \textbf{再現性}: 構成（RAN/コア/変換器）を固定し，ログおよびパケットキャプチャ（pcap）を併せて保存することで再現可能な評価を行いやすい．
+    \item \textbf{コストと入手性}: 商用網相当の環境に比べて実験基盤を低コストで構築可能である．
 \end{itemize}
 本研究では，OSS（Open5GS/srsRAN）と実機（sXGP）を組み合わせることで，提案アーキテクチャの有効性を多角的に評価する．
 
@@ -130,27 +159,27 @@ sXGPを採用する主目的は，評価を再現可能な形で継続実施で�
 
 UEには市販のスマートフォンを，RANにはsXGP対応の小型基地局を採用し，免許不要で利用可能なプライベートLTE環境を構築した．
 GatewayおよびOpen5GSは同一物理サーバ上のDockerコンテナとして動作させ，コンテナ間通信によるオーバーヘッドを最小化した．
-実装の詳細および最適化方針については第\ref{chap:proposal}章で述べた．
+実装の詳細および最適化方針については第\ref{chap:design}章で述べた．
 
 \subsection{ネットワーク構成}
 各NFはDockerコンテナとして構築し，Linuxブリッジ（\texttt{br-sXGP-5G}）上のサブネット\texttt{172.24.0.0/16}に固定IPアドレスで配置した．
 ホストマシンの物理NIC（Network Interface Card，\texttt{eno1}）を当該ブリッジに接続し，物理的に接続されたeNB（IPアドレス: \texttt{172.24.0.111}）とコンテナ群とのL2到達性を確保した．
-本実験は小規模な検証環境であるため，VLANやVRFによるネットワーク分離は行わず，単一セグメントで構成した．
+本実験は小規模な検証環境であるため，ネットワーク分離は行わず単一セグメントで構成した．
 
-UEへのIPアドレス払い出しには，インターネット接続用APN（Access Point Name，internet）に\texttt{192.168.100.0/}\allowbreak\texttt{24}を割り当てた．
+UEへのIPアドレス払い出しには，インターネット接続用APN（Access Point Name，internet）に対し，提案手法環境では\texttt{172.25.0.0/24}を，ベースライン環境では\texttt{192.168.100.0/24}を割り当てた．
 外部ネットワークへの接続性を確保するため，UPFコンテナ内でiptablesによるNAPT（Network Address Port Translation，IPマスカレード）を設定した．
 
 \subsection{監視・計測}
-制御面の動作検証には，Linuxブリッジ上で\texttt{tcpdump}によりパケットキャプチャを取得し，Wiresharkおよび\texttt{tshark}を用いてプロトコル解析を行った．
+制御面の動作検証には，Linuxブリッジ上でパケットキャプチャツール（\texttt{tcpdump}）によりトラフィックを記録し，プロトコル解析ツール（Wireshark，\texttt{tshark}）を用いて解析を行った．
 また，各NFコンテナのログはホスト側ディレクトリにマウントして保存し，障害発生時の原因追跡に使用した．
 ゲートウェイの処理時間は，変換器がメッセージを受信した時刻と送信した時刻の差分をログ出力し，その差分から算出した．
 
 ユーザ面の性能測定には以下のツールと条件を使用した．
 \begin{itemize}
-    \item \textbf{遅延測定}: \texttt{ping}によるRTT測定（100回試行，1秒間隔）
+    \item \textbf{遅延測定}: \texttt{irtt}（Isochronous Round-Trip Tester）によるRTT測定（100回試行，1秒間隔）．\texttt{irtt}はUDPベースの高精度遅延測定ツールであり，片道遅延やジッタの計測にも対応する．
     \item \textbf{スループット測定}: \texttt{iPerf3}によるTCP/UDP測定
     \begin{itemize}
-        \item TCP: 10秒間の連続転送（Downlink/Uplink各5回試行）
+        \item TCP: 100秒間の連続転送（Downlink/Uplink各1回）
         \item UDP: 40Mbps目標帯域での転送（sXGP 10MHz帯域の理論上限付近）
     \end{itemize}
 \end{itemize}
@@ -159,6 +188,8 @@ UEへのIPアドレス払い出しには，インターネット接続用APN（A
 \subsection{ベースライン環境}
 提案手法のオーバーヘッドを評価するためのベースラインとして，変換ゲートウェイを介さずにsXGP基地局を4G EPC（Open5GSのMME/SGW/PGW機能）に直接接続した「LTEネイティブ環境」を構築した．
 ハードウェア構成は提案手法と同一であり，Open5GSの設定を変更して4Gコアとして動作させることで，純粋なプロトコル変換処理の影響を比較可能な状態とした．
+
+なお，提案手法環境とベースライン環境では，UEに払い出されるIPアドレスが異なる（提案手法: 172.25.0.0/24帯，ベースライン: 192.168.100.0/24帯）．性能測定において，UEからの測定対象サーバは各環境のUPF/PGWと同一ホスト上に配置しているため，コアネットワーク内の経路長は同等である．
 
 \section{評価シナリオ}
 
@@ -197,8 +228,14 @@ U-plane & GTP-U (S1-U) & GTP-U (N3) & シナリオ2 \\
 \end{tabular}
 \end{table}
 
-\subsection{シナリオ1: C-Plane接続検証}
-UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．このシナリオでは，世代共通機能のうち「AAA」および「Mobility Management」の変換が正しく行われることを検証する．
+\subsection{シナリオ1: C-Plane接続検証（R1/R2の検証）}
+UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．
+
+本シナリオは，以下の要件を検証する．
+\begin{itemize}
+    \item \textbf{R1（透過的介在）}: sXGP基地局（無改修のS1インタフェース）とOpen5GS（標準のN2インタフェース）が，ゲートウェイを介して正常に接続できること．
+    \item \textbf{R2（プロトコル変換）}: 世代共通機能のうち「AAA」および「Mobility Management」が正しく変換・維持されること．
+\end{itemize}
 \begin{itemize}
     \item \textbf{確認項目}:
     \begin{itemize}
@@ -217,8 +254,15 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
     \item \textbf{成功基準}: UE画面上でアンテナピクトが表示され，データ通信可能な状態（IPアドレス取得）となること．Open5GSのログにおいてエラーが発生していないこと．
 \end{itemize}
 
-\subsection{シナリオ2: U-Planeデータ転送性能の評価}
-接続確立後，UEからコアネットワーク内のサーバ（またはインターネット上のホスト）に対してデータ通信を行い，パケットの到達性および転送性能を検証する．このシナリオでは，世代共通機能のうち「U-plane」（GTP-Uトンネリング）の変換が正しく行われ，かつ変換処理が性能上のボトルネックとならないことを確認する．
+\subsection{シナリオ2: U-Planeデータ転送性能の評価（R2の検証）}
+接続確立後，UEからコアネットワーク内のサーバ（またはインターネット上のホスト）に対してデータ通信を行い，パケットの到達性および転送性能を検証する．
+
+本シナリオは，以下の要件を検証する．
+\begin{itemize}
+    \item \textbf{R2（プロトコル変換）}: 世代共通機能のうち「U-plane」（GTP-Uトンネリング）が正しく変換され，ユーザデータが透過的に転送されること．
+\end{itemize}
+
+また，変換処理が性能上のボトルネックとならないことを，ベースライン環境との比較により確認する．
 \begin{itemize}
     \item \textbf{確認項目}:
     \begin{itemize}
@@ -231,6 +275,17 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
             \item \textbf{QoSの対応}: 手順上必要なQoS情報（QCI/5QI）が，提案実装の方針（表\ref{tab:qos_mapping}の対応例およびフォールバック）と矛盾なく扱われていること．
         \end{itemize}
     \end{itemize}
-    \item \textbf{測定ツール}: Ping（遅延），iPerf3（スループット）
+    \item \textbf{測定ツール}: irtt（遅延），iPerf3（スループット）
     \item \textbf{成功基準}: UEから対向サーバへのICMP Echo Request/Replyが損失なく交換されること．また，ベースライン環境（LTE Native）と比較して著しい性能劣化が見られず，変換処理が通信の律速要因となっていないこと．
 \end{itemize}
+\section{本章のまとめ}
+
+本章では，提案するS1-N2変換ゲートウェイを検証するための実験環境と評価手法を述べた．本章冒頭で設定した3つの実験目的に対応する評価体制を以下に要約する．
+
+\begin{itemize}
+    \item \textbf{機能検証（R1/R2の実証）}: sXGP基地局，商用端末（Pixel 8a），Open5GS 5GCを用いた実機環境を構築し，シナリオ1（C-Plane接続検証）においてpcapキャプチャとログ分析により変換規則の成立を確認する．
+    \item \textbf{性能評価}: シナリオ2（U-Planeデータ転送）において，irtt（遅延）およびiPerf3（スループット）を用いてゲートウェイ導入によるオーバーヘッドを測定し，ベースライン環境（LTE Native）と比較する．
+    \item \textbf{実機相互運用性}: シミュレータではなく実際の無線機（sXGP）と商用スマートフォンを用いることで，プロトコルスタックの実環境での動作を検証する．
+\end{itemize}
+
+次章では，これらの実験シナリオに基づく評価結果と考察を述べる．

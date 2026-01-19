@@ -1,0 +1,61 @@
+# s1n2 Converter - Authentication Keys Configuration
+#
+# WARNING: This configuration bypasses end-to-end security between UE and 5G Core!
+# Use only in controlled test/development environments.
+#
+# These keys allow s1n2 to compute RES* from 4G UE's RES for authentication
+# with 5G Core (AMF/AUSF).
+
+# Subscriber authentication keys
+subscribers:
+  # Default test subscriber from Open5GS webui (IMSI: 001010000000001)
+  - imsi: "001010000000001"
+    # K (Subscriber permanent key) - 128 bits
+    ki: "465B5CE8B199B49FAA5F0A2EE238A6BC"
+    # OPc (Operator variant algorithm configuration field) - 128 bits
+    opc: "E8ED289DEBA952E4283B54E88E6183CA"
+    # Note: CK and IK will be computed from Ki during authentication
+    # based on RAND provided by AMF
+
+  # Test Subscriber 2
+  - imsi: "001010123456789"
+    ki: "00112233445566778899AABBCCDDEEFF"
+    opc: "63BFA50EE6523365FF14C1F45F88737D"
+
+  # Active UE (IMSI: 001011234567895) - From Open5GS WebUI
+  - imsi: "001011234567895"
+    ki: "8baf473f2f8fd09487cccbd7097c6862"
+    opc: "8e27b6af0e692e750f32667a3b14605d"
+
+# Security settings
+security:
+  # Enable authentication key usage
+  enabled: true
+
+  # Log key usage for audit (warning: may expose sensitive information)
+  audit_logging: true
+
+  # Automatically clear keys after authentication complete
+  auto_clear_keys: true
+
+  # Maximum time to cache authentication vectors (seconds)
+  max_cache_time: 60
+
+  # RES*/XRES* KDF implementation mode (TS 33.501 Annex A.4)
+  # Options:
+  #   "standard" (default): Use Kausf as key (TS 33.501 compliant)
+  #   "open5gs_compat": Use CK||IK as key (matches Open5GS v2.7.2 bug)
+  #
+  # Open5GS v2.7.2 has a bug in ogs_kdf_xres_star() that uses CK||IK instead
+  # of Kausf. Use "open5gs_compat" mode to match this behavior until Open5GS
+  # is fixed upstream.
+  #
+  # Standard-compliant 5G cores will require "standard" mode.
+  res_star_kdf_mode: "open5gs_compat"
+
+  # XOR to Milenage conversion (for test eSIMs using XOR algorithm)
+  # If UE uses XOR algorithm (Conformance Test profile), s1n2 will:
+  #   1. Derive Ki from: Ki = RES_xor XOR RAND
+  #   2. Compute Milenage RES for 5G Core
+  # WARNING: Only for testing! XOR algorithm has weak security.
+  xor_to_milenage_conversion: false  # Set to true to enable

@@ -4,6 +4,7 @@
 \usepackage{tascmac}
 \usepackage{tabularx}
 \usepackage{multirow}
+\usepackage{longtable}
 \usepackage{listliketab}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[dvipdfmx]{graphics}
@@ -108,9 +109,9 @@ pdftitle={RG},%
 \makeatother
 
 % タイトル
-\def\title{世代不変性に基づくレガシーRANの5GC収容アーキテクチャ}
+\def\title{世代不変性に基づく疎結合なCN移行アーキテクチャ}
 % 英語タイトル
-\def\etitle{Proposal and Demonstration of Loosely Coupled Architecture for Accommodating Physically Constrained Legacy RAN into 5G Core}
+\def\etitle{Generation-Invariant Decoupled Architecture for Core Network Migration}
 % 著者(日本語)
 \def\author{山口 泰平}
 % 著者(英語)
@@ -155,10 +156,10 @@ pdftitle={RG},%
 % 第3章 関連研究と事例
 \input{src/03_related_works.ja}
 
-% 第4章 提案手法：S1-N2変換ゲートウェイ
+% 第4章 疎結合アーキテクチャの提案
 \input{src/04_suggestion.ja}
 
-% 第5章 設計と実装：S1-N2変換ゲートウェイ
+% 第5章 設計と実装
 \input{src/05_design.ja.tex}
 
 % 第6章 実験環境と方法

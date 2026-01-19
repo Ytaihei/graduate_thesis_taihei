@@ -6,18 +6,18 @@ S1N2 Converter は、4G LTE eNB (S1AP) と 5G Core (NGAP) 間のプロトコル�
 
 ### 用語解説
 
-| 用語 | 正式名称 | 説明 |
-|------|---------|------|
-| **eNB** | evolved Node B | 4G LTE の基地局。UE (端末) と無線通信を行う。 |
-| **gNB** | next generation Node B | 5G NR の基地局。S1N2 では eNB を仮想的に gNB として見せる。 |
-| **AMF** | Access and Mobility Management Function | 5G コアの接続・モビリティ管理機能。4G の MME に相当。 |
-| **UPF** | User Plane Function | 5G コアのユーザーデータ転送機能。4G の S-GW/P-GW に相当。 |
-| **S1AP** | S1 Application Protocol | eNB と MME 間の制御プロトコル (4G)。 |
-| **NGAP** | NG Application Protocol | gNB と AMF 間の制御プロトコル (5G)。 |
-| **NAS** | Non-Access Stratum | UE とコアネットワーク間の制御メッセージ。認証・セキュリティ等を担当。 |
-| **GTP-U** | GPRS Tunneling Protocol - User plane | ユーザーデータを転送するトンネリングプロトコル。 |
-| **SCTP** | Stream Control Transmission Protocol | 制御プレーン (S1AP/NGAP) で使用する信頼性のあるトランスポート。 |
-| **TEID** | Tunnel Endpoint Identifier | GTP トンネルを識別する ID。送受信ペアで通信経路を特定。 |
+| 用語      | 正式名称                                | 説明                                                                  |
+| --------- | --------------------------------------- | --------------------------------------------------------------------- |
+| **eNB**   | evolved Node B                          | 4G LTE の基地局。UE (端末) と無線通信を行う。                         |
+| **gNB**   | next generation Node B                  | 5G NR の基地局。S1N2 では eNB を仮想的に gNB として見せる。           |
+| **AMF**   | Access and Mobility Management Function | 5G コアの接続・モビリティ管理機能。4G の MME に相当。                 |
+| **UPF**   | User Plane Function                     | 5G コアのユーザーデータ転送機能。4G の S-GW/P-GW に相当。             |
+| **S1AP**  | S1 Application Protocol                 | eNB と MME 間の制御プロトコル (4G)。                                  |
+| **NGAP**  | NG Application Protocol                 | gNB と AMF 間の制御プロトコル (5G)。                                  |
+| **NAS**   | Non-Access Stratum                      | UE とコアネットワーク間の制御メッセージ。認証・セキュリティ等を担当。 |
+| **GTP-U** | GPRS Tunneling Protocol - User plane    | ユーザーデータを転送するトンネリングプロトコル。                      |
+| **SCTP**  | Stream Control Transmission Protocol    | 制御プレーン (S1AP/NGAP) で使用する信頼性のあるトランスポート。       |
+| **TEID**  | Tunnel Endpoint Identifier              | GTP トンネルを識別する ID。送受信ペアで通信経路を特定。               |
 
 ### ネットワーク構成
 
@@ -71,12 +71,12 @@ eNB                      S1N2 Converter                    AMF
 
 ### 変換内容
 
-| S1AP パラメータ | NGAP パラメータ | 意味・目的 | 変換ロジック |
-|----------------|----------------|-----------|---------------|
-| Global-ENB-ID | Global-gNB-ID | **基地局の一意識別子**。PLMN (通信事業者ID) + 基地局番号で構成。ネットワーク内で基地局を特定する。 | PLMN IDはそのままコピー。<br>eNB-ID (20bit) は gNB-ID (22-32bit) に左詰めまたはパディングしてマッピング。 |
-| SupportedTAs | SupportedTAList | **対応エリア情報**。この基地局がカバーする Tracking Area (位置登録エリア) のリスト。UE の位置管理に使用。 | TACはそのままコピー。<br>Broadcast PLMNs は S1AP のリストを NGAP の BroadcastPLMNItem に変換。 |
-| ENBname | RANNodeName | **基地局の名前**。運用管理用の識別名 (例: "eNB-Tokyo-01")。 | 文字列をそのままコピー (UTF-8)。 |
-| PagingDRX | DefaultPagingDRX | **ページング周期**。Idle 状態の UE を呼び出す間隔。省電力と応答速度のバランスを決定。 | Enum値を 1:1 でマッピング (v32 -> v32, v64 -> v64 等)。 |
+| S1AP パラメータ | NGAP パラメータ  | 意味・目的                                                                                                | 変換ロジック                                                                                              |
+| --------------- | ---------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Global-ENB-ID   | Global-gNB-ID    | **基地局の一意識別子**。PLMN (通信事業者ID) + 基地局番号で構成。ネットワーク内で基地局を特定する。        | PLMN IDはそのままコピー。<br>eNB-ID (20bit) は gNB-ID (22-32bit) に左詰めまたはパディングしてマッピング。 |
+| SupportedTAs    | SupportedTAList  | **対応エリア情報**。この基地局がカバーする Tracking Area (位置登録エリア) のリスト。UE の位置管理に使用。 | TACはそのままコピー。<br>Broadcast PLMNs は S1AP のリストを NGAP の BroadcastPLMNItem に変換。            |
+| ENBname         | RANNodeName      | **基地局の名前**。運用管理用の識別名 (例: "eNB-Tokyo-01")。                                               | 文字列をそのままコピー (UTF-8)。                                                                          |
+| PagingDRX       | DefaultPagingDRX | **ページング周期**。Idle 状態の UE を呼び出す間隔。省電力と応答速度のバランスを決定。                     | Enum値を 1:1 でマッピング (v32 -> v32, v64 -> v64 等)。                                                   |
 
 ## 2. UE アタッチシーケンス (Registration)
 
@@ -116,13 +116,13 @@ UE        eNB                S1N2 Converter                AMF
 
 **NAS (Non-Access Stratum)** は、UE とコアネットワーク間で直接やり取りされる制御メッセージです。基地局は中身を解釈せず透過的に転送しますが、S1N2 Converter は 4G NAS ⇔ 5G NAS の変換を行います。
 
-| 4G EPS NAS | 5G NAS | 意味・目的 | 変換ロジック |
-|------------|--------|-----------|--------------|
-| Attach Request (0x41) | Registration Request (0x41) | **接続要求**。UE がネットワークへの接続を開始する最初のメッセージ。 | メッセージタイプは同一 (0x41)。<br>EPS Attach Type -> 5GS Registration Type (Initial)。 |
-| IMSI (EPS Mobile Identity) | SUCI (5GS Mobile Identity) | **端末識別子**。SIM カードに記録された世界で一意の番号 (15桁)。加入者を特定する。 | **IMSI -> SUCI 変換**: <br>Protection Scheme = 0 (Null)<br>Home Network Public Key ID = 0<br>MCC/MNC + MSIN をそのまま格納。 |
-| UE Network Capability | UE Security Capability | **対応セキュリティ機能**。UE が対応する暗号化・完全性保護アルゴリズムのリスト。 | **アルゴリズムビットマップ変換**: <br>EEA0 -> NEA0<br>128-EEA1 -> 128-NEA1<br>128-EEA2 -> 128-NEA2<br>128-EIA1 -> 128-NIA1<br>128-EIA2 -> 128-NIA2 |
-| PDN Connectivity Request | (Pending) | **データ接続要求**。インターネット接続用の IP アドレス割り当てを要求。 | Registration Request には含めず、Registration Complete 後に<br>PDU Session Establishment Request として送信するためにフラグをセット。 |
-| ESM Message Container | (Dropped) | **セッション管理コンテナ**。4G固有の形式のため 5G では不要。 | Registration Request では使用しないため削除。 |
+| 4G EPS NAS                 | 5G NAS                      | 意味・目的                                                                        | 変換ロジック                                                                                                                                       |
+| -------------------------- | --------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Attach Request (0x41)      | Registration Request (0x41) | **接続要求**。UE がネットワークへの接続を開始する最初のメッセージ。               | メッセージタイプは同一 (0x41)。<br>EPS Attach Type -> 5GS Registration Type (Initial)。                                                            |
+| IMSI (EPS Mobile Identity) | SUCI (5GS Mobile Identity)  | **端末識別子**。SIM カードに記録された世界で一意の番号 (15桁)。加入者を特定する。 | **IMSI -> SUCI 変換**: <br>Protection Scheme = 0 (Null)<br>Home Network Public Key ID = 0<br>MCC/MNC + MSIN をそのまま格納。                       |
+| UE Network Capability      | UE Security Capability      | **対応セキュリティ機能**。UE が対応する暗号化・完全性保護アルゴリズムのリスト。   | **アルゴリズムビットマップ変換**: <br>EEA0 -> NEA0<br>128-EEA1 -> 128-NEA1<br>128-EEA2 -> 128-NEA2<br>128-EIA1 -> 128-NIA1<br>128-EIA2 -> 128-NIA2 |
+| PDN Connectivity Request   | (Pending)                   | **データ接続要求**。インターネット接続用の IP アドレス割り当てを要求。            | Registration Request には含めず、Registration Complete 後に<br>PDU Session Establishment Request として送信するためにフラグをセット。              |
+| ESM Message Container      | (Dropped)                   | **セッション管理コンテナ**。4G固有の形式のため 5G では不要。                      | Registration Request では使用しないため削除。                                                                                                      |
 
 ## 3. 認証シーケンス
 
@@ -170,12 +170,12 @@ UE        eNB                S1N2 Converter                AMF
 
 ### 認証パラメータ変換
 
-| 4G パラメータ | 5G パラメータ | 意味・目的 | 変換ロジック |
-|--------------|--------------|-----------|--------------|
-| RAND (16 bytes) | RAND (16 bytes) | **乱数チャレンジ**。ネットワークが生成するランダム値。UE はこれを使って応答を計算。毎回異なる値で盗聴・リプレイを防止。 | そのままコピー。内部キャッシュに保存 (RES*計算用)。 |
-| AUTN (16 bytes) | AUTN (16 bytes) | **認証トークン**。ネットワークの正当性を UE が検証するための情報 (SQN, MAC 等を含む)。偽基地局対策。 | そのままコピー。内部キャッシュに保存。 |
-| eKSI (3 bits) | ngKSI (4 bits) | **鍵セット識別子**。複数のセキュリティコンテキストを管理する番号。同じ鍵を再利用する際に参照。 | 下位3ビットをマッピング。TSC=0 (Native security context)。 |
-| RES (4-16 bytes) | RES* (16 bytes) | **認証応答**。UE が秘密鍵 (Ki) と RAND を使って計算した値。正しい値ならば認証成功。 | **RES* 計算ロジック**: <br>1. 4G RES, RAND, AUTN, SQN^AK (キャッシュ) を使用。<br>2. `s1n2_auth_compute_res_star_with_imsi` 関数で計算。<br>3. 4G RES から 5G RES* を導出 (KDF使用)。 |
+| 4G パラメータ    | 5G パラメータ   | 意味・目的                                                                                                              | 変換ロジック                                                                                                                                                                          |
+| ---------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RAND (16 bytes)  | RAND (16 bytes) | **乱数チャレンジ**。ネットワークが生成するランダム値。UE はこれを使って応答を計算。毎回異なる値で盗聴・リプレイを防止。 | そのままコピー。内部キャッシュに保存 (RES*計算用)。                                                                                                                                   |
+| AUTN (16 bytes)  | AUTN (16 bytes) | **認証トークン**。ネットワークの正当性を UE が検証するための情報 (SQN, MAC 等を含む)。偽基地局対策。                    | そのままコピー。内部キャッシュに保存。                                                                                                                                                |
+| eKSI (3 bits)    | ngKSI (4 bits)  | **鍵セット識別子**。複数のセキュリティコンテキストを管理する番号。同じ鍵を再利用する際に参照。                          | 下位3ビットをマッピング。TSC=0 (Native security context)。                                                                                                                            |
+| RES (4-16 bytes) | RES* (16 bytes) | **認証応答**。UE が秘密鍵 (Ki) と RAND を使って計算した値。正しい値ならば認証成功。                                     | **RES* 計算ロジック**: <br>1. 4G RES, RAND, AUTN, SQN^AK (キャッシュ) を使用。<br>2. `s1n2_auth_compute_res_star_with_imsi` 関数で計算。<br>3. 4G RES から 5G RES* を導出 (KDF使用)。 |
 
 ### 鍵導出 (Key Derivation)
 
@@ -243,13 +243,13 @@ UE        eNB                S1N2 Converter                AMF
 **暗号化アルゴリズム (EEA/NEA)**: データの内容を第三者から隠すための暗号化方式
 **完全性保護アルゴリズム (EIA/NIA)**: データが改ざんされていないことを検証するための方式
 
-| 4G アルゴリズム (S1AP/NAS) | 5G アルゴリズム (NGAP/NAS) | 説明 | 変換ロジック |
-|----------------|----------------|------|--------------|
-| EEA0 (NULL) | NEA0 (NULL) | 暗号化なし (テスト・デバッグ用) | 0x00 <-> 0x00 |
-| 128-EEA1 (SNOW3G) | 128-NEA1 (SNOW3G) | ストリーム暗号 (3GPP 標準) | 0x01 <-> 0x01 |
-| 128-EEA2 (AES) | 128-NEA2 (AES) | AES ブロック暗号 (最も一般的) | 0x02 <-> 0x02 |
-| 128-EIA1 (SNOW3G) | 128-NIA1 (SNOW3G) | SNOW3G ベース完全性保護 | 0x01 <-> 0x01 |
-| 128-EIA2 (AES) | 128-NIA2 (AES) | AES-CMAC ベース完全性保護 (最も一般的) | 0x02 <-> 0x02 |
+| 4G アルゴリズム (S1AP/NAS) | 5G アルゴリズム (NGAP/NAS) | 説明                                   | 変換ロジック  |
+| -------------------------- | -------------------------- | -------------------------------------- | ------------- |
+| EEA0 (NULL)                | NEA0 (NULL)                | 暗号化なし (テスト・デバッグ用)        | 0x00 <-> 0x00 |
+| 128-EEA1 (SNOW3G)          | 128-NEA1 (SNOW3G)          | ストリーム暗号 (3GPP 標準)             | 0x01 <-> 0x01 |
+| 128-EEA2 (AES)             | 128-NEA2 (AES)             | AES ブロック暗号 (最も一般的)          | 0x02 <-> 0x02 |
+| 128-EIA1 (SNOW3G)          | 128-NIA1 (SNOW3G)          | SNOW3G ベース完全性保護                | 0x01 <-> 0x01 |
+| 128-EIA2 (AES)             | 128-NIA2 (AES)             | AES-CMAC ベース完全性保護 (最も一般的) | 0x02 <-> 0x02 |
 
 ### Security Mode Complete 変換 (4G → 5G)
 
@@ -347,13 +347,13 @@ UE        eNB                S1N2 Converter                AMF/SMF/UPF
 
 **ベアラ (E-RAB)** と **PDU セッション** は、それぞれ 4G と 5G における「データ通信経路」のことです。1つの UE が複数のベアラ/セッションを持つこともできます (例: インターネット用 + 音声通話用)。
 
-| S1AP (E-RAB) | NGAP (PDU Session) | 意味・目的 | 変換ロジック |
-|--------------|-------------------|-----------|--------------|
-| E-RAB ID | PDU Session ID | **データ経路の識別番号**。複数ベアラを区別するための ID。 | ID マッピング (通常 5) |
-| QCI | 5QI | **通信品質クラス**。優先度や遅延要件を定義 (9=インターネット, 1=音声等)。 | QCI → 5QI マッピング |
-| ARP | ARP | **優先度レベル**。輻輳時にどのベアラを優先するかを決定。 | Priority Level 保持 |
-| S1-U GTP TEID | N3 GTP TEID | **トンネル識別子**。データパケットを送受信する際の経路を特定。 | **S1N2 Proxy TEID** (初期) → **UPF TEID** (更新) |
-| S1-U Transport Layer Address | N3 Transport Layer Address | **データ転送先 IP アドレス**。GTP-U パケットの宛先。 | IP アドレス変換 |
+| S1AP (E-RAB)                 | NGAP (PDU Session)         | 意味・目的                                                                | 変換ロジック                                     |
+| ---------------------------- | -------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------ |
+| E-RAB ID                     | PDU Session ID             | **データ経路の識別番号**。複数ベアラを区別するための ID。                 | ID マッピング (通常 5)                           |
+| QCI                          | 5QI                        | **通信品質クラス**。優先度や遅延要件を定義 (9=インターネット, 1=音声等)。 | QCI → 5QI マッピング                             |
+| ARP                          | ARP                        | **優先度レベル**。輻輳時にどのベアラを優先するかを決定。                  | Priority Level 保持                              |
+| S1-U GTP TEID                | N3 GTP TEID                | **トンネル識別子**。データパケットを送受信する際の経路を特定。            | **S1N2 Proxy TEID** (初期) → **UPF TEID** (更新) |
+| S1-U Transport Layer Address | N3 Transport Layer Address | **データ転送先 IP アドレス**。GTP-U パケットの宛先。                      | IP アドレス変換                                  |
 
 ## 6. TAU (Tracking Area Update) シーケンス
 
@@ -394,13 +394,13 @@ UE        eNB                S1N2 Converter                AMF
 
 ### TAU パラメータ変換
 
-| 入力 (TAU Request) | 出力 (TAU Accept) | 意味・目的 | 変換ロジック |
-|-------------------|-------------------|-----------|--------------|
-| EPS Update Type (bits 1-3) | EPS Update Result | **更新種別**。TAのみ / TA+LA同時 / 定期更新 の別を示す。 | **Type → Result マッピング**: <br>Type 0 (TA updating) → Result 0<br>Type 1 (Combined TA/LA) → Result 1<br>Type 2 (Combined + IMSI attach) → Result 1<br>Type 3 (Periodic) → Result 0 |
-| - | T3412 Timer | **定期 TAU タイマー**。次の定期 TAU を送るまでの時間 (アイドル時)。 | デフォルト値 0x29 (約9分) を設定。 |
-| - | TAI List | **Tracking Area リスト**。TAU なしで移動できるエリアのリスト。 | キャッシュされた TAC/PLMN から生成。 |
-| EPS Update Type = 1 or 2 | LAI (Location Area Identity) | **2G/3G 位置情報**。CS Fallback 用の Location Area。 | Combined TA/LA の場合のみ付与。 |
-| - | EPS Bearer Context Status | **アクティブベアラ状態**。現在有効なベアラのビットマスク。 | アクティブベアラのビットマスクを付与 (IEI 0x57)。 |
+| 入力 (TAU Request)         | 出力 (TAU Accept)            | 意味・目的                                                          | 変換ロジック                                                                                                                                                                          |
+| -------------------------- | ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EPS Update Type (bits 1-3) | EPS Update Result            | **更新種別**。TAのみ / TA+LA同時 / 定期更新 の別を示す。            | **Type → Result マッピング**: <br>Type 0 (TA updating) → Result 0<br>Type 1 (Combined TA/LA) → Result 1<br>Type 2 (Combined + IMSI attach) → Result 1<br>Type 3 (Periodic) → Result 0 |
+| -                          | T3412 Timer                  | **定期 TAU タイマー**。次の定期 TAU を送るまでの時間 (アイドル時)。 | デフォルト値 0x29 (約9分) を設定。                                                                                                                                                    |
+| -                          | TAI List                     | **Tracking Area リスト**。TAU なしで移動できるエリアのリスト。      | キャッシュされた TAC/PLMN から生成。                                                                                                                                                  |
+| EPS Update Type = 1 or 2   | LAI (Location Area Identity) | **2G/3G 位置情報**。CS Fallback 用の Location Area。                | Combined TA/LA の場合のみ付与。                                                                                                                                                       |
+| -                          | EPS Bearer Context Status    | **アクティブベアラ状態**。現在有効なベアラのビットマスク。          | アクティブベアラのビットマスクを付与 (IEI 0x57)。                                                                                                                                     |
 
 ### TAU Accept のビット構造 (重要)
 
@@ -435,13 +435,13 @@ UE        eNB                S1N2 Converter                AMF
 
 **GTP-U (GPRS Tunneling Protocol - User Plane)** は、ユーザーデータをトンネルで転送するプロトコルです。UE の IP パケットを GTP ヘッダーで包んで、基地局とコアネットワーク間を転送します。
 
-| 5G パラメータ (NGAP/NAS) | 4G パラメータ (S1AP/NAS) | 意味・目的 | 変換ロジック |
-|----------------|----------------|-----------|--------------|
-| PDU Session ID | E-RAB ID | **データ経路の ID**。1つの UE が複数の経路を持つ場合に区別。 | PDU Session ID + 4 (例: ID 1 -> E-RAB 5) |
-| QFI / 5QI | QCI (QoS Class Identifier) | **通信品質クラス/フロー識別子**。QCI=4G QoS、5QI=5G QoS、QFI=QoS Flow ID。 | **現状 (MVP)**: <br>- **4G 側 (S1AP/ESM)** はデフォルトで **QCI=9** を固定設定 (動的マッピングは未実装)<br>- **5G 側 (NGAP)** に付与する **QFI/5QI** は、QCI が 1..9 なら同値、それ以外/不明なら **9 にフォールバック**<br>- **AMF から受信した QFI** は UE コンテキストに保存し、InitialContextSetupResponse の `associatedQosFlowList` に反映 |
-| UPF Transport Layer Address | S-GW Transport Layer Address | **データ転送先の IP アドレス**。GTP-U パケットの宛先。 | UPF の IP アドレスをそのまま S-GW アドレスとして通知。 |
-| UPF GTP-TEID | S-GW GTP-TEID | **トンネル識別子**。経路を特定するための 32bit の ID。 | UPF の TEID をそのまま S-GW TEID として通知。 |
-| PDU Session Establishment Accept | Activate Default EPS Bearer Context Request | **セッション確立応答**。IP アドレス等を UE に通知。 | **NAS 変換**: <br>APN -> Access Point Name<br>PDU Address -> PDN Address<br>Protocol Config Options -> Protocol Config Options |
+| 5G パラメータ (NGAP/NAS)         | 4G パラメータ (S1AP/NAS)                    | 意味・目的                                                                 | 変換ロジック                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PDU Session ID                   | E-RAB ID                                    | **データ経路の ID**。1つの UE が複数の経路を持つ場合に区別。               | PDU Session ID + 4 (例: ID 1 -> E-RAB 5)                                                                                                                                                                                                                                                                                                        |
+| QFI / 5QI                        | QCI (QoS Class Identifier)                  | **通信品質クラス/フロー識別子**。QCI=4G QoS、5QI=5G QoS、QFI=QoS Flow ID。 | **現状 (MVP)**: <br>- **4G 側 (S1AP/ESM)** はデフォルトで **QCI=9** を固定設定 (動的マッピングは未実装)<br>- **5G 側 (NGAP)** に付与する **QFI/5QI** は、QCI が 1..9 なら同値、それ以外/不明なら **9 にフォールバック**<br>- **AMF から受信した QFI** は UE コンテキストに保存し、InitialContextSetupResponse の `associatedQosFlowList` に反映 |
+| UPF Transport Layer Address      | S-GW Transport Layer Address                | **データ転送先の IP アドレス**。GTP-U パケットの宛先。                     | UPF の IP アドレスをそのまま S-GW アドレスとして通知。                                                                                                                                                                                                                                                                                          |
+| UPF GTP-TEID                     | S-GW GTP-TEID                               | **トンネル識別子**。経路を特定するための 32bit の ID。                     | UPF の TEID をそのまま S-GW TEID として通知。                                                                                                                                                                                                                                                                                                   |
+| PDU Session Establishment Accept | Activate Default EPS Bearer Context Request | **セッション確立応答**。IP アドレス等を UE に通知。                        | **NAS 変換**: <br>APN -> Access Point Name<br>PDU Address -> PDN Address<br>Protocol Config Options -> Protocol Config Options                                                                                                                                                                                                                  |
 
 ### TEID マッピング
 
@@ -480,12 +480,12 @@ eNB                    S1N2 Converter                    UPF
 
 ### ID 対応関係
 
-| S1AP ID | NGAP ID | 意味・目的 | 管理方法 |
-|---------|---------|-----------|----------|
-| ENB-UE-S1AP-ID | RAN-UE-NGAP-ID | **基地局側の UE 識別子**。eNB/gNB が割り当てるローカル ID。 | 同一値を使用 |
-| MME-UE-S1AP-ID | AMF-UE-NGAP-ID | **コア側の UE 識別子**。MME/AMF が割り当てる ID。 | Converter がマッピング管理 |
-| IMSI | SUCI | **恒久的な加入者識別子**。SIM カードに記録された世界で一意の番号。 | NAS 変換時に変換 |
-| GUTI | 5G-GUTI | **一時的な UE 識別子**。IMSI を隠すために使用する一時 ID。 | NAS 変換時に変換 |
+| S1AP ID        | NGAP ID        | 意味・目的                                                         | 管理方法                   |
+| -------------- | -------------- | ------------------------------------------------------------------ | -------------------------- |
+| ENB-UE-S1AP-ID | RAN-UE-NGAP-ID | **基地局側の UE 識別子**。eNB/gNB が割り当てるローカル ID。        | 同一値を使用               |
+| MME-UE-S1AP-ID | AMF-UE-NGAP-ID | **コア側の UE 識別子**。MME/AMF が割り当てる ID。                  | Converter がマッピング管理 |
+| IMSI           | SUCI           | **恒久的な加入者識別子**。SIM カードに記録された世界で一意の番号。 | NAS 変換時に変換           |
+| GUTI           | 5G-GUTI        | **一時的な UE 識別子**。IMSI を隠すために使用する一時 ID。         | NAS 変換時に変換           |
 
 ## 9. エラーハンドリング
 
@@ -527,9 +527,9 @@ UE        eNB                S1N2 Converter                AMF/AUSF
 
 **パラメータ変換**:
 
-| 4G パラメータ | 5G パラメータ | 意味・目的 | 変換ロジック |
-|--------------|--------------|-----------|--------------|
-| EMM Cause (21 = Synch failure) | 5GMM Cause | **失敗理由**。21=SQN同期失敗, 他にも各種原因コードがある。 | そのままコピー。 |
+| 4G パラメータ                     | 5G パラメータ                     | 意味・目的                                                                            | 変換ロジック                                                         |
+| --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| EMM Cause (21 = Synch failure)    | 5GMM Cause                        | **失敗理由**。21=SQN同期失敗, 他にも各種原因コードがある。                            | そのままコピー。                                                     |
 | Auth Failure Parameter (IEI 0x30) | Auth Failure Parameter (IEI 0x30) | **AUTS (再同期トークン)**。14バイトの再同期情報。UE が保持する SQN を暗号化して通知。 | **AUTS (14 bytes)** をそのままコピー。<br>AUSF が SQN 再同期を実行。 |
 
 ### Security Mode Reject
@@ -557,33 +557,33 @@ UE が切断された場合：
 
 ### 成功シーケンス (Frame 3383-3726)
 
-| Time (s) | Direction | Protocol | Message |
-|----------|-----------|----------|---------|
-| 86.927 | eNB→S1N2 | S1AP | InitialUEMessage (Attach Request) |
-| 86.927 | S1N2→AMF | NGAP | InitialUEMessage (Registration Request) |
-| 86.934 | AMF→S1N2 | NGAP | DownlinkNASTransport (Auth Request) |
-| 86.934 | S1N2→eNB | S1AP | DownlinkNASTransport (Auth Request) |
-| 87.012 | eNB→S1N2 | S1AP | UplinkNASTransport (Auth Response) |
-| 87.012 | S1N2→AMF | NGAP | UplinkNASTransport (Auth Response) |
-| 87.020 | AMF→S1N2 | NGAP | DownlinkNASTransport (Security Mode Cmd) |
-| 87.020 | S1N2→eNB | S1AP | DownlinkNASTransport (Security Mode Cmd) |
-| 87.052 | eNB→S1N2 | S1AP | UplinkNASTransport (Security Mode Complete) |
-| 87.052 | S1N2→AMF | NGAP | UplinkNASTransport (Security Mode Complete + Reg Request) |
-| 87.078 | AMF→S1N2 | NGAP | InitialContextSetupRequest |
-| 87.078 | S1N2→eNB | S1AP | InitialContextSetupRequest |
-| 87.372 | eNB→S1N2 | S1AP | InitialContextSetupResponse |
-| 87.373 | eNB→S1N2 | S1AP | UplinkNASTransport (Attach Complete) |
-| 87.373 | S1N2→AMF | NGAP | UplinkNASTransport (Registration Complete) |
-| 87.396 | S1N2→AMF | NGAP | InitialContextSetupResponse |
+| Time (s) | Direction | Protocol | Message                                                   |
+| -------- | --------- | -------- | --------------------------------------------------------- |
+| 86.927   | eNB→S1N2  | S1AP     | InitialUEMessage (Attach Request)                         |
+| 86.927   | S1N2→AMF  | NGAP     | InitialUEMessage (Registration Request)                   |
+| 86.934   | AMF→S1N2  | NGAP     | DownlinkNASTransport (Auth Request)                       |
+| 86.934   | S1N2→eNB  | S1AP     | DownlinkNASTransport (Auth Request)                       |
+| 87.012   | eNB→S1N2  | S1AP     | UplinkNASTransport (Auth Response)                        |
+| 87.012   | S1N2→AMF  | NGAP     | UplinkNASTransport (Auth Response)                        |
+| 87.020   | AMF→S1N2  | NGAP     | DownlinkNASTransport (Security Mode Cmd)                  |
+| 87.020   | S1N2→eNB  | S1AP     | DownlinkNASTransport (Security Mode Cmd)                  |
+| 87.052   | eNB→S1N2  | S1AP     | UplinkNASTransport (Security Mode Complete)               |
+| 87.052   | S1N2→AMF  | NGAP     | UplinkNASTransport (Security Mode Complete + Reg Request) |
+| 87.078   | AMF→S1N2  | NGAP     | InitialContextSetupRequest                                |
+| 87.078   | S1N2→eNB  | S1AP     | InitialContextSetupRequest                                |
+| 87.372   | eNB→S1N2  | S1AP     | InitialContextSetupResponse                               |
+| 87.373   | eNB→S1N2  | S1AP     | UplinkNASTransport (Attach Complete)                      |
+| 87.373   | S1N2→AMF  | NGAP     | UplinkNASTransport (Registration Complete)                |
+| 87.396   | S1N2→AMF  | NGAP     | InitialContextSetupResponse                               |
 
 ### データ通信 (Frame 3860-)
 
-| Time (s) | Direction | Protocol | Message |
-|----------|-----------|----------|---------|
-| 90.592 | eNB→S1N2 | GTP-U | Echo Request (ICMP to 8.8.8.8) |
-| 90.592 | S1N2→UPF | GTP-U | Echo Request (TEID変換済み) |
-| 90.597 | UPF→S1N2 | GTP-U | Echo Reply |
-| 90.597 | S1N2→eNB | GTP-U | Echo Reply (TEID変換済み) |
+| Time (s) | Direction | Protocol | Message                        |
+| -------- | --------- | -------- | ------------------------------ |
+| 90.592   | eNB→S1N2  | GTP-U    | Echo Request (ICMP to 8.8.8.8) |
+| 90.592   | S1N2→UPF  | GTP-U    | Echo Request (TEID変換済み)    |
+| 90.597   | UPF→S1N2  | GTP-U    | Echo Reply                     |
+| 90.597   | S1N2→eNB  | GTP-U    | Echo Reply (TEID変換済み)      |
 
 ### 成功シーケンス (20251204_5.pcap + dockerログ突合)
 
@@ -593,14 +593,14 @@ UE が切断された場合：
 
 #### Control Plane (MME-UE-S1AP-ID=4 / ENB-UE-S1AP-ID=32, PDU Session ID=5)
 
-| Time (s) | Frame | Direction | Protocol | Message / Key fields |
-|----------|-------|-----------|----------|----------------------|
-| 78.400 | 4029 | S1N2→eNB | S1AP (proc=9) | InitialContextSetupRequest: `gTP-TEID=0x00000001`, `transportLayerAddress=172.24.0.30`, `e-RAB-ID=5`, `QCI=9` |
-| 78.689 | 4059 | eNB→S1N2 | S1AP (proc=9) | InitialContextSetupResponse: `gTP-TEID=0x01000608`, `transportLayerAddress=172.24.0.111` |
-| 78.690 | 4064 | S1N2→AMF | NGAP (proc=46) | UplinkNASTransport: NAS 5GMM `Registration complete (0x43)` |
-| 78.692 | 4066 | S1N2→AMF | NGAP (proc=46) | UplinkNASTransport: NAS 5GSM `PDU Session Establishment Request (0xC1)`, `PDU session identity=5` |
-| 78.719 | 4176 | AMF→S1N2 | NGAP (proc=14) | InitialContextSetupRequest (PDUSessionResourceSetupListCxtReq含む) |
-| 78.720 | 4179 | S1N2→AMF | NGAP (proc=14) | InitialContextSetupResponse |
+| Time (s) | Frame | Direction | Protocol       | Message / Key fields                                                                                          |
+| -------- | ----- | --------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
+| 78.400   | 4029  | S1N2→eNB  | S1AP (proc=9)  | InitialContextSetupRequest: `gTP-TEID=0x00000001`, `transportLayerAddress=172.24.0.30`, `e-RAB-ID=5`, `QCI=9` |
+| 78.689   | 4059  | eNB→S1N2  | S1AP (proc=9)  | InitialContextSetupResponse: `gTP-TEID=0x01000608`, `transportLayerAddress=172.24.0.111`                      |
+| 78.690   | 4064  | S1N2→AMF  | NGAP (proc=46) | UplinkNASTransport: NAS 5GMM `Registration complete (0x43)`                                                   |
+| 78.692   | 4066  | S1N2→AMF  | NGAP (proc=46) | UplinkNASTransport: NAS 5GSM `PDU Session Establishment Request (0xC1)`, `PDU session identity=5`             |
+| 78.719   | 4176  | AMF→S1N2  | NGAP (proc=14) | InitialContextSetupRequest (PDUSessionResourceSetupListCxtReq含む)                                            |
+| 78.720   | 4179  | S1N2→AMF  | NGAP (proc=14) | InitialContextSetupResponse                                                                                   |
 
 対応する s1n2 ログ（行番号）:
 - `1529`: `[ICS-TRIGGER]` Attach Accept 検知
@@ -616,12 +616,12 @@ UE が切断された場合：
 
 #### User Plane (GTP-U, Hybrid Proxy: ULはTEID変換 / DLは透過)
 
-| Time (s) | Frame | Direction | GTP-U TEID | 観測 |
-|----------|-------|-----------|------------|------|
-| 81.769 | 4250 | eNB→S1N2 | 0x00000001 | UL (S1-U) 到来 |
-| 81.769 | 4251 | S1N2→UPF | 0x0000e2ad | UL (N3) へ転送（TEID変換） |
-| 81.773 | 4254 | UPF→S1N2 | 0x01000608 | DL (N3) 到来 |
-| 81.773 | 4255 | S1N2→eNB | 0x01000608 | DL (S1-U) へ転送（TEID透過） |
+| Time (s) | Frame | Direction | GTP-U TEID | 観測                         |
+| -------- | ----- | --------- | ---------- | ---------------------------- |
+| 81.769   | 4250  | eNB→S1N2  | 0x00000001 | UL (S1-U) 到来               |
+| 81.769   | 4251  | S1N2→UPF  | 0x0000e2ad | UL (N3) へ転送（TEID変換）   |
+| 81.773   | 4254  | UPF→S1N2  | 0x01000608 | DL (N3) 到来                 |
+| 81.773   | 4255  | S1N2→eNB  | 0x01000608 | DL (S1-U) へ転送（TEID透過） |
 
 対応する s1n2 ログ（代表例）:
 - `1734`: `Added explicit TEID mapping: S1-U 0x00000001 ↔ N3 0x0000e2ad`
@@ -636,34 +636,47 @@ UE が切断された場合：
 
 ## 11. 関連ソースコード
 
-| ファイル | 機能 |
-|---------|------|
-| `src/s1n2_converter.c` | メイン変換ロジック |
-| `src/s1n2_nas_converter.c` | NAS メッセージ変換 (4G↔5G) |
-| `src/s1n2_gtp.c` | GTP-U プロキシ、TEID 管理 |
-| `src/s1n2_auth.c` | 認証パラメータ変換 |
-| `src/s1n2_security.c` | セキュリティコンテキスト管理 |
-| `include/s1n2_converter.h` | 公開 API 定義 |
+| ファイル                                   | 機能                                             |
+| ------------------------------------------ | ------------------------------------------------ |
+| `src/s1n2_converter.c`                     | メイン変換ロジック、S1AP/NGAP メッセージハンドラ |
+| `src/nas/s1n2_nas.c`                       | NAS メッセージ変換 (4G↔5G)、TAU Accept 生成      |
+| `src/nas/suci_utils.c`                     | SUCI エンコード/デコード ユーティリティ          |
+| `src/core/s1n2_gtp.c`                      | GTP-U ヘッダ解析/構築、GTP-U メッセージ処理      |
+| `src/transport/gtp_tunnel.c`               | TEID マッピング管理、双方向 TEID 変換            |
+| `src/auth/s1n2_auth.c`                     | 認証パラメータ変換、Milenage 計算、RES* 導出     |
+| `src/auth/s1n2_security.c`                 | NAS セキュリティ (MAC 計算、完全性保護)          |
+| `src/context/s1n2_context.c`               | UE コンテキスト管理                              |
+| `src/ngap/ngap_builder.c`                  | NGAP メッセージビルダー                          |
+| `include/s1n2_converter.h`                 | 公開 API 定義                                    |
+| `include/internal/s1n2_nas_internal.h`     | NAS 変換内部 API                                 |
+| `include/internal/s1n2_security.h`         | セキュリティ内部 API                             |
+| `include/internal/s1n2_context_internal.h` | コンテキスト内部構造体定義                       |
 
 ## 12. 主要な変換関数
 
 ```c
-// S1AP → NGAP 変換
-int s1n2_convert_s1setup_to_ngsetup(...)      // S1SetupRequest → NGSetupRequest
-int s1n2_convert_initial_ue_message(...)      // InitialUEMessage 変換
-int s1n2_convert_uplink_nas_transport(...)    // UplinkNASTransport 変換
-int s1n2_convert_initial_context_setup_response(...)  // ICS Response 変換
+// S1AP → NGAP 変換 (eNB → AMF 方向)
+int s1n2_convert_s1setup_to_ngsetup(...)              // S1SetupRequest → NGSetupRequest
+int s1n2_convert_initial_ue_message(...)             // InitialUEMessage 変換
+int s1n2_convert_uplink_nas_transport(...)           // UplinkNASTransport 変換
+int s1n2_convert_downlink_nas_transport(...)         // S1AP DownlinkNASTransport → NGAP (MME経由時)
+int s1n2_convert_initial_context_setup_response(...) // ICS Response 変換
 
-// NGAP → S1AP 変換
-int s1n2_convert_ngsetup_to_s1setup(...)      // NGSetupResponse → S1SetupResponse
-int s1n2_convert_ngap_downlink_nas_transport(...)  // DownlinkNASTransport 変換
+// NGAP → S1AP 変換 (AMF → eNB 方向)
+int s1n2_convert_ngsetup_to_s1setup(...)             // NGSetupResponse → S1SetupResponse
+int s1n2_convert_ngap_downlink_nas_transport(...)    // NGAP DownlinkNASTransport → S1AP
 
-// NAS 変換
+// 内部ビルダー関数 (static)
+static int build_s1ap_initial_context_setup_request(...)  // S1AP ICS Request 生成
+static int build_ngap_uplink_nas(...)                     // NGAP UplinkNASTransport 生成
+static int build_ngap_pdu_session_setup_request(...)      // PDU Session Setup Request 生成
+
+// NAS 変換 (src/nas/s1n2_nas.c)
 int convert_4g_nas_to_5g(...)                 // 4G EPS NAS → 5G NAS
 int convert_5g_nas_to_4g(...)                 // 5G NAS → 4G EPS NAS
 int s1n2_build_tau_accept_nas(...)            // TAU Accept 生成 (ローカル)
 
-// メッセージハンドラ
+// メッセージハンドラ (メインエントリポイント)
 int s1n2_handle_s1c_message(...)              // S1AP メッセージ受信処理
 int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処理
 ```
@@ -674,11 +687,11 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.1 Detach / Deregistration
 
-| 4G 手順 | 5G 手順 | 現状の対応 |
-|---------|---------|-----------|
-| Detach Request (UE initiated) | Deregistration Request | **未実装**: UE Context Release で代替。 |
+| 4G 手順                            | 5G 手順                | 現状の対応                              |
+| ---------------------------------- | ---------------------- | --------------------------------------- |
+| Detach Request (UE initiated)      | Deregistration Request | **未実装**: UE Context Release で代替。 |
 | Detach Request (Network initiated) | Deregistration Request | **未実装**: UE Context Release で代替。 |
-| Detach Accept | Deregistration Accept | **未実装** |
+| Detach Accept                      | Deregistration Accept  | **未実装**                              |
 
 **必要な実装**:
 - Detach Request (0x45) の検出と 5G Deregistration Request への変換
@@ -686,10 +699,10 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.2 Service Request
 
-| 4G 手順 | 5G 手順 | 現状の対応 |
-|---------|---------|-----------|
-| Service Request | Service Request | **部分実装**: TAU で代替処理。 |
-| Extended Service Request | Service Request | **未実装** |
+| 4G 手順                  | 5G 手順         | 現状の対応                     |
+| ------------------------ | --------------- | ------------------------------ |
+| Service Request          | Service Request | **部分実装**: TAU で代替処理。 |
+| Extended Service Request | Service Request | **未実装**                     |
 
 **必要な実装**:
 - Service Request (0x4C) の検出と変換
@@ -698,8 +711,8 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.3 Paging
 
-| 4G 手順 | 5G 手順 | 現状の対応 |
-|---------|---------|-----------|
+| 4G 手順     | 5G 手順     | 現状の対応                     |
+| ----------- | ----------- | ------------------------------ |
 | S1AP Paging | NGAP Paging | **未実装**: Idle Mode 未対応。 |
 
 **必要な実装**:
@@ -713,10 +726,10 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.4 Handover
 
-| 4G 手順 | 5G 手順 | 現状の対応 |
-|---------|---------|-----------|
-| S1 Handover | Xn/N2 Handover | **未実装** |
-| X2 Handover | Xn Handover | **対象外** (eNB間直接通信) |
+| 4G 手順     | 5G 手順        | 現状の対応                 |
+| ----------- | -------------- | -------------------------- |
+| S1 Handover | Xn/N2 Handover | **未実装**                 |
+| X2 Handover | Xn Handover    | **対象外** (eNB間直接通信) |
 
 **必要な実装**:
 - Handover Required (S1AP) → Handover Required (NGAP)
@@ -728,10 +741,10 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.5 E-RAB Modification / Bearer Modification
 
-| 4G 手順 | 5G 手順 | 現状の対応 |
-|---------|---------|-----------|
-| E-RAB Modify Request | PDU Session Modification Request | **未実装** |
-| E-RAB Release Command | PDU Session Release Command | **未実装** |
+| 4G 手順               | 5G 手順                          | 現状の対応 |
+| --------------------- | -------------------------------- | ---------- |
+| E-RAB Modify Request  | PDU Session Modification Request | **未実装** |
+| E-RAB Release Command | PDU Session Release Command      | **未実装** |
 
 **必要な実装**:
 - QoS パラメータ変更の変換
@@ -739,19 +752,32 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 ### 13.6 NAS Ciphering (Encryption)
 
-| 機能 | 現状の対応 |
-|------|-----------|
-| Downlink NAS Ciphering | **未実装**: 完全性保護のみ対応。 |
-| Uplink NAS Deciphering | **未実装**: 完全性検証のみ対応。 |
+| 機能                          | 現状の対応                                        |
+| ----------------------------- | ------------------------------------------------- |
+| Downlink NAS Deciphering (5G) | **実装済み**: NEA2 (AES-CTR) で 5G NAS を復号。   |
+| Downlink NAS Ciphering (4G)   | **実装済み**: EEA2 (AES-CTR) で 4G NAS を暗号化。 |
+| Uplink NAS Deciphering (4G)   | **実装済み**: EEA2 (AES-CTR) で 4G NAS を復号。   |
+| Uplink NAS Ciphering (5G)     | **実装済み**: NEA2 (AES-CTR) で 5G NAS を暗号化。 |
 
-**必要な実装**:
-- `NEA1/NEA2` (5G) ⇔ `EEA1/EEA2` (4G) の暗号化/復号処理
-- 現状は NULL 暗号 (NEA0/EEA0) で運用可能な環境を前提。
+**対応アルゴリズム**:
+
+| アルゴリズム        | 状態       | 備考                       |
+| ------------------- | ---------- | -------------------------- |
+| EEA0/NEA0 (NULL)    | ✅ 実装済み | 暗号化なし (テスト用)      |
+| EEA2/NEA2 (AES-CTR) | ✅ 実装済み | 最も一般的、商用運用で使用 |
+| EEA1/NEA1 (SNOW3G)  | ❌ 未実装   | 3GPP標準ストリーム暗号     |
+| EEA3/NEA3 (ZUC)     | ❌ 未実装   | 中国標準暗号               |
+
+**ログエビデンス** (`log/docker/s1n2_follow_20251204_203753.log`):
+- L1426: `[INFO] [NAS-SEC-UL] Decryption SUCCESS` (4G Uplink 復号)
+- L1503: `[INFO] [5G-DL-SEC] Decryption SUCCESS` (5G Downlink 復号)
+- L1523: `[INFO] Wrapped Attach Accept with NAS cipher+integrity (EEA=2,EIA=2)` (4G Downlink 暗号化)
+- L1911: `[INFO] [TAU-ACCEPT] Applied NAS ciphering (EEA2)` (TAU Accept 暗号化)
 
 ### 13.7 Multi-PDU Session
 
-| 機能 | 現状の対応 |
-|------|-----------|
+| 機能             | 現状の対応                           |
+| ---------------- | ------------------------------------ |
 | 複数 PDU Session | **未実装**: 単一セッションのみ対応。 |
 
 **必要な実装**:
@@ -762,4 +788,6 @@ int s1n2_handle_n2_message(...)               // NGAP メッセージ受信処�
 
 *Document generated: 2024-12-09*
 *Based on pcap analysis: 20251204_3.pcap (TAU fix verified)*
-*Last updated: 2024-12-09 - Added TAU sequence, Auth Failure/AUTS handling, Future Work*
+*Last updated: 2025-01-15 - ソースコードファイルパス修正、セクション12の関数リストを実装に合わせて更新*
+
+

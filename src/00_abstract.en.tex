@@ -10,25 +10,45 @@ Abstract of Bachelor's Thesis - Academic Year 2025
 \end{center}
 \begin{spacing}{1.2}
 \small
-The Mobile Core Network (CN) is responsible for essential functions in mobile communication systems, including terminal authentication, session management, mobility control, QoS control, and connectivity to external networks. In recent years, CN has evolved rapidly through software-defined implementations, while Radio Access Networks (RAN) have long update cycles due to physical constraints, creating an "evolutionary gap" between the two.
-This gap causes three challenges: (1) lack of low-cost verification environments for R\&D, (2) lack of flexible migration strategies for commercial deployment, and (3) stranded infrastructure such as Non-Terrestrial Networks (NTN) that cannot be physically updated.
+% 1-2 sentences: Basic introduction (for all scientists)
+Mobile communication systems consist of geographically distributed base stations and a centralized control system (core network), which cooperate to provide user authentication, location tracking, and data transfer.
+When communication standards evolve to a new generation, both base stations and the control system are typically upgraded simultaneously.
 
-To address these challenges, we propose a ``Loosely Coupled Architecture'' that enables legacy 4G RAN to connect to 5G Core (5GC) without hardware modifications. Specifically, we design and implement an "S1-N2 Conversion Gateway" that abstracts and maps generation-invariant functions (AAA, Mobility Management, U-plane).
+% 2-3 sentences: Detailed background (for related fields)
+In the current transition from 4G to 5G, the control system can be rapidly updated due to advances in software-based implementation, while base stations require longer upgrade cycles due to physical antenna equipment and dedicated hardware constraints.
+International standards assume synchronized upgrades of base stations and control systems, and existing migration technologies also require either maintaining both old and new control systems or modifying base stations, leaving no standard method to upgrade only the control system to 5G while keeping existing 4G base stations unmodified.
 
-In the design, we introduce protocol conversion logic between S1AP (S1 Application Protocol) and NGAP (NG Application Protocol), an "Early S1 Setup" mechanism to absorb timing differences in User Plane (U-Plane) establishment, and dynamic rewriting of GTP-U (GPRS Tunnelling Protocol - User Plane) TEID (Tunnel Endpoint Identifier) between S1-U and N3 interfaces.
+% 1 sentence: Problem statement
+This study aims to accommodate existing 4G base stations into 5G control systems without any modifications, enabling control-system-first migration.
 
-Through real-hardware verification using sXGP (shared eXtended Global Platform), an unlicensed LTE radio standard, combined with Open5GS, we confirmed: (i) successful Registration in the Control Plane (C-Plane), demonstrating that the gateway abstracts RAN-Core dependencies, and (ii) successful communication via Ping and iPerf in the U-Plane, showing that conversion overhead is negligible for practical use.
+% 1 sentence: Main result summary
+To achieve this goal, we propose an architecture that inserts protocol conversion functionality between base stations and the control system, demonstrating its feasibility through theoretical analysis and validating its effectiveness through prototype implementation and real-hardware verification.
 
-Our contributions include the theorization and demonstration of a loosely coupled architecture based on cross-generational common functions. This establishes a new migration model that allows Core-only advancement without physical RAN updates, contributing to life-extension of physically constrained infrastructure like NTN and low-cost next-generation Core verification environments.
+% 2-3 sentences: Comparison with conventional understanding (theoretical contribution)
+This study first analyzes the essential functions common between 4G and 5G (authentication, mobility management, and data transfer) from multiple perspectives, revealing that these fundamental functions remain invariant across generations.
+Furthermore, by systematically organizing 5G-specific extended features and deriving response strategies according to each feature's characteristics, we establish the theoretical foundation that protocol conversion is fundamentally possible without modifying base stations.
+
+% 2-3 sentences: Implementation and verification (empirical contribution)
+Based on this theory, we designed and implemented conversion functionality that absorbs differences between 4G and 5G at the control signaling, user data, and authentication information layers.
+The procedural differences in connection establishment between 4G and 5G are resolved through internal state management within the conversion function.
+Real-hardware verification confirmed successful connection to 5G control systems without modifications to either base stations or terminals, with conversion overhead of approximately 3.4 milliseconds in round-trip latency and throughput impact within measurement error margins.
+
+% 1-2 sentences: Generalization
+These results demonstrate that the gap between ``physical equipment upgrade constraints'' and ``software evolution speed'' in communication systems can be absorbed by inserting a conversion layer.
+By placing conversion functionality at the aggregated control system side, the proposed approach avoids individual modifications to numerous distributed base stations, providing a scalable solution.
+
+% 2-3 sentences: Broader perspective
+This approach is applicable to accommodating satellite-mounted base stations that are difficult to update into next-generation control systems, and to building low-cost research and educational environments without expensive 5G base stations.
+Support for 5G-specific features such as virtual network partitioning can be incrementally extended based on the design guidelines presented in this study.
+The concept of ``generation-invariant fundamental functions'' identified in this study may serve as a general design model for integrating legacy base stations that are difficult to update into next-generation control systems, including future 6G transitions.
 
 \end{spacing}
-Keywords : \\
-\underline{1. Loosely Coupled Architecture}\\
-\underline{2. Cross-Generational Common Functions}\\
-\underline{3. sXGP (TD-LTE)}\\
-\underline{4. 5G Core (Open5GS)}\\
-\underline{5. Protocol Conversion (S1AP/NGAP)}\\
-\underline{6. Non-Terrestrial Network (NTN)}
+
+\noindent Keywords:\\
+\underline{1. Mobile Communication},
+\underline{2. 5G},
+\underline{3. LTE},
+\underline{4. Core Network}
 \begin{flushright}
 \edept \\
 \eauthor

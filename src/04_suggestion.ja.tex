@@ -1,7 +1,7 @@
-\chapter{提案手法：S1-N2変換ゲートウェイ}
+\chapter{疎結合アーキテクチャの提案}
 \label{chap:proposal}
 
-本章では，第\ref{chap:background}章で述べた技術背景を踏まえ，4G RANを改修なしに5Gコア（5GC）へ収容可能にするS1-N2変換ゲートウェイを提案する．まず\ref{sec:proposal_theoretical_foundation}節で提案の理論的基盤を述べる．提案手法を実現するためのアーキテクチャ設計，詳細設計，プロトタイプ実装，およびプロトコル仕様上の制約については，第\ref{chap:design}章で述べる．
+本章では，第\ref{chap:background}章で述べた技術背景を踏まえ，4G RANを改修なしに5Gコア（5GC）へ収容可能にする疎結合アーキテクチャを提案する．まず第\ref{sec:proposal_theoretical_foundation}節で提案の理論的基盤を述べ，第\ref{sec:proposed_architecture}節で提案アーキテクチャの概要を示し，第\ref{sec:logical_design_challenges}節で論理設計上の主要課題を整理する．詳細設計，プロトタイプ実装，およびプロトコル仕様上の制約については，第\ref{chap:design}章で述べる．
 
 \section{提案の理論的基盤}
 \label{sec:proposal_theoretical_foundation}
@@ -214,7 +214,7 @@ U-Plane &
 \begin{itemize}
   \item \textbf{AAA}: 認証結果に応じて状態が遷移する．認証成功時はEMM-REGISTERED/5GMM-REGISTEREDへ遷移し，失敗時は接続が拒否される．認証自体は独立した状態機械を持たないが，移動管理状態の遷移条件として機能する．
   \item \textbf{移動管理}: EPSではEMM-DEREGISTERED/EMM-REGISTEREDで端末の登録有無を管理する．5GSでは5GMM-DEREGISTERED/5GMM-REGISTEREDが対応する．Attach完了⇔Registration完了で登録済み状態へ遷移する．
-  \item \textbf{U-Plane}: EPSではECM-IDLE/ECM-CONNECTEDでセッション接続状態を管理する．5GSではCM-IDLE/CM-CONNECTEDが対応する．プロトコル変換ゲートウェイは，これらの状態遷移を追跡し，4G側の状態を5G側にマッピングする必要がある．
+  \item \textbf{U-Plane}: EPSではECM-IDLE/ECM-CONNECTEDでセッション接続状態を管理する．5GSではCM-IDLE/CM-CONNECTEDが対応する．提案アーキテクチャは，これらの状態遷移を追跡し，4G側の状態を5G側にマッピングする必要がある．
 \end{itemize}
 
 \paragraph{インタフェース境界の対応}
@@ -255,7 +255,7 @@ CN--DN: N6 \\
 \begin{itemize}
   \item \textbf{AAA}: 認証情報はRAN--CN境界ではS1AP/NGAP内のNASメッセージとして搬送される．CN内部ではEPSがS6a（Diameter）でHSSと通信し，5GSはSBI（HTTP/2）でAUSF/UDMと通信する．
   \item \textbf{移動管理}: RAN--CN境界ではS1-MME（S1AP）⇔N2（NGAP）が対応する．両者ともASN.1/PERで符号化されるが，メッセージ構造が異なるため変換が必要である．
-  \item \textbf{U-Plane}: RAN--CN境界ではS1-U⇔N3が対応し，両者ともGTP-Uを使用する．5GSでは拡張ヘッダ（PDU Session Container）が追加されている．本研究が対象とするのは\textbf{RAN--CN境界（S1⇔N2/N3）}の変換である．
+  \item \textbf{U-Plane}: RAN--CN境界ではS1-U⇔N3が対応し，両者ともGTP-Uを使用する．5GSでは拡張ヘッダ（PDU Session Container）が追加されている．本研究が対象とするのはRAN--CN境界（S1⇔N2/N3）の変換である．
 \end{itemize}
 
 \paragraph{ライフサイクルの対応}
@@ -336,12 +336,14 @@ U-Plane &
 \end{tabular}
 \end{table}
 
-この包括的な対応関係の存在が，本研究で提案するプロトコル変換方式による4G RANの5GC収容を実現する理論的根拠となる．変換ゲートウェイは，これら6つの観点における対応関係を活用し，S1インタフェースの通信をN2/N3インタフェースの通信に変換する．具体的には，各本質的機能（AAA，移動管理，U-Plane）について，対応するノード，プロトコル，状態，インタフェース，ライフサイクル段階のマッピングルールを適用することで，4G端末からの通信を5GCが処理可能な形式に変換する．
+この包括的な対応関係の存在が，本研究で提案するプロトコル変換方式による4G RANの5GC収容を実現する理論的根拠となる．提案アーキテクチャは，これら6つの観点における対応関係を活用し，S1インタフェースの通信をN2/N3インタフェースの通信に変換する．具体的には，各本質的機能（AAA，移動管理，U-Plane）について，対応するノード，プロトコル，状態，インタフェース，ライフサイクル段階のマッピングルールを適用することで，4G端末からの通信を5GCが処理可能な形式に変換する．
 
 \subsection{5GC固有機能の階層的分析}
 \label{subsec:5gc_layered_design_framework}
 
-異世代間の相互運用性を実現する一方で，5Gのみが提供する新しい機能が存在する．本手法の設計にあたり，これらの5GC固有機能を「基盤層」「制御メカニズム層」「応用サービス層」の3層に分類し，設計優先度を整理する．
+前項では4Gと5Gで変わらない本質的機能を整理し，プロトコル変換による相互接続が原理的に可能であることを示した．しかし，5Gでは4Gにはなかった新たな機能も導入されている．具体的には，eMBB（enhanced Mobile Broadband：高速大容量），URLLC（Ultra-Reliable Low-Latency Communications：超高信頼・低遅延），mMTC（massive Machine Type Communications：多数同時接続）という3つの利用シナリオへの対応が求められており\cite{ITUR_M2083}，これらの多様な通信要件を単一のネットワーク上で同時に満たすため，5GCでは新たな制御メカニズムやサービス機能が追加された．
+
+本項では，これらの5GC固有機能を体系的に整理するため，本研究独自の分析フレームワークとして「基盤層」「制御メカニズム層」「応用サービス層」の3層モデルを導入する．この分類は，5GCの技術的特徴を「アーキテクチャ構造」「通信制御ロジック」「提供サービス価値」という抽象度の異なる観点から捉え，提案アーキテクチャがレガシーRANと整合させるための対応方針を層ごとに異なる戦略で導出することを目的とする．この階層的分析により，すべての機能を一律に変換するのではなく，層の特性に応じて対応方法を使い分けるという分割統治のアプローチを明確にし，後述するアーキテクチャ要件「5GC固有機能の整合」の理論的根拠を与える．
 
 図\ref{fig:5gc_layered_model}に5GC機能の階層モデルを示す．
 
@@ -349,50 +351,414 @@ U-Plane &
   \centering
   \begin{tikzpicture}[scale=0.85, transform shape, every node/.style={font=\small}]
     % Layer 3: Service / Outcome
-    \node[draw, rounded corners, fill=GoogleGreen!15, minimum width=14cm, minimum height=2.2cm] (layer3) at (0,5.2) {};
-    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer3.north west) {3. 応用サービス層 (Service / Outcome)};
+    \node[draw, rounded corners, fill=GoogleGreen!15, minimum width=14cm, minimum height=2.2cm] (layer3) at (0,5.4) {};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer3.north west) {3. 応用サービス層};
     \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer3.north west) {
-      \textbf{機能例}: ネットワークスライシング，NEF (API公開)，MEC\\
-      \textbf{要件}: マルチテナンシー，異業種連携 (Vertical Integration)};
+      \textbf{例}: Network Slicing，Network Exposure，5G LAN-type service\\
+      \textbf{5GCの狙い}: 産業ごとの要求に応えるマルチテナンシーと異業種システム連携};
 
     % Layer 2: Mechanism
-    \node[draw, rounded corners, fill=GoogleYellow!15, minimum width=14cm, minimum height=2.2cm] (layer2) at (0,2.6) {};
-    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer2.north west) {2. 制御メカニズム層 (Mechanism)};
+    \node[draw, rounded corners, fill=GoogleYellow!15, minimum width=14cm, minimum height=2.2cm] (layer2) at (0,2.7) {};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer2.north west) {2. 制御メカニズム層};
     \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer2.north west) {
-      \textbf{機能例}: Flow-based QoS，ULCL (Uplink Classifier)\\
-      \textbf{要件}: 全く異なる要求条件（超低遅延・多数同時接続等）を持つトラフィックの混在収容};
+      \textbf{例}: Slice Selection，QoS Flow制御，Multi-type PDU\\
+      \textbf{5GCの狙い}: 多様な通信要件が混在するトラフィックの識別と高精細な制御};
 
     % Layer 1: Infrastructure
     \node[draw, rounded corners, fill=GoogleBlue!15, minimum width=14cm, minimum height=2.2cm] (layer1) at (0,0) {};
-    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer1.north west) {1. 基盤層 (Infrastructure / Enabler)};
+    \node[anchor=north west, font=\bfseries] at ([xshift=0.3cm, yshift=-0.2cm]layer1.north west) {1. 基盤層};
     \node[anchor=north west, text width=13cm] at ([xshift=0.5cm, yshift=-0.8cm]layer1.north west) {
-      \textbf{機能例}: SBA (Service Based Architecture)，CUPS (分離アーキテクチャ)\\
-      \textbf{要件}: クラウドネイティブ環境への適応，開発サイクルの高速化};
+      \textbf{例}: SBA，CUPS，NFV\\
+      \textbf{5GCの狙い}: クラウドネイティブによる柔軟性と迅速化};
 
     % Connections
     \draw[->, thick, gray] (layer1.north) -- (layer2.south);
     \draw[->, thick, gray] (layer2.north) -- (layer3.south);
 
   \end{tikzpicture}
-  \caption{5GC機能の3層構造モデル（設計分析フレーム）}
+  \caption{5GC機能の3層構造モデル}
   \label{fig:5gc_layered_model}
 \end{figure}
 
-\subsubsection{基盤層}
+\subsubsection{基盤層：CNアーキテクチャの構造的刷新}
 
-基盤層は，CNのアーキテクチャそのものの変革を指す．代表的な技術として，SBA (Service Based Architecture) やCUPS (Control and User Plane Separation) が挙げられる．本層における5GCの要件は，\textbf{クラウドネイティブ環境への適応}と\textbf{開発サイクルの高速化}である．物理ハードウェアに依存しないソフトウェア化により，機能の追加やスケーリングを迅速に行うことが可能となる．
+基盤層は，CNアーキテクチャの構造的刷新を指す．従来のハードウェア依存型から脱却した，\textbf{分散・分離型アーキテクチャ構造}への転換を特性とする．代表的な技術としてSBA，CUPS，NFVが挙げられ，5GCのアーキテクチャが刷新された主な狙いはクラウドネイティブ化による柔軟性と迅速化である．4G時代の専用ハードウェアによる設計では年単位の改修サイクルを要したが，これらの基盤技術はソフトウェア中心の設計・運用により，機能の追加・更新・スケーリングを迅速に行え，新しいサービス提供を短期間で実現できる．
 
-\subsubsection{制御メカニズム層}
+\paragraph{対応方針：隠蔽}
 
-制御メカニズム層は，アーキテクチャ上で動作する通信制御の仕組みを指す．4Gではベアラ (Bearer) 単位であったQoS制御が，5Gではフロー (Flow-based QoS) 単位へと細分化されたほか，特定のトラフィックをエッジ側で折り返すULCL (Uplink Classifier) などの機能が導入された．本層における要件は，超低遅延や多数同時接続など，\textbf{全く異なる要求条件を持つトラフィックが混在する状態への対応}である．
+提案アーキテクチャは，この層を完全に隠蔽する．理由は以下の通りである．
 
-本研究では，共通機能の確実な実現を最優先とし，このメカニズム層の一部（Flow-based QoS）は段階的な拡張の対象とする．
+\begin{itemize}
+\item \textbf{CN内部事情：} SBAやCUPSは，5GC内部のノード間インターフェース（SBI等）に関する要件であり，RAN側からは見える必要がない．
+\item \textbf{透過性の維持：} 提案アーキテクチャがS1インターフェースをN2/N3インターフェースに変換する際，5GC内部のこれらの技術選択には一切影響を受けない．
+\item \textbf{疎結合化の根拠：} 結果として，eNBは5GCの内部実装の詳細を知ることなく通信可能となり，「双方の改修不要」という疎結合の本質が実現される．
+\end{itemize}
 
-\subsubsection{応用サービス層}
+\paragraph{実装上の位置づけ}
 
-応用サービス層は，ユーザーや事業者が享受する最終的なメリットを創出する層である．論理的に分割されたネットワークを提供するネットワークスライシングや，ネットワーク機能を外部公開するNEF (Network Exposure Function)，およびMEC (Multi-access Edge Computing) との連携が含まれる．本層における要件は，\textbf{マルチテナンシー}と\textbf{異業種連携 (Vertical Integration)}の実現である．
+提案アーキテクチャは，eNBに対してはMMEとして，5GCに対してはgNBとして振る舞い，S1インターフェースとN2/N3インターフェースを終端する．5GC内部のSBI通信は提案アーキテクチャから見えず，標準のN2/N3インターフェースのみを考慮すればよい．したがって，CN側の内部実装（SBA構成等）が変わっても，提案アーキテクチャの変換ルールに影響しない．
 
-本提案では，共通機能の検証に集中するため，本層の機能は初版では部分的なサポートとし，将来的な拡張として位置づける．
+\subsubsection{制御メカニズム層：通信制御の高度化}
 
-% 旧4.2節「基本概念：世代共通機能に基づく疎結合化」は4.1.1節と内容が重複するため削除
-% 疎結合化の概念は4.1.1節の「機能的共通性」で説明済み
+制御メカニズム層は，基盤上でトラフィックを識別・制御し，要件に応じた論理的な処理を行う\textbf{通信制御メカニズム}を指す．5Gにおける通信制御の高度化とは，多様な通信要件が混在するトラフィックを識別し，フロー単位で細粒度に制御することが可能になったことを意味する．4GはQoSクラス（QCI）による優先度管理を備えていたものの，ベアラ単位の粗粒度な制御に留まっていた．5Gでは自動運転（超低遅延），4K動画（大容量），IoT（多数同時接続）といった互いに相反する要件が同一ネットワーク上で混在するため，フロー単位での細粒度制御が不可欠となった．
+
+\paragraph{4G/5G間の本質的ギャップ}
+
+4Gと5Gの制御メカニズムの主要な違いを表\ref{tab:mechanism_gap}に示す．
+
+\begin{table}[htbp]
+\centering
+\caption{4G/5Gにおける制御メカニズムのギャップ}
+\label{tab:mechanism_gap}
+\begin{tabular}{|p{3cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{制御項目} & \textbf{4G (EPS)} & \textbf{5G (5GS)} \\
+\hline
+QoS管理単位 & ベアラ単位（粗粒度） & フロー単位（細粒度） \\
+\hline
+QoSクラス識別子 & QCI（1--9の9段階） & 5QI（標準化/非標準化値） \\
+\hline
+スライス識別 & なし（単一ネットワーク） & S-NSSAI（複数スライス）で識別 \\
+\hline
+UL/DL制御 & 対称的に管理 & ULCL等で非対称制御が可能 \\
+\hline
+トラフィック分類 & TFT（Traffic Flow Template）で固定的に分類 & SDF（Service Data Flow）で動的分類 \\
+\hline
+\end{tabular}
+\end{table}
+
+これらのギャップは，4G eNBが5GC固有機能を理解・実行できないことを意味する．ここが本研究の主たる技術的解決領域となる．
+
+\paragraph{対応方針：変換・整合}
+
+提案アーキテクチャは，このメカニズム層に限定して積極的な変換・マッピングを行う．以下に，論理設計として対応が求められる主要な制御メカニズムと，提案アーキテクチャの役割を述べる．なお，実装上の対応範囲と制約については第\ref{chap:design}章で述べる．
+
+\begin{enumerate}
+\item \textbf{Network Slice Selection（スライス選択メカニズム）}
+
+用途に応じた仮想ネットワークを動的に選択し，複数のスライスを並行運用する仕組みである．5GCではS-NSSAI（Single Network Slice Selection Assistance Information）を用いてスライスを識別し，NSSF（Network Slice Selection Function）がスライスに対応したNF群（AMF，UPF等）を選択する．
+
+  \begin{itemize}
+  \item \textbf{4G側の制約}: eNBはS-NSSAIの概念を持たず，複数スライスを区別して接続を適切に振り分ける機能に対応していない
+  \item \textbf{提案アーキテクチャの役割}: 4G eNBが送信してくる接続情報（APN等）を受取り，5GCへの登録時にS-NSSAI情報を付与し，異なるスライスを指定できる構成を実現する
+  \item \textbf{設計上の実現指針}: CN側では論理的に複数スライスを判別管理でき，スライスごとのポリシーを独立的に適用できることを目指す
+  \end{itemize}
+
+\item \textbf{Flow-based QoS Framework（フローベースQoS制御）}
+
+QoSフロー（QFIで識別）を単位とした細粒度QoS制御を実現する仕組みである．5GCではトラフィック分類（Traffic Classification）を基盤とし，SDF（Service Data Flow）により動的に分類される．SDFは各パケットのヘッダ情報（送受信IP，ポート，プロトコル等）を検査し，ポリシーに基づいてQFI（および5QI）を動的に割り当てる．
+
+  \begin{itemize}
+  \item \textbf{4G側の制約}: EPSはEPS Bearer単位の粗粒度QoS管理であり，TFT（Traffic Flow Template）による固定的な分類と，QCI（QoS Class Identifier，1--9段階）による制御に限定される
+  \item \textbf{提案アーキテクチャの役割}: QCI（4G）$\leftrightarrow$ 5QI（5G）のマッピングを行い，eNBからのBearer確立要求をFlow情報に変換する
+  \item \textbf{設計上の実現指針}: CN側では論理的なQoS優先度管理が可能となり，異なるアプリケーション群に異なる品質を提供できることを目指す
+  \end{itemize}
+
+\item \textbf{Traffic Steering（トラフィックステアリング）}
+
+特定のトラフィックをエッジやローカルネットワークへ分岐させ，異なる経路を提供する経路制御の仕組みである．5GCではULCL（Uplink Classifier）等の技術により，MEC（Multi-access Edge Computing）やローカルブレイクアウトへの低遅延パスを実現する．
+
+  \begin{itemize}
+  \item \textbf{4G側の制約}: EPSでは経路制御が限定的であり，ULCLのような動的なステアリング機能に対応していない
+  \item \textbf{提案アーキテクチャの役割}: 5GCが指示するステアリングルールを受取り，GTP-Uパケットの経路を柔軟に制御する
+  \item \textbf{設計上の実現指針}: CN側からの経路指示に従い，特定トラフィックを異なる経路へ振り分けられることを目指す
+  \end{itemize}
+
+\item \textbf{Multi-type PDU Support（異種プロトコル対応）}
+
+従来のIPに加え，EthernetやUnstructured（非構造化データ）タイプをサポートし，産業用プロトコルを透過させる仕組みである．5GCではPDU Session確立時にPDU Typeを指定でき，産業用機器の多様な通信要件に対応する．
+
+  \begin{itemize}
+  \item \textbf{4G側の制約}: EPSはIPベースのPDN接続のみをサポートし，Ethernetフレームや産業用プロトコルの透過的伝送ができない
+  \item \textbf{提案アーキテクチャの役割}: 4G RANからのIP通信を5GCのPDU Session（Type: IPv4/IPv6）にマッピングする
+  \item \textbf{設計上の実現指針}: 4G RANからの接続はIPベースに限定されるが，CN側では適切なPDU Typeを選択し，5GCの機能を最大限活用できることを目指す
+  \end{itemize}
+\end{enumerate}
+
+\subsubsection{応用サービス層：最終的なサービス価値}
+
+応用サービス層は，基盤層と制御メカニズム層を通じて実現される最終的なサービス価値を指す．本層が求められる根本的な理由は，製造業・医療・交通・エネルギーといった多様な産業からの相反する通信要求——例えば「超高速」と「超省電力」の同時実現——を，単一のネットワークインフラで効率的に満たしたいという事業要求にある．
+
+\paragraph{本層の事業要求}
+
+5Gの本質的なビジネス転換は，\textbf{産業ごとの要求に応えるマルチテナンシーと異業種システム連携（Vertical Integration）}である．4G時代は通信キャリアの顧客が基本的に一般消費者向け（スマートフォン利用者）であったが，5Gでは産業ユースケース（工場，病院，電力会社等）へ市場が拡大し，各産業のシステムと統合する必要が生じた．この層に求められる核心的な事業要求は以下の2点である：
+
+\begin{itemize}
+\item \textbf{マルチテナンシー (Multi-tenancy)}: 一つのインフラを，複数の用途・事業者・産業で効率的に共有し，それぞれに対して異なるサービス品質を提供する仕組み．
+\item \textbf{異業種連携 (Vertical Integration)}: 従来の通信事業者の枠を越えて，他産業のシステムと統合され，新しいビジネスモデルと価値を創出できる開放性．
+\end{itemize}
+
+\paragraph{実現技術（Enabling Technologies）}
+
+前述の要件を実現するため，5GCは以下に述べる重要機能群を採用する．
+
+\subparagraph{A. Network Slicing（eMBB/URLLC/mMTCの提供）}
+
+\textbf{Network Slicing}は，マルチテナンシー実現の核である．この機能により，本項の冒頭で述べた3つの利用シナリオ（eMBB，URLLC，mMTC）を，論理的に独立した仮想ネットワークとして提供する：
+
+\begin{itemize}
+\item \textbf{eMBB}: 映像伝送，AR/VR等の帯域重視型サービス
+\item \textbf{URLLC}: 自動運転，ファクトリーオートメーション等の遅延・信頼性重視型サービス
+\item \textbf{mMTC}: スマートシティ，農業センサー等の接続数・効率重視型サービス
+\end{itemize}
+
+これらはNetwork Slicingが提供するサービス属性（スライス特性）であり，複数のサービス分類を同一のインフラリソースで共存させ，設備の効率的な利用を実現する．
+
+\subparagraph{B. Industrial Integration（産業連携：5G LAN / NPN）}
+
+\textbf{5G LAN-type Service}および\textbf{Non-Public Network (NPN)}は，産業用イーサネット機器を5Gネットワークに直接収容するプロトコルレベルの連携機能である．工場（Factory）や企業プライベートネットワーク（Enterprise Network）の産業用機器を，通信インフラの一部として統合する．これは前述の制御メカニズム層におけるMulti-type PDU Support（Ethernetタイプ等）と連携して実現される．
+
+\subparagraph{C. Network Exposure（APIによる外部連携）}
+
+\textbf{Network Exposure}は，IT企業のシステムが5GネットワークのQoSやIoTデバイスの起動をAPI経由で制御できる連携機能である（NEF: Network Exposure Functionがこの機能を担うノード）．異業種システムとの統合の窓口となり，異業種連携（Vertical Integration）を実現する．
+
+\subparagraph{D. Edge Computing Support（性能拡張）}
+
+\textbf{Edge Computing Support}およびMEC（Multi-access Edge Computing）は，5GCの機能をエッジ拠点に分散配置し，UPFやアプリケーション処理を最適化する技術である．特にURLLCが定義する「低遅延」やeMBBが定義する「大容量処理」の実効性能を，物理的な距離短縮により担保する．
+
+\paragraph{5GC先行移行の動機}
+
+事業者が5GC導入を急ぐ理由は，基本的な接続性ではなく，上記の2つの要件（マルチテナンシー，異業種連携）を実現する実現技術（Network Slicing，Network Exposure，5G LAN，MEC等）が，Vertical毎の相反する要求を単一インフラで満たし，新しいビジネスモデルと価値を創出するからである．
+
+\paragraph{対応方針：基盤層・メカニズム層の解決による透過的提供}
+
+4G eNBを使い続ける場合でも，メカニズム層での変換・マッピング（前項）が機能すれば，以下のメリットが得られる：
+
+\begin{itemize}
+\item \textbf{マルチテナンシーの実現（Network Slicing基盤）}: CN側で複数スライスを論理的に運用可能 → 異なるサービス分類の課金分離，優先度制御，Vertical毎の隔離
+\item \textbf{異業種連携の基盤（Network Exposure \& 5G LAN基盤）}: 各スライスに対してAPI（Network Exposure経由）やプロトコル（5G LAN経由）の接続が可能 → 垂直統合アプリケーション対応
+\item \textbf{段階的ハイブリッド運用（MEC基盤）}: 4G RANを使い続けながら，gNBを導入した部分ではEdge Computing Supportをフル活用可能
+\end{itemize}
+
+本システムは，レガシーRAN環境下においても，提案アーキテクチャの制御メカニズム層（前項参照）を通じて，上記の3つのサービス特性（eMBB，URLLC，mMTC）を論理的に再現し，Verticalの要求に応える．
+
+\subsubsection{階層的分析に基づくインターワーキングの実現可能性}
+
+以上の3層分析から，次の結論が得られる．
+
+\begin{enumerate}
+\item \textbf{基盤層は隠蔽で対応可能}: SBAやCUPSなどのCN内部実装は，提案アーキテクチャが完全に隠蔽することで，RANへの影響をゼロにできる．
+
+\item \textbf{制御メカニズム層は変換・整合が必要}: Flow-based QoS等は4G RANとの間で実際の通信制御として交わされるため隠蔽できず，積極的な変換・マッピングが必要である．
+
+\item \textbf{応用サービス層はメカニズム層の解決により享受可能}: スライシング等のビジネス価値は，メカニズム層での変換・整合を完結させることで初めて提供可能となる．
+\end{enumerate}
+
+表\ref{tab:3layer_strategy}に，3層に対する提案アーキテクチャの対応方針を整理する．
+
+\begin{table}[htbp]
+\centering
+\caption{5GC機能3層と提案アーキテクチャの対応方針}
+\label{tab:3layer_strategy}
+\begin{tabular}{|p{2.2cm}|p{3.5cm}|p{3cm}|p{3.5cm}|}
+\hline
+\textbf{層} & \textbf{機能例} & \textbf{対応方針} & \textbf{論文での位置づけ} \\
+\hline
+基盤層 & SBA, CUPS, NFV & 隠蔽（Abstraction） & 疎結合性の根拠 \\
+\hline
+制御メカニズム層 & Slice Selection, QoS Flow, Multi-type PDU & 変換・整合（Interworking） & \textbf{主たる技術的貢献} \\
+\hline
+応用サービス層 & Network Slicing, Industrial Integration, Network Exposure & 段階的提供（Enablement） & 将来的な価値・動機 \\
+\hline
+\end{tabular}
+\end{table}
+
+この階層的分析により，すべての機能を一律に変換するのではなく，層の特性に応じて対応方法を使い分けるという分割統治のアプローチが明確になった．制御メカニズム層での変換・整合が本研究の主たる技術的解決領域である．
+
+\section{提案アーキテクチャ}
+\label{sec:proposed_architecture}
+
+本節では，前節の理論的基盤に基づき，既存の4G RAN（eNB）を無改修で5GCに収容するための疎結合アーキテクチャを提案する．
+
+第\ref{chap:related}章で分析した通り，既存の標準技術（N26，ng-eNB，N3IWF）はいずれもRAN改修またはUE改修を前提とし，学術研究によるアプローチ（5G-Flow，Hybrid 5G Core）もRAN改修やEPC残存という制約を持つ．本研究では，これらの課題を克服するため，プロトコル変換による疎結合方式を採用する．
+
+\subsection{アーキテクチャ要件}
+\label{subsec:architecture_requirements}
+
+第\ref{chap:background}章で設定した研究目的「既存の4G RAN（eNB）を改修せずに5GCへ収容し，CN先行移行を可能にする」を実現するため，提案アーキテクチャは以下の要件を満たす必要がある．
+
+\begin{enumerate}
+    \item[\textbf{R1}] \textbf{透過的介在}: 既存RANと5GCの間に透過的に介在し，双方のインターフェース（S1およびN2/N3）を終端すること．これにより，eNBは従来通りS1インターフェースで，5GCは標準のN2/N3インターフェースでそれぞれ通信でき，相互に改修を要求しない．
+    \item[\textbf{R2}] \textbf{プロトコル相互変換}: 第\ref{subsec:functional_commonality}項で示した世代不変な本質的機能（AAA，移動管理，U-Plane転送）を維持しつつ，プロトコルを相互変換すること．これにより，第\ref{chap:background}章で明らかにしたプロトコル障壁（S1AP↔NGAP，NAS，GTP-U）を解消する．
+    \item[\textbf{R3}] \textbf{5GC固有機能の整合}: 5GC固有の機能を4G RANの制約下で整合させること．これにより，ネットワークスライシング等の拡張機能への対応が，アーキテクチャの根本的な変更なしに可能となる．
+\end{enumerate}
+
+以下では，これらの要件を満たすアーキテクチャの概念，設計方針，および構成について述べる．
+
+\subsection{疎結合アーキテクチャの概念}
+\label{subsec:loosely_coupled_concept}
+
+第\ref{chap:background}章で設定した研究目的で述べた「疎結合アーキテクチャ」とは，4G RANと5GCの間に変換ゲートウェイを配置し，双方のシステムを独立に保ちながら相互接続を実現する構成を指す．この設計思想の本質は以下の3点にある．
+
+\begin{enumerate}
+\item \textbf{既存システムの独立性保持}: 4G RAN（eNB）は従来通りS1インタフェースで通信し，5GC（AMF/UPF）は標準のN2/N3インタフェースで通信する．双方とも相手側の存在を意識する必要がない．
+\item \textbf{変換責務の局所化}: プロトコル変換のすべての複雑性をゲートウェイに集約する．これにより，既存機器のソフトウェア改修が不要となり，導入・運用コストを最小化できる．
+\item \textbf{段階的移行の実現}: 4G RANと5GCが疎結合であるため，ネットワーク全体を一度に更新する必要がなく，基地局単位での段階的な5G移行が可能となる．
+\end{enumerate}
+
+本アーキテクチャは，\ref{subsec:functional_commonality}項で示した本質的機能の対応関係を活用し，S1インタフェースの通信をN2/N3インタフェースの通信に変換する「S1-N2変換ゲートウェイ」として具現化される．以下では，その設計方針，全体構成，およびプロトコルスタックについて述べる．
+
+\subsection{設計方針：トランスレータ方式の採用}
+\label{subsec:design_policy}
+
+異種ネットワーク間の接続技術には，大別して2つのアプローチが存在する．一つはパケットヘッダを書き換える「トランスレータ方式」（例：IPv6とIPv4の相互変換を行うNAT64\cite{rfc6146}）であり，もう一つはパケットを別のプロトコルで包む「カプセル化方式」（例：IPパケットを別のIPパケットでトンネリングするIP-in-IP\cite{rfc2003}）である．第\ref{chap:related}章で述べた標準技術のうち，N26やng-eNBは両システム間でシグナリングを直接交換する密結合方式であり，N3IWFはIPsecトンネルによるカプセル化を用いる．
+
+本研究では，トランスレータ方式を採用する．その理由は以下の2点である．第一に，カプセル化方式では5GC側でデカプセル化処理が必要となり，5GCを無改修で利用するという本研究の要件に反する．第二に，トランスレータ方式は疎結合アーキテクチャの原則---双方のシステムが相手側のプロトコルを意識しない---と整合する．ゲートウェイがプロトコル変換を完結させることで，eNBは従来通りS1インタフェースで，5GCは標準のN2/N3インタフェースでそれぞれ通信できる．
+
+具体的には，C-Plane（制御面）においてS1-APメッセージとNG-APメッセージの意味的な対応関係に基づいて相互に変換を行う．変換の対象にはAS層（S1-AP/NG-AP）だけでなくNAS層も含まれ，一貫したトランスレータ方式を採用する．変換処理の詳細は第\ref{chap:design}章で述べる．
+
+\subsection{全体構成}
+\label{subsec:overall_structure}
+
+提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/\allowbreak UPF）の間に配置され，以下の2つのプレーンで変換を行う．
+
+\begin{itemize}
+\item \textbf{C-Plane（制御面）}: S1AP（S1-MME）とNGAP（N2）の相互変換．SCTP（Stream Control Transmission Protocol）接続を終端し，メッセージ単位で変換を行う．
+\item \textbf{U-Plane（ユーザ面）}: GTP-Uパケットのヘッダ書き換え（TEIDマッピング）およびQoSパラメータ（QCI/5QI）の変換を行う．GTP-Uプロトコル自体は4G/5Gで共通（GTPv1-U）だが，TEID（Tunnel Endpoint Identifier）はC-Planeのセッション確立時に各ノードが独立に割り当てるため，eNBが期待するTEIDと5GCが割り当てたTEIDの対応関係をゲートウェイが管理・変換する必要がある．
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
+    % Nodes
+    \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
+    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
+
+    % Converter Box
+    \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
+    \node[above] at (5,1.3) {\textbf{変換ゲートウェイ}};
+
+    % Internal Logic
+    \node[draw, fill=white, minimum width=1.2cm] (s1) at (3.8,0) {S1};
+    \node[draw, fill=white, minimum width=1.2cm] (ng) at (6.2,0) {NG};
+    \draw[<->, thick] (s1) -- (ng) node[midway, above] {\scriptsize 変換};
+
+    % Connections
+    \draw[<->, thick] (enb) -- (s1) node[midway, above] {S1};
+    \draw[<->, thick] (ng) -- (core) node[midway, above] {N2/N3};
+
+    % Roles
+    \node[below=0.2cm of enb, align=center, font=\scriptsize] {MMEとして\\接続};
+    \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBとして\\接続};
+    \node[below=1.4cm of conv, align=center, font=\scriptsize] {eNBに対してはMME，\\5GCに対してはgNBとして動作};
+
+    % 凡例（下部中央）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+      \begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}l@{\hspace{1em}}l@{}}
+        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ 4G RAN側 &
+        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側 &
+        \csname tikz\endcsname[baseline=-0.6ex]\draw[dashed, thick] (0,0) rectangle (0.18,0.18);\ 変換GW領域 &
+        \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.5,0);\ インタフェース
+      \end{tabular}
+    };
+  \end{tikzpicture}
+  \caption{提案システムの全体構成（S1-N2変換ゲートウェイ）}
+  \label{fig:architecture}
+\end{figure}
+
+\subsection{プロトコルスタック}
+\label{subsec:protocol_stack}
+
+ゲートウェイは，4G側と5G側で独立したプロトコルスタックを持つ（図\ref{fig:protocol_stack}）．
+\begin{itemize}
+\item \textbf{C-Plane（4G側）}: S1AP / SCTP / IP (eNB向け，ポート36412)
+\item \textbf{C-Plane（5G側）}: NGAP / SCTP / IP (AMF向け，ポート38412)
+\item \textbf{U-Plane}: GTP-U / UDP / IP (ポート2152)．eNB-UPF間のユーザデータを中継する．
+\end{itemize}
+なお，各ポート番号は環境変数により設定可能であり，上記は標準仕様で定められたデフォルトポート番号である．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
+    % eNB側
+    \node[font=\normalsize\bfseries] at (1.5,5.5) {eNB};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,4.5) {S1AP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.8) {SCTP};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.1) {IP};
+
+    % GTP-U (eNB側)
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.8) {GTP-U};
+    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.1) {UDP/IP};
+
+    % Converter左側（S1終端）
+    \node[font=\normalsize\bfseries] at (5.5,5.5) {変換GW};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] (gw_s1ap) at (5.5,4.5) {S1AP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.8) {SCTP:36412};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.1) {IP};
+
+    % 変換の注釈（C-Plane）
+    \node[font=\scriptsize, align=center] at (7.5,4.5) {$\Longleftrightarrow$\\[-2pt]{\tiny 変換}};
+
+    % Converter右側（NG終端）
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] (gw_ngap) at (9.5,4.5) {NGAP};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.8) {SCTP:38412};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.1) {IP};
+
+    % GTP Proxy（U-Plane）
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (7.5,1.8) {GTP-U};
+    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (7.5,1.1) {UDP/IP};
+    \node[font=\scriptsize] at (7.5,2.3) {(TEID書換)};
+
+    % AMF側
+    \node[font=\normalsize\bfseries] at (13,5.5) {AMF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,4.5) {NGAP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.8) {SCTP};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.1) {IP};
+
+    % UPF側
+    \node[font=\normalsize\bfseries] at (13,1.8) {UPF};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.8) {GTP-U};
+    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.1) {UDP/IP};
+
+    % 接続線 C-Plane
+    \draw[<->, thick] (2.75,4.5) -- (4.25,4.5);
+    \draw[<->, thick] (10.75,4.5) -- (11.75,4.5);
+
+    % 接続線 U-Plane
+    \draw[<->, thick, dashed] (2.75,1.8) -- (6.25,1.8);
+    \draw[<->, thick, dashed] (8.75,1.8) -- (11.75,0.8);
+
+    % ラベル
+    \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
+    \node[font=\scriptsize] at (4.5,2.1) {U-Plane};
+
+    % 凡例（下部中央）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+      \begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}l@{\hspace{1em}}l@{}}
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB側 &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側 &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換GW &
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.5,0);\ U-Plane
+      \end{tabular}
+    };
+  \end{tikzpicture}
+  \caption{ゲートウェイのプロトコルスタック}
+  \label{fig:protocol_stack}
+\end{figure}
+ゲートウェイは，C-Planeではトランスポート層（SCTP）を終端してシグナリングプロトコル（S1AP/NGAP）間でメッセージ変換を行い，U-PlaneではGTP-Uのヘッダ情報（TEID）を書き換えて転送する．これにより，eNBとAMF/UPFは互いに相手側のプロトコルを意識することなく通信できる．
+
+\section{論理設計上の主要課題}
+\label{sec:logical_design_challenges}
+
+第\ref{subsec:functional_commonality}項および第\ref{subsec:architecture_requirements}項の分析に基づき，本提案アーキテクチャを実現する上で解決すべき主要な課題を整理する．
+
+\subsection{手順タイミングの不一致}
+4GのAttach手順ではDefault Bearer（データ経路）の確立がAttach手順の一部として同時に行われるのに対し，5GではRegistration完了後にPDU Session確立が別手順として実行される．この手順分離により，4G eNBがInitial Context Setup Responseで返却すべきS1-U TEID（GTP-Uトンネル端点ID）が，5GC側の応答（DownlinkNASTransport等）には含まれないという問題が生じる．
+
+\subsection{認証・鍵管理の分離}
+第\ref{subsec:functional_commonality}項で述べたように，認証・認可機能は世代不変であるが，4G（EPS-AKA）と5G（5G-AKA）では認証ベクトルの形式および鍵導出階層が異なる．標準のN26インターフェースを用いない構成では，変換器が認証処理を代行するためにUEの秘密情報（Ki, OPc）へのアクセス手段が必要となる．
+
+\subsection{QoSモデルの差異}
+4GのBearer単位QoS（QCI）と5GのFlow単位QoS（5QI）は，数値範囲や付随パラメータが完全には一致しない．特に5GのGFBR/MFBRから4GのGBR/MBRへの完全なマッピングは困難であり，互換性のある範囲での簡易変換が現実的な解となる．
+
+\section{本章のまとめ}
+
+本章では，4G RANを改修なしに5GCへ収容するための疎結合アーキテクチャを提案した．第\ref{sec:proposal_theoretical_foundation}節で理論的基盤を，第\ref{sec:proposed_architecture}節でアーキテクチャ概要を，第\ref{sec:logical_design_challenges}節で論理設計上の主要課題を述べた．主要な貢献を以下に要約する．
+
+\begin{itemize}
+    \item \textbf{理論的基盤の確立}（第\ref{sec:proposal_theoretical_foundation}節）: 提案手法の根拠として2つの分析を行った．(1) 機能的共通性分析では，モバイルシステムの本質的機能（認証・認可・課金，移動管理，U-Plane転送）が世代を超えて普遍的であることを示し，機能・ノード・プロトコル・状態・インタフェース・ライフサイクルの6つの観点からEPSと5GSの対応関係を体系的に分析した．(2) 5GC固有機能の階層的分析では，基盤層（SBA，CUPS，NFV），制御メカニズム層（Slice Selection，QoS Flow制御，Multi-type PDU），応用サービス層（Network Slicing，Network Exposure，5G LAN）の3層に分類し，各層に対する対応戦略（隠蔽・変換整合・段階的提供）を示した．
+    \item \textbf{アーキテクチャ概要の提示}（第\ref{sec:proposed_architecture}節）: S1-N2変換ゲートウェイによる透過的介在（R1），トランスレータ方式によるプロトコル相互変換（R2），5GC固有機能の整合（R3）という3つの要件を満たすアーキテクチャを提案した．
+    \item \textbf{論理設計上の課題の特定}（第\ref{sec:logical_design_challenges}節）: 手順タイミングの不一致（4GのAttach手順と5GのRegistration/PDU Session確立の分離），認証・鍵管理の分離（EPS-AKAと5G-AKAの鍵導出階層の差異），QoSモデルの差異（Bearer単位とFlow単位の粒度差）という3つの主要課題を整理した．
+\end{itemize}
+
+次章では，これらの課題に対する具体的な設計解と，プロトタイプ実装について述べる．

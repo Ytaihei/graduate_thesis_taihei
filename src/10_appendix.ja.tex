@@ -1,3 +1,338 @@
 \chapter*{付録}\markboth{付録}{付録}
 \addcontentsline{toc}{chapter}{付録}
 \label{appendix}
+
+\section*{A. 実験環境の詳細設定}
+\addcontentsline{toc}{section}{A. 実験環境の詳細設定}
+
+本節では，第\ref{chap:experiment}章で述べた実験環境の再現に必要な設定ファイルを示す．
+
+\subsection*{A.1 ゲートウェイ環境変数}
+
+表\ref{tab:gateway_env}に，S1-N2変換ゲートウェイの主要な環境変数設定を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{ゲートウェイ環境変数（抜粋）}
+\label{tab:gateway_env}
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{変数名} & \textbf{値} & \textbf{説明} \\
+\hline
+\hline
+\multicolumn{3}{|l|}{\textit{ネットワーク基本設定}} \\
+\hline
+MCC & 001 & Mobile Country Code \\
+MNC & 01 & Mobile Network Code \\
+TAC & 1 & Tracking Area Code \\
+TEST\_NETWORK & 172.24.0.0/16 & 実験用サブネット \\
+\hline
+\multicolumn{3}{|l|}{\textit{5GC NF IPアドレス}} \\
+\hline
+AMF\_IP & 172.24.0.12 & AMFのIPアドレス \\
+SMF\_IP & 172.24.0.20 & SMFのIPアドレス \\
+UPF\_IP & 172.24.0.21 & UPFのIPアドレス \\
+\hline
+\multicolumn{3}{|l|}{\textit{ゲートウェイ設定}} \\
+\hline
+S1N2\_IP & 172.24.0.30 & ゲートウェイのIPアドレス \\
+S1N2\_TAU\_T3412 & 0x29 & TAUタイマ値 \\
+\hline
+\multicolumn{3}{|l|}{\textit{UE設定}} \\
+\hline
+UE\_IPV4\_INTERNET & 192.168.100.0/24 & UE向けIPアドレス帯 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection*{A.2 認証鍵設定ファイル}
+
+ゲートウェイがAMFからの認証要求に応答するため，UEの秘密鍵（Ki, OPc）を保持する設定ファイル（\texttt{auth\_keys.yaml}）の構造を以下に示す．
+
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize,frame=single,caption={認証鍵設定ファイルの構造（抜粋）}]
+subscribers:
+  - imsi: "001011234567895"
+    ki: "8baf473f2f8fd09487cccbd7097c6862"
+    opc: "8e27b6af0e692e750f32667a3b14605d"
+
+security:
+  enabled: true
+  res_star_kdf_mode: "open5gs_compat"
+\end{lstlisting}
+
+\textbf{セキュリティ上の注意}: 本設定はPoC環境専用であり，商用環境では標準のN26インターフェースまたはHSS/UDM連携による鍵共有が必要である（第\ref{chap:design}章参照）．
+
+\section*{B. C-Plane接続シーケンスのpcap解析}
+\addcontentsline{toc}{section}{B. C-Plane接続シーケンスのpcap解析}
+
+本節では，第\ref{chap:evaluation}章の評価で取得したパケットキャプチャから，成功した接続シーケンスの主要メッセージを抜粋して示す．表\ref{tab:pcap_sequence}に，UEの接続確立からPDU Session確立までのメッセージシーケンスを示す．
+
+\begin{table}[htbp]
+\centering
+\caption{C-Plane接続シーケンス（pcap抜粋）}
+\label{tab:pcap_sequence}
+\small
+\begin{tabular}{|r|l|l|l|}
+\hline
+\textbf{時刻(s)} & \textbf{方向} & \textbf{プロトコル} & \textbf{メッセージ} \\
+\hline
+\hline
+\multicolumn{4}{|l|}{\textit{基地局接続}} \\
+\hline
+23.629 & eNB→GW & S1AP & S1SetupRequest \\
+23.630 & GW→AMF & NGAP & NGSetupRequest \\
+23.633 & AMF→GW & NGAP & NGSetupResponse \\
+23.633 & GW→eNB & S1AP & S1SetupResponse \\
+\hline
+\multicolumn{4}{|l|}{\textit{UE登録（Attach/Registration）}} \\
+\hline
+78.219 & eNB→GW & S1AP/NAS & InitialUEMessage, Attach request \\
+78.219 & GW→AMF & NGAP/NAS & InitialUEMessage, Registration request \\
+78.229 & AMF→GW & NGAP/NAS & DownlinkNASTransport, Auth request \\
+78.229 & GW→eNB & S1AP/NAS & DownlinkNASTransport, Auth request \\
+78.309 & eNB→GW & S1AP/NAS & UplinkNASTransport, Auth response \\
+78.309 & GW→AMF & NGAP/NAS & UplinkNASTransport, Auth response \\
+78.319 & AMF→GW & NGAP/NAS & DownlinkNASTransport, Security mode cmd \\
+78.319 & GW→eNB & S1AP/NAS & DownlinkNASTransport, Security mode cmd \\
+78.369 & eNB→GW & S1AP/NAS & UplinkNASTransport, Security mode complete \\
+78.369 & GW→AMF & NGAP/NAS & UplinkNASTransport, Security mode complete \\
+\hline
+\multicolumn{4}{|l|}{\textit{ベアラ/セッション確立（Early S1 Setup）}} \\
+\hline
+78.401 & GW→eNB & S1AP/NAS & InitialContextSetupRequest \\
+78.689 & eNB→GW & S1AP & InitialContextSetupResponse \\
+78.718 & SMF→AMF & HTTP2/NGAP & PDUSessionResourceSetupRequest \\
+78.719 & AMF→GW & NGAP/NAS & InitialContextSetupRequest \\
+78.720 & GW→AMF & NGAP & InitialContextSetupResponse \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{観測結果の要点}:
+\begin{itemize}
+  \item S1APメッセージ（eNB↔GW間）とNGAPメッセージ（GW↔AMF間）が1対1で対応して変換されていることが確認できる．
+  \item 認証シーケンス（Authentication request/response）および暗号化有効化（Security mode command/complete）が正常に完了している．
+  \item GWがeNBへInitialContextSetupRequestを先行送信（Early S1 Setup）した後，AMFからのPDUSessionResourceSetupRequestを受信している．
+\end{itemize}
+
+\newpage
+\section*{C. 用語・略語集}
+\addcontentsline{toc}{section}{C. 用語・略語集}
+
+本論文で使用する主要な用語・略語を以下に示す．
+
+\subsection*{C.1 ネットワーク構成要素}
+
+\begin{longtable}{|p{1.8cm}|p{4.5cm}|p{6.5cm}|}
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endfirsthead
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endhead
+\hline
+\endfoot
+UE & User Equipment & ユーザ端末（スマートフォン，IoTデバイス等） \\
+\hline
+RAN & Radio Access Network & 無線アクセスネットワーク \\
+\hline
+CN & Core Network & コアネットワーク \\
+\hline
+DN & Data Network & 外部データネットワーク（インターネット等） \\
+\hline
+\multicolumn{3}{|l|}{\textit{4Gシステム（EPS）}} \\
+\hline
+EPS & Evolved Packet System & 4Gシステム全体を指す総称 \\
+\hline
+E-UTRAN & Evolved UTRAN & 4Gの無線アクセスネットワーク \\
+\hline
+EPC & Evolved Packet Core & 4Gのコアネットワーク \\
+\hline
+eNB & evolved Node B & 4G LTE基地局 \\
+\hline
+MME & Mobility Management Entity & 4Gの移動管理ノード \\
+\hline
+S-GW & Serving Gateway & ユーザデータ転送ゲートウェイ \\
+\hline
+P-GW & PDN Gateway & 外部ネットワークとの接続点 \\
+\hline
+HSS & Home Subscriber Server & 加入者情報データベース \\
+\hline
+\multicolumn{3}{|l|}{\textit{5Gシステム（5GS）}} \\
+\hline
+5GS & 5G System & 5Gシステム全体を指す総称 \\
+\hline
+5GC & 5G Core & 5Gのコアネットワーク \\
+\hline
+NG-RAN & Next Generation RAN & 5Gの無線アクセスネットワーク \\
+\hline
+gNB & next generation Node B & 5G NR基地局 \\
+\hline
+AMF & Access and Mobility Management Function & 5Gの移動管理機能 \\
+\hline
+SMF & Session Management Function & セッション管理機能 \\
+\hline
+UPF & User Plane Function & ユーザデータ転送機能 \\
+\hline
+UDM & Unified Data Management & 加入者データ管理機能 \\
+\hline
+UDR & Unified Data Repository & 統合データリポジトリ \\
+\hline
+AUSF & Authentication Server Function & 認証サーバ機能 \\
+\hline
+NRF & NF Repository Function & NF登録・発見機能 \\
+\hline
+PCF & Policy Control Function & ポリシー制御機能 \\
+\hline
+\end{longtable}
+
+\subsection*{C.2 プロトコル・インターフェース}
+
+\begin{longtable}{|p{1.8cm}|p{4.5cm}|p{6.5cm}|}
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endfirsthead
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endhead
+\hline
+\endfoot
+S1AP & S1 Application Protocol & eNB--MME間の制御プロトコル（4G） \\
+\hline
+NGAP & NG Application Protocol & gNB--AMF間の制御プロトコル（5G） \\
+\hline
+NAS & Non-Access Stratum & UE--CN間の制御プロトコル \\
+\hline
+RRC & Radio Resource Control & UE--RAN間の無線制御プロトコル \\
+\hline
+GTP-U & GPRS Tunnelling Protocol - User & ユーザデータのトンネリングプロトコル \\
+\hline
+SCTP & Stream Control Transmission Protocol & 制御信号の伝送プロトコル \\
+\hline
+PFCP & Packet Forwarding Control Protocol & U-Plane制御プロトコル（N4） \\
+\hline
+SBI & Service Based Interface & 5GC NF間のサービスベースインターフェース \\
+\hline
+\end{longtable}
+
+\subsection*{C.3 識別子・パラメータ}
+
+\begin{longtable}{|p{1.8cm}|p{4.5cm}|p{6.5cm}|}
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endfirsthead
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endhead
+\hline
+\endfoot
+IMSI & International Mobile Subscriber Identity & 国際移動加入者識別番号 \\
+\hline
+SUPI & Subscription Permanent Identifier & 5Gの永続加入者識別子 \\
+\hline
+SUCI & Subscription Concealed Identifier & 5Gの秘匿化加入者識別子 \\
+\hline
+GUTI & Globally Unique Temporary Identity & 一時的な加入者識別子（4G） \\
+\hline
+5G-GUTI & 5G GUTI & 一時的な加入者識別子（5G） \\
+\hline
+TEID & Tunnel Endpoint Identifier & GTPトンネルの端点識別子 \\
+\hline
+TAC & Tracking Area Code & 位置登録エリアコード \\
+\hline
+MCC & Mobile Country Code & 国コード \\
+\hline
+MNC & Mobile Network Code & 事業者コード \\
+\hline
+PLMN & Public Land Mobile Network & 公衆陸上移動通信網 \\
+\hline
+APN & Access Point Name & 4Gの接続先識別子 \\
+\hline
+DNN & Data Network Name & 5Gの接続先識別子 \\
+\hline
+QCI & QoS Class Identifier & 4GのQoSクラス識別子 \\
+\hline
+5QI & 5G QoS Identifier & 5GのQoS識別子 \\
+\hline
+QFI & QoS Flow Identifier & QoSフロー識別子 \\
+\hline
+\end{longtable}
+
+\subsection*{C.4 セキュリティ関連}
+
+\begin{longtable}{|p{1.8cm}|p{4.5cm}|p{6.5cm}|}
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endfirsthead
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endhead
+\hline
+\endfoot
+Ki & Subscriber Key & SIMに格納される加入者固有の共有秘密鍵 \\
+\hline
+OPc & Operator Variant Algorithm Configuration & オペレータ固有の設定値（OPとKiから派生） \\
+\hline
+RES / RES* & Response / Response Star & 認証応答値（4G / 5G） \\
+\hline
+KASME & Key for ASME & 4Gのマスターセッション鍵 \\
+\hline
+KAUSF & Key for AUSF & 5Gの認証サーバ鍵 \\
+\hline
+EEA & EPS Encryption Algorithm & 4G暗号化アルゴリズム \\
+\hline
+EIA & EPS Integrity Algorithm & 4G完全性アルゴリズム \\
+\hline
+NEA & NR Encryption Algorithm & 5G暗号化アルゴリズム \\
+\hline
+NIA & NR Integrity Algorithm & 5G完全性アルゴリズム \\
+\hline
+AKA & Authentication and Key Agreement & 認証・鍵合意プロトコル \\
+\hline
+5G-AKA & 5G AKA & 5G向け認証・鍵合意プロトコル \\
+\hline
+\end{longtable}
+
+\subsection*{C.5 アーキテクチャ・技術用語}
+
+\begin{longtable}{|p{1.8cm}|p{4.5cm}|p{6.5cm}|}
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endfirsthead
+\hline
+\textbf{略語} & \textbf{正式名称} & \textbf{説明} \\
+\hline
+\endhead
+\hline
+\endfoot
+LTE & Long Term Evolution & 4Gの無線アクセス技術（RAT） \\
+\hline
+NR & New Radio & 5Gの無線アクセス技術（RAT） \\
+\hline
+RAT & Radio Access Technology & 無線アクセス技術 \\
+\hline
+NSA & Non-Standalone & 4G EPCを利用する5G構成 \\
+\hline
+SA & Standalone & 5GCを利用する5G構成 \\
+\hline
+CUPS & Control and User Plane Separation & C-Plane/U-Plane分離アーキテクチャ \\
+\hline
+SBA & Service Based Architecture & サービスベースアーキテクチャ \\
+\hline
+NFV & Network Functions Virtualisation & ネットワーク機能仮想化 \\
+\hline
+sXGP & shared eXtended Global Platform & 1.9GHz帯を用いた自営等BWA方式 \\
+\hline
+PoC & Proof of Concept & 概念実証 \\
+\hline
+\end{longtable}

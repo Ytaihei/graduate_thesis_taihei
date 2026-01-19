@@ -64,51 +64,109 @@
 \end{figure}
 
 \subsection{N26インターフェースによるCN間連携}
-3GPP TS 23.501では，4G MMEと5G AMFを接続する「N26インターフェース」が定義されている．N26を使用することで，UEのコンテキスト（認証状態やセッション情報）をCN間で転送し，4Gエリアと5Gエリア間のシームレスなハンドオーバー（シングルレジストレーションモード）が可能となる．
+3GPP TS 23.501では，4G MMEと5G AMFを接続する「N26インターフェース」が定義されている．N26を使用することで，UEのコンテキスト（認証状態やセッション情報）をCN間で転送し，4Gエリアと5Gエリア間のシームレスなハンドオーバー（シングルレジストレーションモード\footnote{UEが4G/5G両方のCNに同時登録せず，単一のCNに登録する動作モード．}）が可能となる．このアプローチではRANやUEの改修は不要である．
 
-しかし，N26はあくまで「4G RANはEPCへ，5G RANは5GCへ」接続されていることを前提とした技術である．UEが4G RAN配下にいる間は5GCネイティブな機能（スライシング等）をフルに利用できず，5GCへ接続するためには5Gエリアへ移動するか，RAN自体を5G対応に更新する必要がある．したがって，N26は移行期間中の移動性管理技術であり，eNBを無改修のまま5GCに収容する技術ではない．
+しかし，N26はあくまで「4G RANはEPCへ，5G RANは5GCへ」接続されていることを前提とした技術である．UEが4G RAN配下にいる間は5GCネイティブな機能（スライシング等）を利用できず，5GC機能を活用するには5Gエリアへ移動するか，RAN自体を5G対応に更新する必要がある．また，N26を利用する限りEPCと5GCの並存運用が必須であり，CNを5GCのみに先行移行することはできない．
+
+したがって，N26はRANとCNの世代を同期させる「密結合」の設計思想に基づく移行期間中の移動性管理技術であり，eNBを無改修のまま5GCに収容し，5GC機能を整合させる技術ではない．
 
 \subsection{ng-eNBによるRANアップグレード}
-第\ref{chap:background}章で述べた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）．これは論理的には本研究に近い構成であるが，実現には基地局装置のファームウェアまたはハードウェアの更新が必須である．NTNや古いプライベートLTE設備のように，物理的な更新が困難な環境には適用できない．本研究のS1-N2変換ゲートウェイは，このng-eNBの機能を「外付け」で実現するアプローチと捕えることができる．
+第\ref{chap:background}章で述べた通り，LTE無線（E-UTRA）を用いながら5GCに接続する基地局として「ng-eNB」が定義されている（SA Option 5, NSA Option 7）．このアプローチではUEの改修は不要であり，RANが5GCに直接接続するため5GC固有機能（スライシング等）を利用できる．これは論理的には本研究に近い構成である．
+
+しかし，実現には基地局装置のファームウェアまたはハードウェアの更新が必須である．RANは多数の基地局から構成されるため，個々のeNBを改修するアプローチは改修対象の数という観点でスケールしない．CNは集約されているのに対し，RANは分散配置されているため，RAN側での対応はコストが大きい．すなわち，ng-eNBアプローチではRANの改修が完了しない限りCNを5GCへ移行できず，CN先行移行は実現できない．
+
+したがって，ng-eNBはRANとCNの世代を同期させる「密結合」の設計思想に基づく技術である．本研究のS1-N2変換ゲートウェイは，このng-eNBの機能を「外付け」で実現するアプローチと捉えることができる．
 
 \subsection{N3IWFによる非3GPPアクセス収容}
-N3IWF（Non-3GPP InterWorking Function）は，Wi-Fi等の非3GPPアクセス網を介して5GCに接続するためのゲートウェイである\cite{3GPP_TS23501_R15}．N3IWFはUEとの間にIPsecトンネルを確立し，信頼できないアクセス網上でもセキュリティを確保する．
+N3IWF（Non-3GPP InterWorking Function）は，Wi-Fi等の非3GPPアクセス網を介して5GCに接続するためのゲートウェイである\cite{3GPP_TS23501_R15}．N3IWFはUEとの間にIPsec\footnote{IP Security: IPレイヤでの暗号化・認証プロトコル．}トンネルを確立し，信頼できないアクセス網上でもセキュリティを確保する．このアプローチではRAN（アクセス網）の改修は不要であり，5GCに直接接続するためCN先行移行が可能である．また，5GC固有機能（スライシング等）も利用できる．
 
-しかし，N3IWFは「非3GPPアクセス」を対象としており，LTE eNBのような既存の3GPP RANを収容することは想定されていない．また，UE側にIPsecクライアント機能を要求するため，既存の4G UEをそのまま利用することはできない．
+しかし，N3IWFは「非3GPPアクセス」を対象としており，LTE eNBのような既存の3GPP RANを収容することは想定されていない．具体的には，N3IWFはS1インターフェース（S1AP/GTP-U）を終端・変換する機能を持たないため，既存のeNBをそのまま接続することができない．また，UE側にIPsecクライアント機能を要求するため，既存の4G UEをそのまま利用することもできない．
+
+\section{学術研究によるアプローチ}
+
+前節で概観した3GPP標準技術に加え，学術研究においても異世代間インターワーキングや柔軟なRAN-CN接続を目指すアプローチが提案されている．本節では，本研究と関連する代表的な研究を紹介し，それらとの差異を明確にする．
+
+\subsection{5G-Flow: SDNベースのマルチRAT統合アーキテクチャ}
+
+Khaturiaらは，SDN（Software Defined Networking: ネットワークの制御機能とデータ転送機能を分離し，ソフトウェアで一元管理するアーキテクチャ）の代表的プロトコルであるOpenFlow\footnote{SDNにおける制御プレーンとデータプレーン間の標準プロトコル．}を用いて複数のRAT（NR，LTE，Wi-Fi等）を単一のソフトウェア定義RANとして統合する「5G-Flow」アーキテクチャを提案している\cite{Khaturia2021_5GFlow}．
+
+5G-Flowの特徴は，RANノード（gNBやN3IWF等）のプロトコルスタックを「無線側スタック」と「CN接続側スタック（N2/N3）」に垂直分割し，それらをOpenFlowスイッチの物理ポートとして収容することで，RAT共通の単一インターワーキングエンティティを構成する点にある．さらに，UE側にもOpenFlowスイッチを導入し，上位層（NAS/IP）と下位層（NR/LTE/Wi-Fi MAC/PHY\footnote{Media Access Control / Physical Layer: 無線プロトコルの下位層．}）を分離する．この設計により，「任意のRATから任意のCN（5GC/4G CN）やインターネットへ」柔軟に接続できるとされる．
+
+5G-Flowは「任意のRATから任意のCNへ」という柔軟な接続を目指す点で，本研究と方向性を共有する．また，UE-RAN間の通信とUE-CN間の通信を論理的に分離するという設計思想は，本研究の「疎結合」アプローチと通底するものがある．
+
+しかし，5G-Flowの実現には以下の要件が存在する．
+\begin{itemize}
+    \item RAN側の改修: 既存のgNBやeNBにOpenFlowスイッチを導入し，プロトコルスタックを分割する必要がある．
+    \item UE側の改修: UEにもOpenFlowスイッチを導入し，NAS/IP層と無線プロトコル層を分離する必要がある．
+    \item SDNコントローラの導入: 5G-Flowコントローラがフローエントリを一元管理し，論理ポート間のマッピングを制御する必要がある．
+\end{itemize}
+
+これらの要件により，5G-Flowは将来のネットワーク設計としては有望であるが，「更新不能な既存eNB・UEをそのまま活用する」という本研究の目的には適用できない．本研究は，RAN・UEともに完全に無改修のまま，CN側に変換ゲートウェイを配置するのみで同様の柔軟性を実現する点で差別化される．
+
+\subsection{Hybrid 5G Core: 標準拡張に基づくインターワーキング}
+
+Cageniusらは，4Gレガシー端末と5G NSA端末を含む全端末を，5GCベースの「ハイブリッドコア」で一元的に収容するアーキテクチャを提案している\cite{Cagenius2024_Hybrid5GCore}．
+
+このアプローチは，3GPP Rel-16で拡張されたEPC-5GCインターワーキング機能を活用し，5GC NAS非対応の4G端末のPDN接続をSMF+PGW-Cにアンカーさせることで，内部的にはPDU Sessionとして扱う構成である．端末には従来通りEPC NASとAPN\footnote{Access Point Name: 接続先ネットワークを識別する名前．}のみを見せつつ，コア内部ではSMF+PGW-CがPDU Session IDを割り当て，UDM/PCF/CHFなど5GC SBA（Service Based Architecture）と連携して単一のサブスクリプション・ポリシー・課金ドメインに統合する．
+
+Hybrid 5G Coreは本研究と目的を共有する点が多い．特に以下の点で類似している．
+\begin{itemize}
+    \item 4Gレガシー端末の5GC収容: 4G端末を改修なしで5GCに接続することを目指す．
+    \item RAN無改修: eNBの改修を必要としない．
+    \item 5GC機能の活用: 5GCの課金・ポリシー制御機能を4G端末にも適用可能．
+\end{itemize}
+
+しかし，Hybrid 5G Coreには以下の制約がある．
+\begin{itemize}
+    \item MME・SGWの残存: MMEを拡張して利用し，SGWも最小構成で維持する必要がある．すなわち，EPCコンポーネントを完全に廃止することはできない．
+    \item 標準拡張への依存: Rel-16のEPC-5GCインターワーキング機能に依存しており，既存のMME/SGWがこの拡張をサポートしている必要がある．
+\end{itemize}
+
+これに対し，本研究のS1-N2変換ゲートウェイは，MME・SGWを含むEPCコンポーネントを完全に廃止し，5GCのみでの運用を可能にする点で差別化される．Hybrid 5G CoreがEPCとの「共存」を前提とした移行アプローチであるのに対し，本研究はEPCの「完全廃止」を可能にするアプローチである．
 
 \section{本研究の独自性と位置づけ}
 
-% TODO: 学術論文における異世代間接続アプローチの比較を追加予定
-% - IEEE論文: Suthar et al. (Migration and Interworking between 4G and 5G, 2020)
-% - IEEE論文: Cagenius et al. (Hybrid 5G Core network architecture, 2024)
-% - IEEE論文: Lin et al. (Interoperability research and experiments, 2022)
-% - RFC論文: Wakikawa et al. (Separation of Control and User Plane for PMIPv6, 2014)
-% これらとの比較を通じて、本研究がなぜ疎結合アーキテクチャを採用したかを説明
-
-以上の関連技術と本研究の比較を表\ref{tab:tech_comparison}に示す．
+以上の関連技術と本研究の比較を表\ref{tab:tech_comparison}に示す．ここで，「CN先行移行」とはRANの改修完了を待たずにCNを5GCへ移行できることを，「5GC機能整合」とは4G端末・RANに対しても5GCの制御メカニズム（QoS Flow等）を適用できることを指す．
 
 \begin{table}[htbp]
   \centering
   \caption{異世代間接続技術と提案手法の比較}
   \label{tab:tech_comparison}
   \small
-  \begin{tabularx}{\textwidth}{l|l|X|X|X|X} \hline
-    技術 & 接続形態 & CN改修 & RAN改修 & UE改修 & 適用シナリオ \\ \hline \hline
-    N26 & CN間連携 & 必須 (N26対応) & 不要 & 不要 & 4G/5Gエリア間HO \\
-    ng-eNB & RAN更新 & 不要 & 必須 & 不要 & 5GCへの直接収容 \\
-    N3IWF & 非3GPP接続 & 必須 (NF追加) & 不要 & 必須 (IPsec) & 公衆/非信頼網 \\ \hline
-    \textbf{提案手法} & \textbf{S1-N2変換} & \textbf{不要} & \textbf{不要} & \textbf{不要} & \textbf{eNB無改修収容} \\ \hline
+  \begin{tabularx}{\textwidth}{l|X|X|X|X|X} \hline
+    技術 & RAN改修 & UE改修 & CN先行移行 & 5GC機能整合 & 設計思想 \\ \hline \hline
+    N26 & 不要 & 不要 & 不可 & 不可 & 密結合（世代同期） \\
+    ng-eNB & 必須 & 不要 & 不可 & 可能 & 密結合（世代同期） \\
+    N3IWF & 不要 & 必須 & 可能 & 可能 & 非3GPP向け \\ \hline
+    5G-Flow & 必須 & 必須 & 可能 & 可能 & SDNベース統合 \\
+    Hybrid 5G Core & 不要 & 不要 & 不可$^{*}$ & 可能 & EPC共存型 \\ \hline
+    \textbf{提案手法} & \textbf{不要} & \textbf{不要} & \textbf{可能} & \textbf{可能} & \textbf{疎結合（世代非同期）} \\ \hline
   \end{tabularx}
 \end{table}
 
-表\ref{tab:tech_comparison}が示す通り，既存の標準技術はいずれもCN・RAN・UEのいずれかの改修を必要とする．これに対し，本研究の提案手法は，いずれの改修も必要とせず，eNBを無改修のまま5GCへ収容することを可能にする．
+\vspace{1mm}
+\noindent
+{\small $^{*}$Hybrid 5G CoreはMME・SGWを最小構成で維持する必要があり，EPCの完全廃止はできない．}
+\vspace{2mm}
+
+表\ref{tab:tech_comparison}が示す通り，本研究の提案手法のみが，RAN・UE無改修でCN先行移行を可能にし，かつ5GC機能整合も実現する．
 
 本研究の独自性は以下の点にある．
 
 \begin{itemize}
-    \item \textbf{「更新不能なRAN」への解法}: 既存の標準技術（ng-eNB）が適用できない物理的制約環境に対し，ハードウェア変更不要の解決策を提示する点．
-    \item \textbf{世代共通機能に基づく設計}: モバイル通信の基本機能（認証・課金，移動管理，U-Plane）は世代を超えて共通しているという観察に基づき，4G/5Gプロトコル間の具体的なパラメータ対応関係を明らかにし，変換ロジックとして実装した点（設計の詳細は第\ref{chap:proposal}章で述べる）．
-    \item \textbf{ステートマシンの違いの解消}: 第\ref{chap:background}章で述べた通り，4GではAttach手順内でベアラ確立が完了するのに対し，5GではRegistration後にPDU Session Establishmentを行うという，C-Planeの手順相違が存在する．単純なメッセージ変換では解決できないこの問題に対し，独自のシーケンス制御手法を導入して解決した点（詳細は第\ref{chap:proposal}章で述べる）．
+    \item RAN改修のスケーラビリティ問題への解法: 既存の標準技術（ng-eNB）では多数の基地局を個別に改修する必要がありスケールしない．これに対し，集約されたCN側に変換ゲートウェイを配置することで，RAN無改修での移行を実現する点．
+    \item 世代共通機能に基づく設計: モバイル通信の基本機能（認証・課金，移動管理，U-Plane）は世代を超えて共通しているという観察に基づき，4G/5Gプロトコル間の具体的なパラメータ対応関係を明らかにし，変換ロジックとして実装した点（第\ref{chap:proposal}章で論理設計を，第\ref{chap:design}章で詳細設計を述べる）．
+    \item ステートマシンの違いの解消: 第\ref{chap:background}章で述べた通り，4GではAttach手順内でベアラ確立が完了するのに対し，5GではRegistration後にPDU Session Establishmentを行うという，C-Planeの手順相違が存在する．単純なメッセージ変換では解決できないこの問題に対し，独自のシーケンス制御手法を導入して解決した点（第\ref{chap:design}章で詳述）．
 \end{itemize}
 
 本研究は，単なる実験環境の構築手法にとどまらず，将来の6G時代においても残存する更新困難なRANを，最新のコアネットワークに統合するための汎用的なアーキテクチャモデルを提案するものである．
+\section{本章のまとめ}
+
+本章では，異世代間インターワーキングに関する標準技術と学術研究を概観し，本研究の位置づけを明確にした．主要な知見を以下に要約する．
+
+\begin{itemize}
+    \item 標準技術の限界: N26（CN間連携）はEPC並存が必須，ng-eNB（RAN更新）は基地局改修が必要，N3IWF（非3GPP接続）はS1インターフェース非対応であり，いずれも「eNB無改修でのCN先行移行」を実現できない．
+    \item 学術研究の制約: 5G-FlowはRAN/UE双方の改修を要求，Hybrid 5G CoreはEPCコンポーネントの残存を前提とし，完全な疎結合を達成していない．
+\end{itemize}
+
+これらの分析を踏まえ，次章では本研究が提案する疎結合アーキテクチャの理論的基盤を述べ，4G/5G間の機能共通性に基づく設計アプローチを示す．

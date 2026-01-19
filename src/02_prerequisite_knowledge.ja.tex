@@ -53,10 +53,10 @@
 
 \begin{itemize}
   \item \textbf{UE（User Equipment）}: ユーザが直接操作する移動端末を指す．スマートフォン，タブレット，IoTデバイス等が含まれる．UEには加入者の識別情報や認証鍵等が格納される\textbf{SIM（Subscriber Identity Module）}が搭載され，RANとの無線インターフェースを介してネットワークに接続する．
-  \item \textbf{RAN（Radio Access Network）}: 無線アクセスネットワークであり，UEとCNの間で無線通信を提供する基地局群を指す．RANはモバイルシステムの世代ごとに無線方式（変調，符号化，周波数帯等の技術仕様等）が異なり、これらの仕様を総称して\textbf{RAT（Radio Access Technology）}と呼ぶ．
-  \item \textbf{TN（Transport Network）}: RANとCNを接続する伝送ネットワークを指し，IP網，専用線，MPLS等の技術を用いて実装され，RANとCN間のデータを伝送する．
+  \item \textbf{RAN（Radio Access Network）}: 無線アクセスネットワークであり，UEとCNの間で無線通信を提供する基地局群を指す．RANはモバイルシステムの世代ごとに無線方式（変調，符号化，周波数帯等の技術仕様等）が異なり，これらの仕様を総称して\textbf{RAT（Radio Access Technology）}と呼ぶ．
+  \item \textbf{TN（Transport Network）}: RANとCNを接続する伝送ネットワークを指し，IP網，専用線，MPLS\footnote{Multi-Protocol Label Switching: ラベルによる高速パケット転送技術．}等の技術を用いて実装され，RANとCN間のデータを伝送する．
   \item \textbf{CN（Core Network）}: 認証・課金，移動管理，セッション管理，ルーティング制御といった中核機能を提供する．
-  \item \textbf{DN（Data Network）}: 外部データネットワークを指し，インターネット，企業内ネットワーク，IMS（IP Multimedia Subsystem）等が含まれる．UEは最終的にDN上のサービス（Webアクセス，ビデオストリーミング，VoIP等）を利用する．
+  \item \textbf{DN（Data Network）}: 外部データネットワークを指し，インターネット，企業内ネットワーク，IMS\footnote{IP Multimedia Subsystem: IPベースのマルチメディアサービス基盤．}等が含まれる．UEは最終的にDN上のサービス（Webアクセス，ビデオストリーミング，VoIP\footnote{Voice over IP: IPネットワーク上での音声通信．}等）を利用する．
 \end{itemize}
 
 \section{4Gと5Gのアーキテクチャ}
@@ -113,7 +113,7 @@
     \draw[-, thick, GoogleRed] (sgw) -- (pgw) node[midway, below] {\scriptsize S5/S8};
     \draw[-, thick, GoogleRed] (pgw) -- (dn) node[midway, below] {\scriptsize SGi};
 
-    % 凡例（色と線を統合、縦並び）
+    % 凡例（色と線を統合，縦並び）
     \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at (-1,2.5) {
       \begin{tabular}{@{}l@{}}
       \csname textbf\endcsname{凡例}\\
@@ -133,7 +133,8 @@
 eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており，論理的な境界点として\textbf{S1インターフェース}が定義されている\cite{3GPP_TS23401}．S1は制御面（C-Plane）とユーザ面（U-Plane）に分離されており，それぞれ異なるプロトコルで実装される：
 \begin{itemize}
   \item \textbf{S1-MME（C-Plane）}: eNBとMME間の制御信号を伝送．プロトコルとして\textbf{S1AP（S1 Application Protocol）}がSCTP（Stream Control Transmission Protocol）上で動作する\cite{3GPP_TS36413}．位置登録，認証，ベアラ確立などの手順を制御する．
-  \item \textbf{S1-U（U-Plane）}: eNBとS-GW間のユーザデータを伝送．プロトコルとして\textbf{GTP-U（GPRS Tunnelling Protocol - User Plane）}がUDP/IP上で動作する\cite{3GPP_TS29281}．
+  \item \textbf{S1-U（U-Plane）}: eNBとS-GW間のユーザデータを伝送．プロトコルとして\textbf{GTP-U（GPRS Tunnelling Protocol - User Plane）}がUDP/IP上で動作する\cite{3GPP_TS29281}．GTP-Uは，UEのIPパケットをGTPヘッダでカプセル化し，eNBとS-GW間を仮想的な経路（トンネル）で転送するトンネリングプロトコルである．各トンネルはTEID（Tunnel Endpoint Identifier）で識別される．
+  4Gでは，1 EPSベアラは1つのDRB（Data Radio Bearer）と1つのGTP-Uトンネルに1対1で対応する．
 \end{itemize}
 
 このアーキテクチャにより，MME（制御）とS-GW（転送）というノード間の機能分離は実現されている．しかし，従来のEPC実装では，データ転送を担うゲートウェイノード（S-GW/P-GW）がC-Plane機能とU-Plane機能を同一ハードウェア内で実装したモノリシック構成となる場合が多かった．その結果，トラフィック増大時にU-Planeリソースのみを独立して拡張することが困難であった．
@@ -193,7 +194,7 @@ eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており
     \draw[-, thick] (sgwc) -- (sgwu) node[midway, right=0.1cm] {\scriptsize Sxa};
     \draw[-, thick] (pgwc) -- (pgwu) node[midway, right=0.1cm] {\scriptsize Sxb};
 
-    % 凡例（色と線を統合、縦並び）
+    % 凡例（色と線を統合，縦並び）
     \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at ([xshift=2pt,yshift=-2pt]current bounding box.north west) {
       \begin{tabular}{@{}l@{}}
       \csname textbf\endcsname{凡例}\\
@@ -274,7 +275,7 @@ eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており
     \draw[-, thick] (smf) -- (upf) node[midway, right] {\scriptsize N4};
     \draw[-, thick, GoogleRed] (upf) -- (dn) node[midway, below] {\scriptsize N6};
 
-    % 凡例（色と線を統合、縦並び）
+    % 凡例（色と線を統合，縦並び）
     \node[draw, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at ([xshift=2pt,yshift=-2pt]current bounding box.north west) {
       \begin{tabular}{@{}l@{}}
       \csname textbf\endcsname{凡例}\\
@@ -293,8 +294,9 @@ eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており
 \subsubsection{RANとCNの境界: NGインターフェース}
 gNBと5GCは\textbf{NGインターフェース}で接続される\cite{3GPP_TS38413}．4GのS1インターフェースと同様にC-PlaneとU-Planeに分離されているが，使用するプロトコルが異なる：
 \begin{itemize}
-  \item \textbf{N2（C-Plane）}: gNBとAMF間の制御信号を伝送．プロトコルとして\textbf{NGAP（NG Application Protocol）}が採用される．
-  \item \textbf{N3（U-Plane）}: gNBとUPF間のユーザデータを伝送．基本プロトコルはGTP-Uであるが，5GC特有の情報（QoSフロー）を運搬する拡張ヘッダが付与される．
+  \item \textbf{N2（C-Plane）}: gNBとAMF間の制御信号を伝送．プロトコルとして\textbf{NGAP（NG Application Protocol）}がSCTP上で動作する\cite{3GPP_TS38413}．登録（Registration），認証，PDUセッション確立などの手順を制御する．
+  \item \textbf{N3（U-Plane）}: gNBとUPF間のユーザデータを伝送．S1-Uと同様にGTP-Uによるトンネリングを用いるが，5GC特有の情報（QoSフローのQFI等）を運搬する拡張ヘッダ（PDU Session Container）が付与される点が異なる．
+  5Gでは，1つのPDUセッション（1つのGTP-Uトンネル）内に複数のQoSフローを多重化でき，QoSフローと無線ベアラ（DRB）の対応は柔軟（多対一／一対一）で実装に依存する．
 \end{itemize}
 
 4GのS1インターフェース（S1AP/GTP-U）と5GのNGインターフェース（NGAP/GTP-U拡張ヘッダ）の相違点については，後述の2.3節で詳しく取り扱う．
@@ -306,9 +308,76 @@ gNBと5GCは\textbf{NGインターフェース}で接続される\cite{3GPP_TS38
 
 この課題を解決するため，5GCでは\textbf{NFV（Network Functions Virtualisation）}技術が全面的に採用され，ネットワーク機能をハードウェアから分離し汎用サーバ上のソフトウェアとして実装する\cite{etsi_nfv_2012}．NFVにより，設備投資・運用コストの削減，ソフトウェアデプロイによる迅速なサービス提供，トラフィック需要に応じた動的スケーリングや，マルチベンダー対応が可能となった．
 \subsubsection{SBA（Service Based Architecture）：サービス指向による柔軟性の向上}
-従来のEPCでは，ノード間の接続がS6a，S11といった参照点方式で定義されており，各インターフェースが1対1の固定的な関係として実装されていた\cite{3GPP_TS23401}．このため，新機能の追加や既存機能の変更には複数のノード間の仕様調整が必要となり，開発・展開の柔軟性が制約されていた．また，Diameter等の専用プロトコルを用いており，Web標準プロトコルとの連携が難しかった．
+従来のEPCでは，ノード間の接続がS6a，S11といった参照点方式で定義されており，各インターフェースが1対1の固定的な関係として実装されていた\cite{3GPP_TS23401}．このため，新機能の追加や既存機能の変更には複数のノード間の仕様調整が必要となり，開発・展開の柔軟性が制約されていた．また，Diameter\footnote{AAA（認証・認可・課金）用のプロトコル．EPCではMMEとHSS間等で使用される．}等の専用プロトコルを用いており，Web標準プロトコルとの連携が難しかった．
 
 この課題を解決するため，5GCでは\textbf{SBA（Service Based Architecture）}が採用されている\cite{3GPP_TS23501_R15}．SBAでは，各NFがHTTP/2およびJSONベースのRESTful APIを用いて\textbf{SBI（Service Based Interface）}上でサービスとして公開され，\textbf{NRF（Network Repository Function）}を介した動的なサービス探索により，疎結合な連携が実現される．このアーキテクチャにより，新NF追加時の既存ノードへの影響を最小限に抑えることができ，NFごとの独立スケーリングが設計上保証され，汎用的なWeb技術やツールが活用できるようになった．SBAにより，5GCは従来のEPCに比べて進化速度と運用柔軟性を大幅に向上させた．
+
+\subsection{4G/5Gアーキテクチャの比較}
+\label{subsec:4g5g_comparison}
+
+ここまで述べた4G EPSと5GSの主要な特徴を表\ref{tab:4g5g_architecture_comparison}に整理する．この比較表は，両システム間のプロトコル障壁を理解するための基礎となる．
+
+\begin{table}[htbp]
+\centering
+\caption{4G EPSと5GSのアーキテクチャ比較}
+\label{tab:4g5g_architecture_comparison}
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{項目} & \textbf{4G EPS} & \textbf{5GS} \\
+\hline \hline
+\multicolumn{3}{|l|}{\textit{RAN}} \\
+\hline
+RAT & LTE & NR \\
+\hline
+基地局 & eNB & gNB \\
+\hline
+RAN名称 & E-UTRAN & NG-RAN \\
+\hline \hline
+\multicolumn{3}{|l|}{\textit{CN}} \\
+\hline
+CN名称 & EPC & 5GC \\
+\hline
+移動管理 & MME & AMF \\
+\hline
+セッション管理 & MME（一部） & SMF \\
+\hline
+U-Plane & S-GW / P-GW & UPF \\
+\hline
+加入者管理 & HSS & UDM / UDR \\
+\hline
+認証 & HSS（内包） & AUSF \\
+\hline \hline
+\multicolumn{3}{|l|}{\textit{RAN-CN境界インターフェース}} \\
+\hline
+C-Plane IF & S1-MME & N2 \\
+\hline
+C-Plane プロトコル & S1AP / SCTP & NGAP / SCTP \\
+\hline
+U-Plane IF & S1-U & N3 \\
+\hline
+U-Plane プロトコル & GTP-U / UDP & GTP-U + 拡張ヘッダ / UDP \\
+\hline \hline
+\multicolumn{3}{|l|}{\textit{NAS層}} \\
+\hline
+NASプロトコル & EPS NAS & 5GS NAS \\
+\hline
+接続手順 & Attach & Registration \\
+\hline
+セッション確立 & Default Bearer（Attach内） & PDU Session（別手順） \\
+\hline
+鍵階層 & KASME → KeNB & KAMF → KgNB \\
+\hline \hline
+\multicolumn{3}{|l|}{\textit{アーキテクチャ特性}} \\
+\hline
+CU分離 & CUPS（Rel.14で追加） & ネイティブ \\
+\hline
+NF間通信 & 参照点方式（Diameter等） & SBA（HTTP/2, RESTful） \\
+\hline
+QoS単位 & ベアラ（粗粒度） & QoS Flow（細粒度） \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{4Gから5Gへの移行シナリオ}
 5Gネットワークの展開形態は，一般に\textbf{SA（Standalone）}と\textbf{NSA（Non-Standalone）}に大別される\cite{5G_NSA_SA_Primer}．
@@ -460,7 +529,7 @@ SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセス�
 
 一方，CNはこれら全ての基地局からのトラフィックを集約・処理する中央集権的な機能を担う．CNの構成ノードは，地理的には数拠点〜十数拠点のデータセンターに集約配置されるのが一般的である．
 
-この結果，\textbf{1つのCNに対して数百〜数千，大規模ネットワークでは数万の基地局が接続される}という数的非対称性が生じる．図\ref{fig:cn_ran_asymmetry}にこの構造を示す．日本の大手携帯電話事業者を例にとると，4G LTEの基地局数は各社10万局以上に達する\cite{MIC_Infra_Report_R05}一方，これらを収容するCNは全国で数拠点から十数拠点程度である．
+この結果，1つのCNに対して数百〜数千，大規模ネットワークでは数万の基地局が接続されるという数的非対称性が生じる．図\ref{fig:cn_ran_asymmetry}にこの構造を示す．日本の大手携帯電話事業者を例にとると，4G LTEの基地局数は各社10万局以上に達する\cite{MIC_Infra_Report_R05}一方，これらを収容するCNは全国で数拠点から十数拠点程度である．
 
 \begin{figure}[htbp]
   \centering
@@ -515,7 +584,7 @@ SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセス�
     % CN
     \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=3cm, minimum height=1.2cm, align=center] (cn) at (0,-2.8) {\textbf{CN}\\{\scriptsize (数拠点〜十数拠点)}};
 
-    % eNBからTNへの接続線（下行のセルからのみ、雲の曲線に合わせて個別設定）
+    % eNBからTNへの接続線（下行のセルからのみ，雲の曲線に合わせて個別設定）
     \draw[-, thick, GoogleBlue!60] (-2.25,1.3) -- (-2.25,0.4);
     \draw[-, thick, GoogleBlue!60] (-0.75,1.3) -- (-0.75,0.5);
     \draw[-, thick, GoogleBlue!60] (0.75,1.3) -- (0.75,0.5);
@@ -569,7 +638,7 @@ SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセス�
 
 しかし，前述のCN-RAN間の数的非対称性を考慮すると，このアプローチには本質的な問題がある．1つのCNに対して数百〜数千の基地局が接続される構成において，RANの改修を前提とするアプローチは，改修対象の絶対数が膨大となる．
 
-すなわち，\textbf{RANの改修を前提とするアプローチは，改修対象の数という観点でスケールしない}という構造的な問題を抱えている．
+すなわち，RANの改修を前提とするアプローチは，改修対象の数という観点でスケールしないという構造的な問題を抱えている．
 
 \subsection{3GPP標準における移行手段の限界}
 
@@ -665,7 +734,7 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
   \begin{tikzpicture}[
     pnode/.style={draw, circle, fill=gray!40, minimum size=0.5cm, inner sep=0pt},
   ]
-    % 物理ノード（平行四辺形: 各辺3ノード、角を共有で8ノード + 中央1ノード）
+    % 物理ノード（平行四辺形: 各辺3ノード，角を共有で8ノード + 中央1ノード）
     % 上辺: a - b - c
     \node[pnode] (a) at (0,1.5) {};
     \node[pnode] (b) at (2,1.5) {};
@@ -729,80 +798,150 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
 5Gでは，UEが希望するスライス情報（S-NSSAI）をRAN経由でCNに伝え，スライス選択機能により適切なスライスへルーティングされる．しかし，レガシーeNBはS-NSSAIフィールドを持たないS1-APを使用するため，この情報を保持・転送できない．単純なプロトコル変換だけではスライス選択機能を提供できず，デフォルトスライスへのフォールバックやゲートウェイ側でのスライス選択代行など，アーキテクチャ上の工夫が必要となる．
 
 \subsubsection{NAS: セキュリティと鍵管理の相違}
-UEとCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}はプロトコル仕様が異なる．前項で述べたC-Planeの手順相違（Attach vs Registration/PDU Session Establishment）はNASメッセージ体系にも反映されており，NASレベルでも手順の変換が必要となる．
+UEとCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}はプロトコル仕様が異なる．前述のC-Planeの手順相違（Attach vs Registration/PDU Session Establishment）はNASメッセージ体系にも反映されており，NASレベルでも手順の変換が必要となる．
 
 特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4Gの鍵階層（K → CK/IK → KASME → KeNB）と5Gの鍵階層（K → CK'/IK' → KAUSF → KSEAF → KAMF → KgNB）は構造が異なり，相互に変換できない．4G UEは5Gの認証手順（5G AKA: Authentication and Key Agreement）を実行できないため，eNBを無改修で5GCに接続する場合，ゲートウェイ側で4G互換の認証ベクトルを生成するか，UEに代わって5GC向けの認証を代行する仕組みが必要となる．
 
 \subsubsection{GTP-U: QoSモデルの変革}
-ユーザデータ転送（GTP-U: GPRS Tunnelling Protocol - User Plane）\cite{3GPP_TS29281}自体は互換性が高いが，QoS（Quality of Service）モデルが大きく異なる．4Gは「ベアラ（Bearer: QoSを保証するデータ転送路の論理単位）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow）」単位で管理する．
-% TODO: 図\ref{fig:qos_model_comparison}を改善後に復活
+ユーザデータ転送（GTP-U: GPRS Tunnelling Protocol - User Plane）\cite{3GPP_TS29281}自体は互換性が高いが，QoS（Quality of Service）モデルが大きく異なる．4Gは「ベアラ（Bearer: QoSを保証するデータ転送路の論理単位）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow: 同一のQoS処理を受けるパケット群を識別する論理単位）」単位で管理する．
 
-% TODO: 図を改善後に復活
-% \begin{figure}[htbp]
-%   \centering
-%   \begin{tikzpicture}[
-%     box/.style={draw, rounded corners, minimum width=1.8cm, minimum height=0.7cm, font=\scriptsize},
-%     flow/.style={draw, rounded corners, minimum width=1.2cm, minimum height=0.5cm, font=\tiny},
-%     label/.style={font=\scriptsize\bfseries},
-%   ]
-%     % 4G側
-%     \node[label] at (2,3.2) {4G: ベアラ単位のQoS管理};
-%
-%     % UE (4G)
-%     \node[box, fill=gray!20] (ue4g) at (0,2) {UE};
-%
-%     % ベアラ（トンネル）
-%     \draw[very thick, blue!60, rounded corners] (0.9,2.6) -- (3.1,2.6) -- (3.1,2.3) -- (0.9,2.3) -- cycle;
-%     \node[font=\tiny, blue!70] at (2,2.45) {Bearer 1 (EBI=5)};
-%     \draw[very thick, green!60, rounded corners] (0.9,2.1) -- (3.1,2.1) -- (3.1,1.8) -- (0.9,1.8) -- cycle;
-%     \node[font=\tiny, green!60!black] at (2,1.95) {Bearer 2 (EBI=6)};
-%     \draw[very thick, orange!60, rounded corners] (0.9,1.6) -- (3.1,1.6) -- (3.1,1.3) -- (0.9,1.3) -- cycle;
-%     \node[font=\tiny, orange!70!black] at (2,1.45) {Bearer 3 (EBI=7)};
-%
-%     % eNB/SGW
-%     \node[box, fill=gray!20] (enb) at (4,2) {eNB/SGW};
-%
-%     \node[font=\tiny, align=center] at (2,0.7) {1 Bearer = 1 GTP-Uトンネル\\= 1 QoSクラス};
-%
-%     % 5G側
-%     \node[label] at (8.5,3.2) {5G: QoSフロー単位のQoS管理};
-%
-%     % UE (5G)
-%     \node[box, fill=gray!20] (ue5g) at (6,2) {UE};
-%
-%     % PDU Session（大きな枠）
-%     \draw[very thick, purple!50, rounded corners] (6.8,2.8) -- (10.2,2.8) -- (10.2,1.1) -- (6.8,1.1) -- cycle;
-%     \node[font=\tiny, purple!70, anchor=north west] at (6.85,2.75) {PDU Session};
-%
-%     % QoSフロー（PDU Session内の複数フロー）
-%     \draw[thick, blue!60, rounded corners] (7,2.5) -- (10,2.5) -- (10,2.2) -- (7,2.2) -- cycle;
-%     \node[font=\tiny, blue!70] at (8.5,2.35) {QoS Flow (QFI=1)};
-%     \draw[thick, green!60, rounded corners] (7,2.0) -- (10,2.0) -- (10,1.7) -- (7,1.7) -- cycle;
-%     \node[font=\tiny, green!60!black] at (8.5,1.85) {QoS Flow (QFI=2)};
-%     \draw[thick, orange!60, rounded corners] (7,1.5) -- (10,1.5) -- (10,1.2) -- (7,1.2) -- cycle;
-%     \node[font=\tiny, orange!70!black] at (8.5,1.35) {QoS Flow (QFI=3)};
-%
-%     % gNB/UPF
-%     \node[box, fill=gray!20] (gnb) at (11,2) {gNB/UPF};
-%
-%     \node[font=\tiny, align=center] at (8.5,0.5) {1 PDU Session = 1 GTP-Uトンネル\\内に複数QoSフロー};
-%   \end{tikzpicture}
-%   \caption{4Gと5GのQoSモデル比較}
-%   \label{fig:qos_model_comparison}
-% \end{figure}
+両者の本質的な違いは粒度にある．4Gでは1つのベアラが1つのGTP-Uトンネルに対応し，ベアラごとに1つのQoSクラス（QCI: QoS Class Identifier）が割り当てられる．QCIは9段階の数値（1〜9）で定義され，標準化された遅延・信頼性・優先度の特性を持つ．したがって，異なるQoS要件を持つトラフィックには別々のベアラを確立する必要があり，管理が粗粒度となる．一方，5Gでは1つのPDU Session（1つのGTP-Uトンネル）の中に複数のQoSフローを多重化できる．各フローはQFI（QoS Flow Identifier）で識別され，同時に5QI（5G QoS Identifier）が割り当てられる．5QIはQCIと同様に標準化されたQoS特性を表す指標であり，より多くの段階が定義されている．同一トンネル内で異なるQoS処理を適用できるため，細粒度な制御が可能となる．
+図\ref{fig:qos_model_comparison}に，4Gと5GのQoSモデルの構造的な違いを示す．
+
+補足として，無線ベアラ（DRB）との対応を明示する．4Gでは各EPSベアラが1つのDRBと1つのGTP-Uトンネルに1対1で結び付くのに対し，5Gでは1つのPDUセッション（1つのGTP-Uトンネル）内に複数のQoSフローが存在し，フローとDRBの対応は多対一または一対一で構成され得る．この構造差が，移行時のQoS整合（QCI→5QI）やトラフィック分類の設計に直接影響する．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+    % === 4G側（左） ===
+    \node[font=\small\bfseries] at (3.5,4) {4G: ベアラ単位のQoS管理};
+    % DRB annotation (4G)（タイトルより上に配置）
+    \node[font=\scriptsize, align=center] at (3.5,3.2) {DRB（無線ベアラ）\\1 Bearer = 1 DRB = 1 Tunnel};
+
+    % UE (4G)
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=1.2cm] (ue4g) at (0,1.5) {UE};
+
+    % eNB（間隔拡大）
+    \node[draw=gray!50, rounded corners, fill=GoogleBlue!50, text=gray!60, minimum width=1.8cm, minimum height=1.2cm] (enb) at (3.5,1.5) {eNB};
+
+    % S-GW（間隔拡大）
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=1.2cm] (sgw) at (7.0,1.5) {S-GW};
+
+    % Bearers (ノードの東西アンカーに揃えて描画／短縮表記)
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)+(0,0.6)$) -- ($(ue4g.east)!0.40!(sgw.west)+(0,0.6)$);
+    \node[font=\tiny] at ($(ue4g.east)!0.5!(sgw.west)+(0,0.6)$) {QCI=1};
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)!0.60!(sgw.west)+(0,0.6)$) -- ($(sgw.west)+(0,0.6)$);
+
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)+(0,0.0)$) -- ($(ue4g.east)!0.40!(sgw.west)+(0,0.0)$);
+    \node[font=\tiny] at ($(ue4g.east)!0.5!(sgw.west)+(0,0.0)$) {QCI=5};
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)!0.60!(sgw.west)+(0,0.0)$) -- ($(sgw.west)+(0,0.0)$);
+
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)+(0,-0.6)$) -- ($(ue4g.east)!0.40!(sgw.west)+(0,-0.6)$);
+    \node[font=\tiny] at ($(ue4g.east)!0.5!(sgw.west)+(0,-0.6)$) {QCI=9};
+    \draw[-, very thick, GoogleRed] ($(ue4g.east)!0.60!(sgw.west)+(0,-0.6)$) -- ($(sgw.west)+(0,-0.6)$);
+
+    % 説明
+    \node[font=\scriptsize, align=center] at (3.5,-0.5) {1 Bearer = 1 GTP-Uトンネル\\各トンネルに1つのQoSクラス（QCI）};
+
+    % === 5G側（右） ===
+    \node[font=\small\bfseries] at (14.5,4) {5G: QoSフロー単位のQoS管理};
+
+    % UE (5G)（左右図の間隔拡大）
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=1.2cm] (ue5g) at (11.0,1.5) {UE};
+
+    % gNB（間隔拡大）
+    \node[draw=gray!50, rounded corners, fill=GoogleBlue!50, text=gray!60, minimum width=1.8cm, minimum height=1.2cm] (gnb) at (14.5,1.5) {gNB};
+
+    % UPF（間隔拡大）
+    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=1.2cm] (upf) at (18.0,1.5) {UPF};
+
+    % DRB annotation (5G)（タイトルより上に配置）
+    \node[font=\scriptsize, align=center] at (14.5,3.2) {DRB（無線ベアラ）\\フロー↔DRBの対応は柔軟};
+
+    % PDU Session枠（1つのトンネル）: UE.east〜UPF.west を矩形で囲う
+    \draw[very thick, GoogleRed, rounded corners] ($(ue5g.east)+(0,0.80)$) -- ($(upf.west)+(0,0.80)$) -- ($(upf.west)+(0,-0.80)$) -- ($(ue5g.east)+(0,-0.80)$) -- cycle;
+    \node[font=\tiny, GoogleRed, anchor=north west] at ($(ue5g.east)+(0.1,1.25)$) {PDU Session (1 GTP-Uトンネル)};
+
+    % QoS Flows (ノードの東西アンカーに揃えて描画／短縮表記)
+    \draw[-, thick, blue!70] ($(ue5g.east)+(0,0.6)$) -- ($(ue5g.east)!0.26!(upf.west)+(0,0.6)$);
+    \node[font=\tiny, text=blue!70] at ($(ue5g.east)!0.5!(upf.west)+(0,0.6)$) {QFI=1 / 5QI=1};
+    \draw[-, thick, blue!70] ($(ue5g.east)!0.74!(upf.west)+(0,0.6)$) -- ($(upf.west)+(0,0.6)$);
+
+    \draw[-, thick, green!60!black] ($(ue5g.east)+(0,0.0)$) -- ($(ue5g.east)!0.26!(upf.west)+(0,0.0)$);
+    \node[font=\tiny, text=green!60!black] at ($(ue5g.east)!0.5!(upf.west)+(0,0.0)$) {QFI=2 / 5QI=5};
+    \draw[-, thick, green!60!black] ($(ue5g.east)!0.74!(upf.west)+(0,0.0)$) -- ($(upf.west)+(0,0.0)$);
+
+    \draw[-, thick, orange!70!black] ($(ue5g.east)+(0,-0.6)$) -- ($(ue5g.east)!0.26!(upf.west)+(0,-0.6)$);
+    \node[font=\tiny, text=orange!70!black] at ($(ue5g.east)!0.5!(upf.west)+(0,-0.6)$) {QFI=3 / 5QI=9};
+    \draw[-, thick, orange!70!black] ($(ue5g.east)!0.74!(upf.west)+(0,-0.6)$) -- ($(upf.west)+(0,-0.6)$);
+
+    % 説明
+    \node[font=\scriptsize, align=center] at (14.5,-0.5) {1 PDU Session = 1 GTP-Uトンネル\\トンネル内に複数のQoSフロー（QFI）};
+  \end{tikzpicture}
+  \caption{4Gと5GのQoSモデル比較（DRB対応の違いを併記）}
+  \label{fig:qos_model_comparison}
+\end{figure}
 
 eNBを無改修で5GCに接続する場合，5GのQoSフローID（QFI）と4GのベアラID（EBI）を適切にマッピングし，GTP-Uパケットヘッダ（拡張ヘッダ等）を変換する仕組みが必要となる．
 
 さらに，5GCのN3インターフェースではQoS情報を運ぶ\textbf{GTP-U拡張ヘッダ（PDU Session Container）}の付与が必須となる．標準仕様のLTE eNBは未知の拡張ヘッダをドロップまたは無視する実装が多く，そのままではダウンリンクパケットが適切に処理されないリスクがある．拡張ヘッダを終端し，4G互換のGTP-Uに再封入する処理が求められる．
 
 \subsubsection{RRCステート管理の不整合}
-5Gでは省電力と低遅延復帰を両立する\textbf{RRC Inactive}状態が導入されており，5GCはこの状態を前提にページングや状態遷移を制御する．一方，レガシーLTE eNBはIdle/Connectedの2状態を前提としており，RRC Inactiveを解釈できない．このステート管理の非対称性は，5GCからの状態指示がeNBで実装されないことによる状態同期ずれを引き起こし得る．
+RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態はコアネットワーク層の接続管理状態（4GのECM-IDLE/CONNECTED，5GのCM-IDLE/CONNECTED）と連動している．5Gでは省電力と低遅延復帰を両立する\textbf{RRC Inactive}状態が導入されており，この状態ではRRC接続は解放されているがCM層ではCM-CONNECTEDとして扱われる．5GCはこの3状態モデルを前提にページングや状態遷移を制御するが，レガシーLTE eNBはIdle/Connectedの2状態モデルを前提としており，RRC Inactiveに相当する動作を実行できない．このステート管理の非対称性は，CN層の状態マッピングを行う変換ゲートウェイにおいて考慮すべき設計課題となり得る．
 
-\subsection{小括}
-本節では，「CN先行アプローチ」を実現する上での技術的障壁を整理した．
+\section{本研究の目的}
+\label{sec:research_objective}
 
-モバイルネットワークでは，1つのCNに対して数百〜数千のeNBが接続されるため，\textbf{RANの改修を前提とするアプローチはスケールしない}．3GPP標準のng-eNBを用いた移行手段もRANの改修を前提としており，この問題を解決しない．したがって，\textbf{eNBを無改修のまま5GCに接続する}アプローチが必要となる．
+前節で明らかにした技術的障壁を踏まえ，本研究の目的を以下のように設定する．
 
-このアプローチを実現するには，S1インターフェースとNGインターフェースの間でプロトコル変換が必要となる．具体的には，S1AP↔NGAP，NAS（セキュリティコンテキスト），GTP-U（QoSモデル，拡張ヘッダ）の各層で変換処理が求められる．
+\subsection{研究目的}
 
-次章では関連研究を整理し，第\ref{chap:proposal}章で本研究の提案手法を詳述する．
+本研究の目的は，\textbf{既存の4G RAN（eNB）を改修せずに5GCへ収容し，CN先行移行を可能にする「疎結合アーキテクチャ」を提案・実証すること}である．
+
+ここで「疎結合」とは，RANとCNのライフサイクルを分離し，一方の世代更新が他方に依存しない構造を指す．現行の3GPP標準が前提とする「密結合モデル」では，RANとCNは同一世代で同期的に更新されることが想定されている．これに対し，本研究が提案する疎結合アーキテクチャでは，CNを先行して5GCへ移行しつつ，RANは既存の4G設備を継続利用することが可能となる．
+
+\subsection{達成目標}
+
+上記の目的を達成するため，本研究では以下の3点を具体的な達成目標とする．
+
+\begin{enumerate}
+    \item \textbf{世代不変性に基づくプロトコルマッピングの体系化}:
+    前節で整理したプロトコル障壁（S1AP↔NGAP，NAS，GTP-U）に対し，4G/5Gの各プロトコル仕様を比較分析する．AAA，移動管理，ユーザデータ転送といった世代不変な機能要件が，各世代のプロトコル上でどのようなパラメータとして実装されているかを整理し，変換ルールとして体系化する．
+
+    \item \textbf{疎結合アーキテクチャの設計と実証}:
+    体系化したプロトコルマッピングに基づき，S1インターフェースとNGインターフェースを相互変換するゲートウェイを設計・実装する．特に，4Gと5Gの接続シーケンスの差異（Attach手順とRegistration/PDU Session Establishment手順の違い）を吸収するシーケンス制御手法を導入し，レガシーRANから5GCへの透過的な接続が可能であることを実証する．
+
+    \item \textbf{5GC固有機能への拡張性の明確化}:
+    提案アーキテクチャにおいて，ネットワークスライシング等の5GC固有機能を将来的にどのように適用可能か，その設計指針と課題を明らかにする．本研究のPoCでは基本機能の実証に注力するが，5GC固有機能への対応はアーキテクチャの実用性を左右する重要な要素であるため，拡張に向けた考察を行う．
+\end{enumerate}
+
+\subsection{研究の範囲}
+
+本研究は，提案アーキテクチャの実現可能性を示す「概念実証（Proof of Concept: PoC）」を主たる範囲とする．
+
+\begin{itemize}
+    \item \textbf{実装・検証対象}:
+    \begin{itemize}
+        \item 接続確立に必要なC-Plane（S1AP↔NGAP）およびU-Plane（S1-U↔N3）のプロトコル変換
+        \item 4G/5G間の接続シーケンス差異（ベアラ確立タイミング等）の吸収
+        \item 実機環境（sXGP基地局 + Open5GS）における基本動作（位置登録，データ通信）の検証
+    \end{itemize}
+    \item \textbf{議論・考察対象}（実装対象外だが設計指針を示す）:
+    \begin{itemize}
+        \item ネットワークスライシング等の5GC固有機能の適用アーキテクチャ
+        \item ハンドオーバー等の移動管理機能への拡張性
+        \item 大規模環境でのスケーラビリティ
+    \end{itemize}
+\end{itemize}
+
+\section{本章のまとめ}
+
+本章では，4G EPSと5GSのアーキテクチャを比較し，異世代相互接続の技術的障壁を整理した．主要な知見を以下に要約する．
+
+\begin{itemize}
+    \item \textbf{アーキテクチャの刷新}: 5GCはNFV/SBAによりクラウドネイティブ化が進み，CN側の進化速度が加速している．一方，RANは物理的な電波設備を伴うため，更新サイクルが長い（表\ref{tab:4g5g_architecture_comparison}参照）．この非対称性が，「CN先行移行」への需要を生んでいる．
+    \item \textbf{移行シナリオの限界}: 3GPP標準のSA/NSA等の移行形態は，いずれもRANの更新（SA）または改修（NSA，DAPS）を前提としており，既存eNBを無改修のまま5GCへ接続する手段が規定されていない．
+    \item \textbf{プロトコル障壁}: eNBを無改修で5GCに接続するには，C-Plane（S1AP↔NGAP：メッセージ体系・IE構造の差異），NAS（EPS-AKA↔5G-AKA：鍵導出階層の差異），U-Plane（GTP-U：QoSモデル・拡張ヘッダの差異）の各層でプロトコル変換が必要となる．
+    \item \textbf{研究目的の設定}: これらの障壁を克服するため，eNBと5GCの間にプロトコル変換ゲートウェイを介在させ，既存4G RANを無改修で5GCに収容する「疎結合アーキテクチャ」の提案・実証を本研究の目的として設定した．
+\end{itemize}
+

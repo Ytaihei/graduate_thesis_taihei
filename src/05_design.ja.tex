@@ -1,143 +1,9 @@
-\chapter{設計と実装：S1-N2変換ゲートウェイ}
+\chapter{設計と実装}
 \label{chap:design}
 
-本章では，第\ref{chap:proposal}章で示した提案手法を具体化するため，S1-N2変換ゲートウェイのアーキテクチャ設計，詳細設計，プロトタイプ実装，およびプロトコル仕様上の制約を述べる．
+本章では，第\ref{chap:proposal}章で示した提案アーキテクチャを実現するための詳細設計，プロトタイプ実装，およびプロトコル仕様上の制約を述べる．
 
-\section{アーキテクチャ設計}
-\label{sec:architecture_design}
-
-\subsection{設計方針：トランスレータ方式の採用}
-
-異種ネットワーク間の接続技術には，大別して2つのアプローチが存在する．一つはパケットヘッダを書き換える「トランスレータ方式」（例：IPv6とIPv4の相互変換を行うNAT64\cite{rfc6146}）であり，もう一つはパケットを別のプロトコルで包む「カプセル化方式」（例：IPパケットを別のIPパケットでトンネリングするIP-in-IP\cite{rfc2003}）である．
-
-本研究では，トランスレータ方式を採用する．C-Plane（制御面）においては，S1-APメッセージとNG-APメッセージの意味的な対応関係に基づいて相互に変換を行う．さらに，NAS（Non-Access Stratum）メッセージについても，4G NAS（EPS-NAS）と5G NAS（5GS-NAS）の間で変換を行い，NG-APのペイロードとして搬送する．このように，本手法はAS層（S1-AP/NG-AP）およびNAS層の両方でプロトコル変換を行う，一貫したトランスレータ方式である．
-
-\subsection{全体構成}
-提案システムの全体構成を図\ref{fig:architecture}に示す．ゲートウェイは4G eNBと5Gコア（AMF/\allowbreak UPF）の間に配置され，以下の2つのプレーンで変換を行う．
-
-\begin{itemize}
-\item \textbf{C-Plane（制御面）}: S1AP（S1-MME）とNGAP（N2）の相互変換．SCTP（Stream Control Transmission Protocol）接続を終端し，メッセージ単位で変換を行う．
-\item \textbf{U-Plane（ユーザ面）}: GTP-Uパケットのヘッダ書き換え（TEIDマッピング）およびQoSパラメータ（QCI/5QI）の変換を行う．プロトコル自体は共通（GTPv1-U）であるが，カプセル化情報の整合性を保つ．
-\end{itemize}
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
-    % Nodes
-    \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
-    \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
-
-    % Converter Box
-    \node[draw, thick, fill=GoogleYellow!10, minimum width=4.5cm, minimum height=2.5cm, dashed] (conv) at (5,0) {};
-    \node[above] at (5,1.3) {\textbf{提案コンバータ}};
-
-    % Internal Logic
-    \node[draw, fill=white, minimum width=1.2cm] (s1) at (3.8,0) {S1};
-    \node[draw, fill=white, minimum width=1.2cm] (ng) at (6.2,0) {NG};
-    \draw[<->, thick] (s1) -- (ng) node[midway, above] {\scriptsize 変換};
-
-    % Connections
-    \draw[<->, thick] (enb) -- (s1) node[midway, above] {S1};
-    \draw[<->, thick] (ng) -- (core) node[midway, above] {N2/N3};
-
-    % Roles
-    \node[below=0.2cm of enb, align=center, font=\scriptsize] {MMEとして\\接続};
-    \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBとして\\接続};
-    \node[below=1.4cm of conv, align=center, font=\scriptsize] {eNBに対してはMME，\\5GCに対してはgNBとして動作};
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-        \csname textbf\endcsname{凡例}\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ 4G RAN側（eNB）\\
-        \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側\\
-        \csname tikz\endcsname[baseline=-0.6ex]\draw[dashed, thick] (0,0) rectangle (0.18,0.18);\ 変換ゲートウェイ領域\\
-        \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.6,0);\ インターフェース接続（S1/NG）\\
-      \end{tabular}
-    };
-  \end{tikzpicture}
-  \caption{提案システムの全体構成（S1-N2変換ゲートウェイ）}
-  \label{fig:architecture}
-\end{figure}
-
-\subsection{プロトコルスタック}
-ゲートウェイは，4G側と5G側で独立したプロトコルスタックを持つ（図\ref{fig:protocol_stack}）．
-\begin{itemize}
-\item \textbf{C-Plane（4G側）}: S1AP / SCTP / IP (eNB向け，ポート36412)
-\item \textbf{C-Plane（5G側）}: NGAP / SCTP / IP (AMF向け，ポート38412)
-\item \textbf{U-Plane}: GTP-U / UDP / IP (ポート2152)．eNB-UPF間のユーザデータを中継する．
-\end{itemize}
-なお，各ポート番号は環境変数により設定可能であり，上記は標準仕様で定められたデフォルトポート番号である．
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
-    % eNB側
-    \node[font=\normalsize\bfseries] at (1.5,5.5) {eNB};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,4.5) {S1AP};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.8) {SCTP};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,3.1) {IP (172.24.0.111)};
-
-    % GTP-U
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,2.0) {GTP-U};
-    \node[draw, fill=GoogleBlue!20, minimum width=2.5cm, minimum height=0.6cm] at (1.5,1.3) {UDP:2152};
-
-    % Converter左側
-    \node[font=\normalsize\bfseries] at (5.5,5.5) {S1N2 Converter};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,4.5) {S1AP};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.8) {SCTP:36412};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,3.1) {IP (172.24.0.30)};
-
-    % 変換ロジック
-    \node[draw, thick, fill=GoogleRed!10, minimum width=2.5cm, minimum height=1.2cm, align=center] at (5.5,2.6) {変換層\\{\scriptsize S1↔NG}\\{\scriptsize TEID管理}};
-
-    % GTP Proxy
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (5.5,1.3) {GTP Proxy};
-
-    % Converter右側
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,4.5) {NGAP};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.8) {SCTP:38412};
-    \node[draw, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=0.6cm] at (9.5,3.1) {IP (172.24.0.30)};
-
-    % AMF/UPF側
-    \node[font=\normalsize\bfseries] at (13,5.5) {AMF};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,4.5) {NGAP};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.8) {SCTP};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,3.1) {IP (172.24.0.12)};
-
-    \node[font=\normalsize\bfseries] at (13,1.8) {UPF};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,1.0) {GTP-U};
-    \node[draw, fill=GoogleGreen!20, minimum width=2.5cm, minimum height=0.6cm] at (13,0.3) {IP (172.24.0.21)};
-
-    % 接続線 C-Plane
-    \draw[<->, thick] (2.75,4.5) -- (4.25,4.5);
-    \draw[<->, thick] (6.75,4.5) -- (8.25,4.5);
-    \draw[<->, thick] (10.75,4.5) -- (11.75,4.5);
-
-    % 接続線 U-Plane
-    \draw[<->, thick, dashed] (2.75,1.3) -- (4.25,1.3);
-    \draw[<->, thick, dashed] (6.75,1.3) -- (11.75,1.0);
-
-    % ラベル
-    \node[font=\scriptsize] at (3.5,4.8) {C-Plane};
-    \node[font=\scriptsize] at (3.5,1.6) {U-Plane};
-
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB側スタック\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ 5GC側スタック\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ ゲートウェイ（終端/中継）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 変換層（S1↔NG/TEID管理）\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.6,0);\ U-Plane経路\\
-      \end{tabular}
-    };
-  \end{tikzpicture}
-  \caption{システム構成とプロトコルスタック（IPアドレスは本実験環境の一例）}
-  \label{fig:protocol_stack}
-\end{figure}
-ゲートウェイは，C-Planeではトランスポート層（SCTP）を終端してシグナリングプロトコル（S1AP/NGAP）間でメッセージ変換を行い，U-PlaneではGTP-Uのヘッダ情報（TEID）を書き換えて転送する．これにより，eNBとAMF/UPFは互いに相手側のプロトコルを意識することなく通信できる．
+第\ref{chap:proposal}章では，4G/5Gの機能共通性分析に基づき論理アーキテクチャを導出し，主要な設計課題（手順タイミングの不一致，認証・鍵管理の分離，QoSモデルの差異）を特定した．本章では，これらの課題に対する具体的な設計解を示し，概念実証（PoC）として実際に実装した範囲・簡略化・論理設計との差分を明らかにし，プロトコル仕様上の制約を整理する．具体的には，第\ref{sec:detailed_design}節で詳細設計を，第\ref{sec:prototype_implementation}節でプロトタイプ実装を，第\ref{sec:protocol_constraints}節で制約事項を述べる．
 
 \section{詳細設計}
 \label{sec:detailed_design}
@@ -148,7 +14,7 @@
 eNBの起動時に行われるS1 Setup手順において，ゲートウェイは以下のID変換を行う．
 \begin{itemize}
   \item \textbf{Global eNB ID $\rightarrow$ Global gNB ID}: 4Gの基地局IDを5Gの基地局ID形式にマッピングする．S1SetupRequestからPLMN（MCC/MNC）およびeNB-IDを抽出し，対応する形式のgNB-IDを生成する．
-  \item \textbf{TAC (Tracking Area Code)}: S1SetupRequestのSupportedTAsからTACを抽出して設定し，エリア情報を維持する．
+  \item \textbf{TAC}: S1SetupRequestのSupportedTAsからTACを抽出して設定し，エリア情報を維持する．
 \end{itemize}
 これにより，AMFは接続元を「5G基地局（gNB）」として認識し，NG Setupを完了させる．
 
@@ -156,8 +22,8 @@ eNBの起動時に行われるS1 Setup手順において，ゲートウェイは
 UEからのAttach Request（4G NAS）は，ゲートウェイによって5G NASメッセージ（Registration Request）に変換され，AMFへ転送される．
 \begin{itemize}
 	\item \textbf{Initial UE Message}: S1APのInitial UE MessageをNGAPのInitial UE Messageに変換．
-	\item \textbf{NAS Transport}: 4G NASコンテナ内の情報を抽出し，原則として5G NAS形式に変換する（変換できない場合は4G NASをそのまま転送するフォールバック動作となる）．
-	\item \textbf{認証・セキュリティ}: ゲートウェイが事前に保持するUEの秘密鍵（Ki, OPc）を用いて，AMFからの認証要求に対する応答（RES*生成）を代行し，セキュリティコンテキストを確立する．
+	\item \textbf{NAS Transport}: 4G NASコンテナ内の情報を抽出し，5G NAS形式に変換する．変換不可能なメッセージについては，ログ出力の上で当該処理を中止する．
+	\item \textbf{認証・セキュリティ}: ゲートウェイが事前に保持するUEの秘密鍵（Ki\footnote{SIMに格納される加入者固有の共有秘密鍵．}, OPc\footnote{SIMカードの製造者鍵OPとKiから派生したオペレータ固有値．}）を用いて，AMFからの認証要求に対する応答（RES*生成）を代行し，セキュリティコンテキストを確立する．
 \end{itemize}
 
 \subsubsection{NASメッセージ変換対応表}
@@ -294,14 +160,13 @@ eKSI (3bit) & ngKSI (4bit, TSC=0) \\
     \node at (-1, -7) [rotate=90] {Time};
     \draw [->] (-0.5, -1) -- (-0.5, -14);
 
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!30] (0,0) rectangle (0.18,0.18);\ 変換器の能動処理（注釈）\\
+    % 凡例（下部中央）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+      \begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}l@{\hspace{1em}}l@{}}
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器 &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!30] (0,0) rectangle (0.18,0.18);\ 能動処理
       \end{tabular}
     };
 
@@ -311,7 +176,7 @@ eKSI (3bit) & ngKSI (4bit, TSC=0) \\
 \end{figure}
 
 \subsection{U-Plane変換とTEIDマッピング}
-U-Plane（ユーザ面）では，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインターフェースと5GのN3インターフェースは共にGTPv1-Uプロトコルを使用するため，プロトコル変換は不要であるが，トンネルエンドポイント識別子（TEID）と宛先IPアドレスの書き換えが必要となる．
+U-Planeでは，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインタフェースと5GのN3インタフェースは共にGTPv1-Uプロトコルを使用するため，プロトコル変換は不要であるが，TEIDと宛先IPアドレスの書き換えが必要となる．
 
 なお，実装によっては方向別（Uplink用／Downlink用）のマッピングテーブルを持ち，各テーブル内でTEIDが一意であることを前提として，GTP-Uヘッダ内のTEIDのみを検索キーとしてマッピングを行う方式も有効である．
 
@@ -334,13 +199,13 @@ Downlink (5GC $\rightarrow$ eNB) & DLパケットのTEID \newline （eNB downlin
 \end{tabularx}
 \end{table}
 
-パケット受信時，ゲートウェイはGTP-Uヘッダ内のTEIDを参照して転送処理を行う．UplinkではTEIDマッピングテーブルを参照し，GTP-UヘッダのTEIDフィールドをN3 TEIDに書き換えてUPFへ送出する．Downlinkでは，受信パケットのTEID（eNBが通知したdownlink TEIDと同値）を用いてUEコンテキストを特定し，対応するeNBのS1-U IPを取得して転送する．転送はOSのネットワークスタックを介して行われるため，外部IP/UDPヘッダは新規に生成され，チェックサムもOSにより計算される．
+パケット受信時，ゲートウェイはGTP-Uヘッダ内のTEIDを参照して転送処理を行う．UplinkではTEIDマッピングテーブルを参照し，GTP-UヘッダのTEIDフィールドをN3 TEIDに書き換えてUPFへ送出する．Downlinkでは，UPFから受信したパケットのTEID（ゲートウェイがUPFに通知したTEIDであり，eNBのdownlink TEIDと同値に設定）を用いてUEコンテキストを特定し，対応するeNBのS1-U IPを取得して転送する．転送はOSのネットワークスタックを介して行われるため，外部IP/UDPヘッダは新規に生成され，チェックサムもOSにより計算される．
 
 \subsubsection{マッピングエントリの生成}
 TEIDマッピングエントリは，C-Planeのセッション確立手順と連動して以下のタイミングで生成される．
 
 \begin{enumerate}
-\item \textbf{S1N2 TEIDの事前割当}: Initial Context Setup Request送信時（4.3.1.4参照），ゲートウェイは自身が管理するTEID（S1N2 TEID）をeNBに通知する．
+\item \textbf{S1N2 TEIDの事前割当}: \ref{sec:pdu_session_establishment}節の「Early S1 Setup」手順において，ゲートウェイが管理するTEID（S1N2 TEID）をeNBに通知する．
 \item \textbf{eNB側TEIDの取得}: eNBからのInitial Context Setup Responseに含まれるS1-U TEIDを記録する．
 \item \textbf{N3側TEIDの取得}: PDU Session Resource Setup手順により通知されるUPF側のN3 TEIDを取得し，Uplink用のマッピングエントリを完成させる．
 \end{enumerate}
@@ -366,7 +231,7 @@ Downlinkでは，受信パケットのTEIDをキーにUEコンテキストを参
 \item eNBをUDP送信先として送出（外側IP/UDPヘッダはOSスタックで生成）
 \end{enumerate}
 
-図\ref{fig:uplane_processing}に，U-Planeにおけるパケット処理とヘッダ変換の概要を示す．Uplinkではs1n2がeNBから受信したパケットのTEIDをN3用に書き換える．DownlinkではUPFがeNBのS1-U TEIDで送出するため，s1n2はTEIDを書き換えず宛先IPのみeNBに変更する．
+図\ref{fig:uplane_processing}に，U-Planeにおけるパケット処理とヘッダ変換の概要を示す．Uplinkでは変換器がeNBから受信したパケットのTEIDをN3用に書き換える．DownlinkではUPFがeNBのS1-U TEIDで送出するため，変換器はTEIDを書き換えず宛先IPのみeNBに変更する．
 
 \begin{figure}[htbp]
   \centering
@@ -403,13 +268,12 @@ Downlinkでは，受信パケットのTEIDをキーにUEコンテキストを参
     \node[right] at (12, -2.5) {To eNB};
     \draw[->, thick] (proc_dl) -- (pkt4);
 
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!10] (0,0) rectangle (0.18,0.18);\ eNB側のパケット\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!10] (0,0) rectangle (0.18,0.18);\ UPF側のパケット\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!10] (0,0) rectangle (0.18,0.18);\ 変換器内処理\\
+    % 凡例（下部中央）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+      \begin{tabular}{@{}l@{\hspace{1.5em}}l@{\hspace{1.5em}}l@{}}
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!10] (0,0) rectangle (0.18,0.18);\ eNB側パケット &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!10] (0,0) rectangle (0.18,0.18);\ UPF側パケット &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!10] (0,0) rectangle (0.18,0.18);\ 変換器内処理
       \end{tabular}
     };
 
@@ -422,19 +286,19 @@ Downlinkでは，受信パケットのTEIDをキーにUEコンテキストを参
 \label{subsec:auth_key_management}
 
 \subsubsection{認証フローと鍵階層}
-5G AKA（Authentication and Key Agreement）では，以下の鍵階層に従って暗号鍵が導出される．
+5G AKAでは，以下の鍵階層に従って暗号鍵が導出される．
 
 \begin{enumerate}
 \item \textbf{ルート鍵}: USIMに保存されたK（共有秘密鍵）
-\item \textbf{中間鍵}: Milenageアルゴリズムによりf3(K, RAND), f4(K, RAND)からCK, IKを生成
-\item \textbf{KAUSF}: KDF(CK||IK, SN name, SQN⊕AK)により導出
+\item \textbf{中間鍵}: Milenage\footnote{3GPPで標準化された認証・鍵生成アルゴリズム群（TS 35.206）．}アルゴリズムによりf3(K, RAND\footnote{認証センターが生成する乱数．認証ベクトルの一部．}), f4(K, RAND)からCK, IK\footnote{Cipher Key / Integrity Key: 認証時に生成される暗号化鍵と完全性保護鍵．}を生成
+\item \textbf{KAUSF}: KDF\footnote{Key Derivation Function: 入力鍵から新たな鍵を導出する関数．}(CK||IK, SN name, SQN\footnote{Sequence Number: 認証ベクトルの再利用攻撃を防ぐためのシーケンス番号．}⊕AK)により導出
 \item \textbf{KSEAF, KAMF}: 順次KDF適用により生成
 \item \textbf{NAS鍵}: KNASenc（暗号化用），KNASint（完全性保護用）
 \end{enumerate}
 
 5G AKAでは，CK/IKはHSS/UDMとUSIM間でのみ生成され，ネットワーク上には流れない．通常，4G-5G間のハンドオーバーではMMEとAMFがN26インターフェースを介して鍵コンテキストを共有するが，本提案のような単独のプロトコル変換器構成ではその手段がない．
 そのため，変換器がUEの秘密情報（Ki, OPc）を何らかの形で保持し，擬似的な認証センターとして振る舞う設計が必要となる．
-変換器は，AMFから送られてくる認証リクエスト（RAND, AUTN）を受信し，保持しているKi, OPcを用いてMilenageアルゴリズムを実行することで，CK, IKを独自に導出する．
+変換器は，AMFから送られてくる認証リクエスト（RAND, AUTN\footnote{Authentication Token: 認証ベクトルの一部で，SQNとMACを含む．}）を受信し，保持しているKi, OPcを用いてMilenageアルゴリズムを実行することで，CK, IKを独自に導出する．
 
 その後，導出したCK, IKを用いて以下の式により4G互換の\textbf{KASME}を生成する（TS 33.401\cite{3GPP_TS33401} Annex A.2）．
 
@@ -486,14 +350,13 @@ Downlinkでは，受信パケットのTEIDをキーにUEコンテキストを参
     };
     \draw[->, dashed] (6, 4.8) -- (6, 4.3) -- (calc.west);
 
-    % 凡例
-    \node[draw, fill=white, anchor=north east, font=\scriptsize, inner sep=2pt] at ([xshift=-2pt,yshift=-2pt]current bounding box.north east) {
-      \begin{tabular}{@{}l@{}}
-      \csname textbf\endcsname{凡例}\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器\\
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB/UE\\
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ 変換器内の計算処理\\
+    % 凡例（下部中央）
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
+      \begin{tabular}{@{}l@{\hspace{1em}}l@{\hspace{1em}}l@{\hspace{1em}}l@{}}
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!20] (0,0) rectangle (0.18,0.18);\ AMF &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!20] (0,0) rectangle (0.18,0.18);\ 変換器 &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!20] (0,0) rectangle (0.18,0.18);\ eNB/UE &
+      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) rectangle (0.18,0.18);\ 計算処理
       \end{tabular}
     };
 
@@ -518,7 +381,7 @@ Downlinkでは，受信パケットのTEIDをキーにUEコンテキストを参
 
 \subsubsection{NAS暗号化と完全性保護}
 \paragraph{暗号化アルゴリズムの選択とマッピング}
-変換器は，5GのNEA（NAS Encryption Algorithm）と4GのEEA（EPS Encryption Algorithm）間のマッピングを実装する．本研究では，両世代で共通のAES暗号プリミティブを使用するNEA2/EEA2を優先的に選択する．
+変換器は，5GのNEA（NAS Encryption Algorithm）と4GのEEA（EPS Encryption Algorithm）間のマッピングを実装する．本研究では，両世代で共通のAES\footnote{Advanced Encryption Standard: 米国標準の共通鍵暗号方式．}暗号プリミティブを使用するNEA2/EEA2を優先的に選択する．
 
 \begin{table}[h]
 \centering
@@ -542,7 +405,7 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 変換器は，5G側と4G側で異なる暗号鍵を並列に管理する必要がある．このため，UEごとに以下のセキュリティコンテキストを保持する．
 
 \begin{itemize}
-\item \textbf{5G鍵}（AMF通信用）: KNASenc(5G), KNASint(5G), NAS UL COUNT(5G)
+\item \textbf{5G鍵}（AMF通信用）: KNASenc(5G), KNASint(5G), NAS UL COUNT\footnote{NASメッセージの送信回数を示すカウンタ．リプレイ攻撃防止に使用される．}(5G)
 \item \textbf{4G鍵}（eNB通信用）: KNASenc(4G), KNASint(4G), NAS UL/DL COUNT(4G)
 \item \textbf{アルゴリズム選択}: 5G側（\texttt{selected\_alg\_5g}），4G側（\texttt{selected\_nas\_security\_alg}）
 \item \textbf{状態フラグ}: has\_5g\_nas\_keys, has\_nas\_keys
@@ -555,16 +418,16 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 
 \textbf{ダウンリンク（5G→4G）}:
 \begin{enumerate}
-\item KNASenc(5G)を使用して5G NASメッセージを復号化（暗号化時）
+\item KNASenc(5G)を使用して5G NASメッセージを復号化（暗号化されている場合）
 \item 平文5GMM → EMMメッセージタイプ変換
 \item KNASenc(4G)を使用して4G NASメッセージを暗号化（EEA2選択時）
-\item KNASint(4G)を使用して完全性保護MAC-Iを計算・付加
+\item KNASint(4G)を使用して完全性保護MAC-I\footnote{Message Authentication Code for Integrity: NASメッセージの改ざん検出に使用される認証コード．}を計算・付加
 \end{enumerate}
 
 \textbf{アップリンク（4G→5G）}:
 \begin{enumerate}
 \item KNASint(4G)を使用して4G NASメッセージの完全性を検証
-\item KNASenc(4G)を使用して4G NASメッセージを復号化（暗号化時）
+\item KNASenc(4G)を使用して4G NASメッセージを復号化（暗号化されている場合）
 \item 平文EMM → 5GMMメッセージタイプ変換
 \item KNASint(5G)を使用して完全性保護MAC-Iを計算・付加
 \item （必要に応じて）KNASenc(5G)を使用して5G NASメッセージを暗号化
@@ -573,6 +436,7 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 なお，Initial Context Setup Request等に埋め込まれるNAS-PDUについては，保護ヘッダ付きNASをそのまま保持して転送する方式を採用する．
 
 \subsection{コンテキスト管理とタイムアウト}
+\label{subsec:context_management}
 変換器はUEごとに以下を保持する．
 \begin{itemize}
   \item ID束: (ENB-UE-S1AP-ID, MME-UE-S1AP-ID) ↔ (RAN-UE-NGAP-ID, AMF-UE-NGAP-ID)
@@ -582,6 +446,19 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 リソース管理として，一定時間未使用のTEIDマッピングやUEコンテキストは定期的にクリーンアップし，メモリリークを防止する．また，手順の重複実行を防ぐためのガード時間を設ける．
 
 異常系（IE不足/不整合等）については，原則としてログ出力の上でメッセージを破棄する．ただし，S1AP/NGAPのErrorIndicationやUE Context Release Request等のエラー関連メッセージを受信した場合は，対向側インターフェースへ変換・転送することで，両端ノード間のエラー通知を橋渡しする．
+
+\subsection{TAU（Tracking Area Update）処理}
+\label{subsec:tau_design}
+UEが同一TAC内で移動した場合や，定期タイマー（T3412）の満了時に送信されるTAU Requestについては，AMFへの転送ではなく，ゲートウェイがローカルでTAU Acceptを生成して応答する方式を採用する．
+
+この設計の根拠は以下のとおりである．
+\begin{itemize}
+\item 5GにはTAUに直接対応する手順が存在せず，Registration Updateとして処理される
+\item Registration Updateへの変換は，状態管理の複雑化を招く
+\item ローカル応答により，コア網への不要なシグナリングを削減できる
+\end{itemize}
+
+TAU Acceptには，初期接続時にキャッシュしたTAC/PLMNから生成したTAI List，定期TAUタイマー値，およびアクティブベアラ状態を含める．具体的な実装については\ref{sec:prototype_implementation}節を参照されたい．
 
 \subsection{QoSパラメータのマッピング}
 \label{subsec:qos_mapping}
@@ -612,7 +489,7 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 
 \begin{itemize}
 \item \textbf{IE不足/デコード失敗}: 必須パラメータが欠落またはデコードに失敗した場合，ログ出力の上で当該変換を中止する．ただし，NAS変換に失敗した場合は，原文メッセージをそのまま透過転送するフォールバック処理を行う場合もある．
-\item \textbf{リソース解放}: 長時間未使用のTEIDマッピングは定期クリーンアップにより解放し，メモリリークを防ぐ．
+\item \textbf{リソース解放}: 第\ref{subsec:context_management}項で述べた通り，長時間未使用のTEIDマッピングは定期クリーンアップにより解放し，メモリリークを防ぐ．
 \item \textbf{障害解析用ロギング}: エラー発生時は，関連ID（ENB-UE-S1AP-ID, RAN-UE-NGAP-ID等）やNAS/手順の種別をログに残し，調査の手がかりとする．
 \end{itemize}
 
@@ -629,13 +506,43 @@ NEA0 (null) & 0 & EEA0 (null) & 0 & - \\
 これらの遅延を低減するため，以下の設計指針が有効である．
 \begin{itemize}
 \item \textbf{効率的なコンテキスト管理}: UEコンテキストのデータ構造は，メモリ局所性と検索効率を考慮して選択する．
-\item \textbf{TEIDマッピングのLRU管理}: TEIDマッピングテーブルはLRU（Least Recently Used）方式で管理し，長時間未使用のエントリを定期的にクリーンアップする．
+\item \textbf{TEIDマッピングの期限管理}: 第\ref{subsec:context_management}項のリソース管理方針に基づき，長時間未使用のエントリを定期的にクリーンアップする．
 \item \textbf{OSネットワークスタックの活用}: GTP-Uパケットの送信にはOSのソケットAPIを使用し，IP/UDPヘッダ生成やチェックサム計算をOSに委ねることで実装を簡素化する．
 \end{itemize}
 
 \section{プロトタイプ実装}
 \label{sec:prototype_implementation}
-前節までに述べた設計を検証するため，本研究ではプロトタイプ実装を行った．本節では，設計の検証を目的とした本プロトタイプにおける具体的な実装上の選択と，それに伴う制約について述べる．
+前節までに述べた設計を検証するため，本研究ではプロトタイプ実装を行った．本節では，実装の概要と，設計の検証を目的とした本プロトタイプにおける具体的な実装上の選択について述べる．
+
+\subsection{実装概要}
+本プロトタイプはC言語で実装し，約14,000行のソースコードから構成される．主要な外部ライブラリとして，S1AP/NGAPメッセージのASN.1エンコード・デコードにはlibasn1c（asn1c生成コード）を使用した．認証処理のMilenageアルゴリズムおよび鍵導出関数（KDF）の実装は，3GPP TS 35.206\cite{3GPP_TS35206}およびTS 33.501の仕様に基づき，Open5GS\cite{open5gs}の実装を参考にした．
+
+表\ref{tab:module_structure}に主要モジュールの構成を示す．
+
+\begin{table}[htbp]
+\centering
+\caption{プロトタイプの主要モジュール構成}
+\label{tab:module_structure}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{モジュール} & \textbf{機能} \\
+\hline
+core/ & メインループ，SCTP/UDP受信処理 \\
+\hline
+ngap/ & NGAPメッセージ生成・解析 \\
+\hline
+nas/ & NASメッセージ変換（4G↔5G） \\
+\hline
+auth/ & Milenage認証，鍵導出 \\
+\hline
+context/ & UEコンテキスト・TEIDマッピング管理 \\
+\hline
+transport/ & GTP-Uパケット転送 \\
+\hline
+\end{tabular}
+\end{table}
+
+以下では，本プロトタイプにおける具体的な実装上の選択と簡略化について述べる．
 
 \subsection{ID変換における簡略化}
 gNB-ID生成については，eNB-IDからの動的変換ではなく，固定値を用いて生成している．同様に，TACについてもS1SetupRequestから取得できない場合は環境変数により設定したデフォルト値へフォールバックする構成とした．
@@ -647,16 +554,19 @@ PDUセッション確立前の仮TEID割り当てには，固定値\texttt{0x000
 本実装では，Downlink方向においてTransparent proxy方式を採用し，TEID変換を行っていない．UPFがeNBのS1-U TEIDを直接使用して送出するため，ゲートウェイはTEIDを書き換えず宛先IPアドレスのみをeNBに変更する．
 
 \subsection{認証・鍵管理における構成}
-検証環境におけるKi/OPcの取得には，設定ファイル（auth\_keys.yaml）からの読み込み方式を採用した．これは商用環境では一般に想定されない構成であり，実運用では標準の認証・鍵管理機構（コア網側の機能）に委ねる設計が必要となる．
+検証環境におけるKi/OPcの取得には，設定ファイル（auth\_keys.yaml）からの読み込み方式を採用した．この構成に伴うセキュリティ上の制約については\ref{subsec:security_constraints}節で述べる．
 
 \subsection{暗号化アルゴリズムの対応範囲}
-本実装ではNEA2/EEA2（AES系）を中心に対応しており，NEA1/EEA1（SNOW 3G）およびNEA3/EEA3（ZUC）は未実装である．また，アップリンク方向の5G側暗号化（KNASenc(5G)によるciphering）は実装されておらず，完全性保護のみを適用している．
+本実装ではNEA2/EEA2（AES系）を中心に対応しており，NEA1/EEA1（SNOW 3G）およびNEA3/EEA3（ZUC）は未実装である．NAS暗号化は双方向（Uplink/Downlink）で実装されており，4G側・5G側それぞれの鍵を用いた暗号化・復号処理を行う．
+
+\subsection{TAU処理における実装}
+\ref{subsec:tau_design}節で述べたTAU処理のローカル応答方式を実装した．TAU Acceptの生成には，初期接続時にキャッシュしたTAC/PLMN情報を使用する．
 
 \subsection{タイムアウト値の設定}
 本実装では，汎用的なタイマ機構ではなくタイムスタンプベースの時間管理を採用し，以下の固定値を設定している．
 \begin{itemize}
   \item \textbf{TEIDマッピングの期限切れ}: 1時間未使用で解放（5分間隔のクリーンアップ）
-  \item \textbf{TAUガード}: 60秒のガード時間でフラグ管理
+  \item \textbf{TAUガード}: 60秒のガード時間でフラグ管理（連続TAU抑止）
   \item \textbf{ICS重複抑止}: 10秒間の重複送信抑止
 \end{itemize}
 
@@ -665,6 +575,36 @@ S1APメッセージ生成時（Downlink方向）においては，接続性の�
 
 \subsection{データ構造の選択}
 UEコンテキストは固定長配列（\texttt{ue\_mappings}）で管理し，線形探索により検索する．実装は簡素であり，配列のメモリ局所性によりキャッシュ効率が期待できるが，UE数が増加した場合のスケーラビリティには制約がある．
+
+\subsection{論理設計との差分}
+表\ref{tab:logical_vs_prototype}に，第\ref{chap:proposal}章の論理設計と本プロトタイプ実装の主な差分を整理する．
+
+\begin{table}[htbp]
+\centering
+\caption{論理設計とプロトタイプ実装の差分}
+\label{tab:logical_vs_prototype}
+\begin{tabular}{|l|p{5cm}|p{5cm}|}
+\hline
+\textbf{項目} & \textbf{論理設計} & \textbf{プロトタイプ実装} \\
+\hline
+gNB-ID生成 & eNB-IDからの動的変換 & 固定値による生成 \\
+\hline
+APN取得 & ESM情報の解析により取得 & 環境変数によるデフォルト値 \\
+\hline
+TEID変換 & 双方向での動的マッピング & Downlink方向はTransparent proxy \\
+\hline
+Ki/OPc取得 & セキュアな外部連携 & 設定ファイルからの読み込み \\
+\hline
+暗号アルゴリズム & 全アルゴリズム対応 & NEA2/EEA2（AES系）のみ \\
+\hline
+QoSマッピング & QCI/5QIの動的変換 & QCI=9固定 \\
+\hline
+UEコンテキスト管理 & スケーラブルなデータ構造 & 固定長配列・線形探索 \\
+\hline
+\end{tabular}
+\end{table}
+
+これらの差分は，本プロトタイプが接続性検証を主目的としたPoC（Proof of Concept）であることに起因する．商用実装においては，各項目について論理設計に沿った実装が必要となる．
 
 \section{プロトコル仕様上の制約}
 \label{sec:protocol_constraints}
@@ -681,11 +621,33 @@ S1APとNGAPは情報要素（IE）の集合と手順が一致しないため，�
 ただし，PDU Session確立に必要な情報（TEID等）が通知されるまでの待機が発生する．コア網の処理遅延が大きい環境では，確立成功率の低下や再試行による遅延増加が生じる可能性がある．
 
 \subsection{機能制限に関する制約}
-本変換器設計は以下の5G固有機能について本質的な制約を持つ．
+本変換器設計は以下の機能について本質的な制約を持つ．これらは第\ref{chap:proposal}章の論理設計で対応が求められるとした機能のうち，本プロトタイプでは実装対象外としたもの，または簡易実装に留めたものである．
 \begin{itemize}
-\item \textbf{Network Slicing}: S-NSSAIに基づくスライス選択は4Gに対応概念がないため，NGAP必須IEを満たすために固定値（SST=1等）での補完が必要となる．
+\item \textbf{ハンドオーバー}: S1ハンドオーバー手順とN2ハンドオーバー手順の相互変換は未実装であり，基地局間の移動を伴う通信継続には対応していない．本研究では位置登録（Registration）に焦点を当て，移動管理（Mobility Management）は対象外としている．
+\item \textbf{Network Slicing}: S-NSSAIに基づくスライス選択は4Gに対応概念がないため，NGAP必須IEを満たすために固定値（SST=1等）での補完が必要となる．論理設計ではAPNからS-NSSAIへのマッピングを想定しているが，本PoCでは未実装である．
 \item \textbf{QoS Flow}: 5GのFlow単位QoS\allowbreak （GFBR/MFBR）から4GのBearer単位\allowbreak （GBR/MBR）への完全なマッピングは困難であり，QCI/5QI/QFIの対応関係に基づく簡易変換（\ref{subsec:qos_mapping}節参照）に留まる．
+\item \textbf{Traffic Steering}: ULCL（Uplink Classifier）等による動的なトラフィック分岐は，4GにULCLに対応する概念がなく，本PoCでは対象外としている．
+\item \textbf{Multi-type PDU Support}: 5GCはIPに加えEthernetやUnstructuredタイプをサポートするが，4G RANはIPベースのPDN接続のみであり，本PoCではIPv4/IPv6のみを対象としている．
 \end{itemize}
 
 \subsection{セキュリティに関する制約}
-\ref{subsec:auth_key_management}節で述べたとおり，本提案の変換器設計ではUEの秘密情報（Ki, OPc）へのアクセス手段が必要となる．N26インターフェースを介した標準的な鍵共有が利用できない構成では，変換器が何らかの形でこれらの情報を保持する必要があり，セキュリティアーキテクチャ上の考慮が必要となる．本研究の検証環境における具体的な構成については\ref{sec:prototype_implementation}節を参照されたい．
+\label{subsec:security_constraints}
+\ref{subsec:auth_key_management}節で述べたとおり，本提案の変換器設計ではUEの秘密情報（Ki, OPc）へのアクセス手段が必要となる．N26インターフェースを介した標準的な鍵共有が利用できない構成では，変換器が何らかの形でこれらの情報を保持する必要があり，セキュリティアーキテクチャ上の考慮が必要となる．
+
+本研究の検証環境では，設定ファイル（auth\_keys.yaml）からKi/OPcを読み込む方式を採用した．これは商用環境では一般に想定されない構成であり，実運用においては以下のいずれかのアプローチが考えられる．
+\begin{itemize}
+\item 標準のN26インターフェースを実装し，コア網間で鍵コンテキストを共有する
+\item HSS/UDM連携により，変換器が認証ベクトルを取得する
+\item 変換器を信頼されたセキュリティドメイン内に配置し，適切なアクセス制御を実施する
+\end{itemize}
+\section{本章のまとめ}
+
+本章では，第\ref{chap:proposal}章で提案した疎結合アーキテクチャを実現するための詳細設計，プロトタイプ実装，および制約事項を述べた．各節の貢献を以下に要約する．
+
+\begin{itemize}
+    \item \textbf{詳細設計}（第\ref{sec:detailed_design}節）: C-Plane変換（S1AP↔NGAP，NAS EPS↔NAS 5GSのメッセージ変換規則，ID変換の体系化），U-Plane変換（TEIDマッピングテーブルによるHybrid Proxy設計），認証・鍵管理（Milenage処理代行によるデュアルモードセキュリティ），および手順タイミング差異を解消するEarly S1 Setup手順を設計した．
+    \item \textbf{プロトタイプ実装}（第\ref{sec:prototype_implementation}節）: C言語で約14,000行のプロトタイプを実装し，接続性検証を主目的としたPoCとしての簡略化（gNB-ID固定値生成，APN環境変数設定，QCI=9固定等）と論理設計との差分を明確化した．
+    \item \textbf{プロトコル仕様上の制約}（第\ref{sec:protocol_constraints}節）: 規格差分による制約（S1AP/NGAP間のIE非対称性），手順分離に起因する制約（PDU Session確立待機），機能制限に関する制約（ハンドオーバー，Network Slicing，QoS Flow，Traffic Steering，Multi-type PDU），およびセキュリティに関する制約（Ki/OPcアクセス要件）を整理した．
+\end{itemize}
+
+プロトタイプ実装はC言語で約14,000行，概念実証を目的とした構成である．次章では，このプロトタイプを用いた実験環境と評価手法を述べる．
