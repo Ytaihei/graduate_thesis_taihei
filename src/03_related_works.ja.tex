@@ -88,16 +88,16 @@ N3IWF（Non-3GPP InterWorking Function）は，Wi-Fi等の非3GPPアクセス網
 
 \subsection{5G-Flow: SDNベースのマルチRAT統合アーキテクチャ}
 
-Khaturiaらは，SDN（Software Defined Networking: ネットワークの制御機能とデータ転送機能を分離し，ソフトウェアで一元管理するアーキテクチャ）の代表的プロトコルであるOpenFlow\footnote{SDNにおける制御プレーンとデータプレーン間の標準プロトコル．}を用いて複数のRAT（NR，LTE，Wi-Fi等）を単一のソフトウェア定義RANとして統合する「5G-Flow」アーキテクチャを提案している\cite{Khaturia2021_5GFlow}．
+Khaturiaらは，SDN（Software Defined Networking: ネットワークの制御機能とデータ転送機能を分離し，ソフトウェアで一元管理するアーキテクチャ）の代表的プロトコルであるOpenFlow\footnote{SDNにおける制御プレーンとデータプレーン間の標準プロトコル．}を用いて複数のRATを単一のソフトウェア定義RANとして統合する「5G-Flow」アーキテクチャを提案している\cite{Khaturia2021_5GFlow}．同論文ではNRやWi-Fiを主な対象としているが，アーキテクチャを一般化すればLTEも含みうる設計となっている．
 
-5G-Flowの特徴は，RANノード（gNBやN3IWF等）のプロトコルスタックを「無線側スタック」と「CN接続側スタック（N2/N3）」に垂直分割し，それらをOpenFlowスイッチの物理ポートとして収容することで，RAT共通の単一インターワーキングエンティティを構成する点にある．さらに，UE側にもOpenFlowスイッチを導入し，上位層（NAS/IP）と下位層（NR/LTE/Wi-Fi MAC/PHY\footnote{Media Access Control / Physical Layer: 無線プロトコルの下位層．}）を分離する．この設計により，「任意のRATから任意のCN（5GC/4G CN）やインターネットへ」柔軟に接続できるとされる．
+5G-Flowの特徴は，RANノード（gNBやN3IWF等）のプロトコルスタックを「無線側スタック」と「CN接続側スタック（N2/N3）」に垂直分割し，それらをOpenFlowスイッチのインターフェース（論理ポート）として収容することで，RAT共通の単一インターワーキングエンティティを構成する点にある．さらに，UE側にもOpenFlowスイッチを導入し，上位層（NAS/IP）と下位層（NR/LTE/Wi-Fi MAC/PHY\footnote{Media Access Control / Physical Layer: 無線プロトコルの下位層．}）を分離する．この設計により，「任意のRATから任意のCN（5GC/4G CN）やインターネットへ」柔軟に接続できるとされる．
 
 5G-Flowは「任意のRATから任意のCNへ」という柔軟な接続を目指す点で，本研究と方向性を共有する．また，UE-RAN間の通信とUE-CN間の通信を論理的に分離するという設計思想は，本研究の「疎結合」アプローチと通底するものがある．
 
 しかし，5G-Flowの実現には以下の要件が存在する．
 \begin{itemize}
-    \item RAN側の改修: 既存のgNBやeNBにOpenFlowスイッチを導入し，プロトコルスタックを分割する必要がある．
-    \item UE側の改修: UEにもOpenFlowスイッチを導入し，NAS/IP層と無線プロトコル層を分離する必要がある．
+    \item RAN側の改修: 既存のgNBやeNBにOpenFlowスイッチを導入し，ソフトウェア的にプロトコルスタックを分割する必要がある．
+    \item UE側の改修: UEにもOpenFlowスイッチを導入し，ソフトウェア的にNAS/IP層と無線プロトコル層を分離する必要がある．
     \item SDNコントローラの導入: 5G-Flowコントローラがフローエントリを一元管理し，論理ポート間のマッピングを制御する必要がある．
 \end{itemize}
 
@@ -105,9 +105,9 @@ Khaturiaらは，SDN（Software Defined Networking: ネットワークの制御�
 
 \subsection{Hybrid 5G Core: 標準拡張に基づくインターワーキング}
 
-Cageniusらは，4Gレガシー端末と5G NSA端末を含む全端末を，5GCベースの「ハイブリッドコア」で一元的に収容するアーキテクチャを提案している\cite{Cagenius2024_Hybrid5GCore}．
+Cageniusらは，4Gレガシー端末と5G NSA端末を含む4G/5G端末を，5GCベースの「ハイブリッドコア」で一元的に収容するアーキテクチャを提案している\cite{Cagenius2024_Hybrid5GCore}．
 
-このアプローチは，3GPP Rel-16で拡張されたEPC-5GCインターワーキング機能を活用し，5GC NAS非対応の4G端末のPDN接続をSMF+PGW-Cにアンカーさせることで，内部的にはPDU Sessionとして扱う構成である．端末には従来通りEPC NASとAPN\footnote{Access Point Name: 接続先ネットワークを識別する名前．}のみを見せつつ，コア内部ではSMF+PGW-CがPDU Session IDを割り当て，UDM/PCF/CHFなど5GC SBA（Service Based Architecture）と連携して単一のサブスクリプション・ポリシー・課金ドメインに統合する．
+このアプローチは，3GPP Rel-16で拡張されたEPC-5GCインターワーキング機能を活用し，5GC NAS非対応の4G/5G NSA端末のPDN接続をSMF+PGW-Cにアンカーさせることで，内部的にはPDU Sessionとして扱う構成である．端末には従来通りEPC NASとAPN\footnote{Access Point Name: 接続先ネットワークを識別する名前．}のみを見せつつ，コア内部ではSMF+PGW-CがPDU Session IDを割り当て，UDM/PCF/CHFなど5GC SBA（Service Based Architecture）と連携して単一のサブスクリプション・ポリシー・課金ドメインに統合する．
 
 Hybrid 5G Coreは本研究と目的を共有する点が多い．特に以下の点で類似している．
 \begin{itemize}
@@ -119,7 +119,7 @@ Hybrid 5G Coreは本研究と目的を共有する点が多い．特に以下の
 しかし，Hybrid 5G Coreには以下の制約がある．
 \begin{itemize}
     \item MME・SGWの残存: MMEを拡張して利用し，SGWも最小構成で維持する必要がある．すなわち，EPCコンポーネントを完全に廃止することはできない．
-    \item 標準拡張への依存: Rel-16のEPC-5GCインターワーキング機能に依存しており，既存のMME/SGWがこの拡張をサポートしている必要がある．
+    \item 標準拡張への依存: Rel-16のEPC-5GCインターワーキング仕様に依存しており，MME側の拡張（SMF+PGW-C選択機能等）やDNS設定が必要となる．
 \end{itemize}
 
 これに対し，本研究のS1-N2変換ゲートウェイは，MME・SGWを含むEPCコンポーネントを完全に廃止し，5GCのみでの運用を可能にする点で差別化される．Hybrid 5G CoreがEPCとの「共存」を前提とした移行アプローチであるのに対し，本研究はEPCの「完全廃止」を可能にするアプローチである．
@@ -155,7 +155,7 @@ Hybrid 5G Coreは本研究と目的を共有する点が多い．特に以下の
 
 \begin{itemize}
     \item RAN改修のスケーラビリティ問題への解法: 既存の標準技術（ng-eNB）では多数の基地局を個別に改修する必要がありスケールしない．これに対し，集約されたCN側に変換ゲートウェイを配置することで，RAN無改修での移行を実現する点．
-    \item 世代共通機能に基づく設計: モバイル通信の基本機能（認証・課金，移動管理，U-Plane）は世代を超えて共通しているという観察に基づき，4G/5Gプロトコル間の具体的なパラメータ対応関係を明らかにし，変換ロジックとして実装した点（第\ref{chap:proposal}章で論理設計を，第\ref{chap:design}章で詳細設計を述べる）．
+    \item 世代共通機能に基づく設計: モバイル通信の基本機能（AAA，Mobility Management，U-Plane）は世代を超えて共通しているという観察に基づき，4G/5Gプロトコル間の具体的なパラメータ対応関係を明らかにし，変換ロジックとして実装した点（第\ref{chap:proposal}章で論理設計を，第\ref{chap:design}章で詳細設計を述べる）．
     \item ステートマシンの違いの解消: 第\ref{chap:background}章で述べた通り，4GではAttach手順内でベアラ確立が完了するのに対し，5GではRegistration後にPDU Session Establishmentを行うという，C-Planeの手順相違が存在する．単純なメッセージ変換では解決できないこの問題に対し，独自のシーケンス制御手法を導入して解決した点（第\ref{chap:design}章で詳述）．
 \end{itemize}
 

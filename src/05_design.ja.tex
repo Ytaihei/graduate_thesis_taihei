@@ -172,12 +172,12 @@ eKSI (3bit) & ngKSI (4bit, TSC=0) \\
     };
 
   \end{tikzpicture}
-  \caption{プロトタイプにおける接続シーケンス（Early S1 Setupを含む）}
+  \caption{プロトタイプにおける接続シーケンス}
   \label{fig:sequence_diagram}
 \end{figure}
 
 \subsection{U-Plane変換とTEIDマッピング}
-U-Planeでは，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインタフェースと5GのN3インタフェースは共にGTPv1-Uプロトコル\cite{3GPP_TS29281}を使用するため，プロトコル変換は不要であるが，TEIDと宛先IPアドレスの書き換えが必要となる．
+U-Planeでは，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインターフェースと5GのN3インターフェースは共にGTPv1-Uプロトコル\cite{3GPP_TS29281}を使用するため，プロトコル変換は不要であるが，TEIDと宛先IPアドレスの書き換えが必要となる．
 
 なお，実装によっては方向別（Uplink用／Downlink用）のマッピングテーブルを持ち，各テーブル内でTEIDが一意であることを前提として，GTP-Uヘッダ内のTEIDのみを検索キーとしてマッピングを行う方式も有効である．
 
@@ -626,9 +626,11 @@ S1APとNGAPは情報要素（IE）の集合と手順が一致しないため，�
 \begin{itemize}
 \item \textbf{ハンドオーバー}: S1ハンドオーバー手順とN2ハンドオーバー手順の相互変換は未実装であり，基地局間の移動を伴う通信継続には対応していない．本研究では位置登録（Registration）に焦点を当て，移動管理（Mobility Management）は対象外としている．
 \item \textbf{Network Slicing}: S-NSSAIに基づくスライス選択は4Gに対応概念がないため，NGAP必須IEを満たすために固定値（SST=1等）での補完が必要となる．論理設計ではAPNからS-NSSAIへのマッピングを想定しているが，本PoCでは未実装である．
-\item \textbf{QoS Flow}: 5GのFlow単位QoS\allowbreak （GFBR/MFBR）から4GのBearer単位\allowbreak （GBR/MBR）への完全なマッピングは困難であり，QCI/5QI/QFIの対応関係に基づく簡易変換（\ref{subsec:qos_mapping}節参照）に留まる．
-\item \textbf{Traffic Steering}: ULCL（Uplink Classifier）等による動的なトラフィック分岐は，4GにULCLに対応する概念がなく，本PoCでは対象外としている．
-\item \textbf{Multi-type PDU Support}: 5GCはIPに加えEthernetやUnstructuredタイプをサポートするが，4G RANはIPベースのPDN接続のみであり，本PoCではIPv4/IPv6のみを対象としている．
+\item \textbf{QoS Flow}: 5GのFlow単位QoS\allowbreak （GFBR/MFBR）から4GのBearer単位\allowbreak （GBR/MBR）への完全なマッピングは困難である．\ref{subsec:qos_mapping}節で設計したQCI/5QIの対応関係に基づく変換ロジックに対し，本PoCではさらに簡略化してQCI=9固定としている（第\ref{sec:prototype_implementation}節参照）．
+\item \textbf{Traffic Steering}: 論理設計ではパケットフィルタに基づく転送先UPF選択を想定しているが，本PoCでは単一UPF構成での検証に限定しており，複数UPFへの動的分岐は未実装である．
+\item \textbf{Multi-type PDU Support}: 論理設計ではPDN TypeからPDU Typeへの1対1マッピングを定義しているが，本PoCではIPv4のみを対象としている．IPv6についてはアドレス処理の実装が未完了であり，EthernetおよびUnstructuredタイプは4G RANで生成されないため対象外である．
+\item \textbf{セッション変更}: Bearer変更（4G）とPDU Session変更（5G）の相互変換は未実装であり，確立後のセッションパラメータ変更には対応していない．
+\item \textbf{IDLE/CONNECTED状態遷移}: S1 Release/Service Request（4G）とN2 Release/Service Request（5G）の変換は未実装である．本PoCはCONNECTED状態での接続確立に焦点を当てており，IDLE状態への遷移および復帰は対象外としている．なお，UEからのService RequestについてはTAU処理で代替しているが，本来のService Request手順には対応していない．
 \end{itemize}
 
 \subsection{セキュリティに関する制約}
@@ -648,7 +650,7 @@ S1APとNGAPは情報要素（IE）の集合と手順が一致しないため，�
 \begin{itemize}
     \item \textbf{詳細設計}（第\ref{sec:detailed_design}節）: C-Plane変換（S1AP↔NGAP，NAS EPS↔NAS 5GSのメッセージ変換規則，ID変換の体系化），U-Plane変換（TEIDマッピングテーブルによるHybrid Proxy設計），認証・鍵管理（Milenage処理代行によるデュアルモードセキュリティ），および手順タイミング差異を解消するEarly S1 Setup手順を設計した．
     \item \textbf{プロトタイプ実装}（第\ref{sec:prototype_implementation}節）: C言語で約14,000行のプロトタイプを実装し，接続性検証を主目的としたPoCとしての簡略化（gNB-ID固定値生成，APN環境変数設定，QCI=9固定等）と論理設計との差分を明確化した．
-    \item \textbf{プロトコル仕様上の制約}（第\ref{sec:protocol_constraints}節）: 規格差分による制約（S1AP/NGAP間のIE非対称性），手順分離に起因する制約（PDU Session確立待機），機能制限に関する制約（ハンドオーバー，Network Slicing，QoS Flow，Traffic Steering，Multi-type PDU），およびセキュリティに関する制約（Ki/OPcアクセス要件）を整理した．
+    \item \textbf{プロトコル仕様上の制約}（第\ref{sec:protocol_constraints}節）: 規格差分による制約（S1AP/NGAP間のIE非対称性），手順分離に起因する制約（PDU Session確立待機），機能制限に関する制約（ハンドオーバー，Network Slicing，QoS Flow，Traffic Steering，Multi-type PDU，セッション変更，IDLE/CONNECTED状態遷移），およびセキュリティに関する制約（Ki/OPcアクセス要件）を整理した．
 \end{itemize}
 
 プロトタイプ実装はC言語で約14,000行，概念実証を目的とした構成である．次章では，このプロトタイプを用いた実験環境と評価手法を述べる．

@@ -140,7 +140,7 @@ eNBとEPCの接続アーキテクチャは3GPP TS 23.401で規定されており
 このアーキテクチャにより，MME（制御）とS-GW（転送）というノード間の機能分離は実現されている．しかし，従来のEPC実装では，データ転送を担うゲートウェイノード（S-GW/P-GW）がC-Plane機能とU-Plane機能を同一ハードウェア内で実装したモノリシック構成となる場合が多かった．その結果，トラフィック増大時にU-Planeリソースのみを独立して拡張することが困難であった．
 
 \subsubsection{UEーCN 間の制御層: RRCとNAS}
-4Gでは，無線区間の制御を担う\textbf{RRC（Radio Resource Control）}（UE–eNB間）と，CNと直接やり取りする\textbf{NAS（Non-Access Stratum）}（UE–MME間）が分離される．RRCは無線リンクの確立・解放や測定・ハンドオーバ制御を担い，NASは位置登録（Attach），認証・セキュリティ，ベアラ管理などCN側の手続きを担う\cite{3GPP_TS24301}．NASメッセージはS1AP上をカプセル化されてMMEへ転送され，RANと独立した状態機械・パラメータで動作する．
+4Gでは，無線区間の制御を担う\textbf{RRC（Radio Resource Control）}（UE–eNB間）\cite{3GPP_TS36331}と，CNと直接やりとりする\textbf{NAS（Non-Access Stratum）}（UE–MME間）が分離される．RRCは無線リンクの確立・解放や測定・ハンドオーバー制御を担い，NASは位置登録（Attach），認証・セキュリティ，ベアラ管理などCN側の手続きを担う\cite{3GPP_TS24301}．NASメッセージはS1AP上をカプセル化されてMMEへ転送され，RANと独立したステートマシン・パラメータで動作する．
 
 \subsubsection{CUPS（Control and User Plane Separation）： CU分離によるスケーラビリティの向上}
 上述のスケーラビリティの課題を解決するために，3GPPのRelease 14仕様では，EPSに\textbf{CUPS（Control and User Plane Separation）}が導入され，S-GWおよびP-GWをC-Plane（S-GW-C/ P-GW-C）とU-Plane（S-GW-U/ P-GW-U）へ論理的に分離するアーキテクチャ拡張が規定された\cite{3GPP_TS23214}．C-PlaneノードとU-Planeノード間はSxインターフェースで接続され，プロトコルとしてPFCP（Packet Forwarding Control Protocol）が用いられる\cite{3GPP_TS29244}．CUPSにより，U-Plane資源のみの独立スケーリングや地理分散配置が可能となり，CUPS以前のモノリシックなスケール制約が大幅に緩和された．
@@ -302,7 +302,7 @@ gNBと5GCは\textbf{NGインターフェース}で接続される\cite{3GPP_TS38
 4GのS1インターフェース（S1AP/GTP-U）と5GのNGインターフェース（NGAP/GTP-U拡張ヘッダ）の相違点については，後述の2.3節で詳しく取り扱う．
 
 \subsubsection{UEーCN 間の制御層: RRCとNAS}
-5Gでも，UEとRAN間で動作する\textbf{RRC}（UE–gNB間）と，UEとCNが直接やり取りする\textbf{NAS}（UE–AMF間）に分離される．RRCは無線リンクの確立・解放や測定・ハンドオーバ制御を担い，NASは登録（Registration），セキュリティ，PDUセッション管理などCN側の手続きを担う\cite{3GPP_TS24501}．NASメッセージはNGAPを経由してAMFへ転送され，RANと独立したステートマシンとパラメータ体系を持つ．ただし，4G NASと5G NASはプロトコル仕様が異なり，メッセージ体系やセキュリティアーキテクチャ（鍵導出階層等）が刷新されている．この相違は第\ref{sec:protocol_barriers}項で詳しく扱う．
+5Gでも，UEとRAN間で動作する\textbf{RRC}（UE–gNB間）\cite{3GPP_TS38331}と，UEとCNが直接やりとりする\textbf{NAS}（UE–AMF間）に分離される．RRCは無線リンクの確立・解放や測定・ハンドオーバー制御を担い，NASは登録（Registration），セキュリティ，PDUセッション管理などCN側の手続きを担う\cite{3GPP_TS24501}．NASメッセージはNGAPを経由してAMFへ転送され，RANと独立したステートマシンとパラメータ体系を持つ．ただし，4G NASと5G NASはプロトコル仕様が異なり，メッセージ体系やセキュリティアーキテクチャ（鍵導出階層等）が刷新されている．この相違は第\ref{sec:protocol_barriers}項で詳しく扱う．
 \subsubsection{NFV（Network Functions Virtualisation）：専用機からの解放とコスト削減}
 先述の通り，従来のEPCではMMEやS-GW/P-GW等の主要ノードはベンダー独自の専用ハードウェアアプライアンスとして実装されており，ハードウェアとソフトウェアが密結合していた\cite{etsi_nfv_2012}．その結果，高額な設備投資，ベンダーロックイン，および新機能導入時の物理的制約といった課題が生じていた．
 
@@ -725,13 +725,129 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
 
 \subsubsection{S1AP/NGAP: 制御信号と識別子の非互換性}
 4Gの制御プロトコルであるS1-APと，5GのNG-APは，共にASN.1で記述されているものの，メッセージ構造やパラメータ（IE：Information Element）が異なる．
-例えば，4Gではネットワークへの登録とU-Plane確立を一括して行う「Attach」手順が存在するが，5Gではネットワークへの登録を行う「Registration」とU-Planeの確立を行う「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
+例えば，4Gではネットワークへの登録とU-Plane確立を一括して行う手順が存在するが，5Gではネットワークへの登録とU-Planeの確立が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
-% TODO: 4G Attach手順と5G Registration/PDU Session Establishment手順の
-%       標準シーケンス比較図を追加する（fig:standard_sequence_comparison）
-%       - 4G: UE→eNB→MME のAttach手順（Default Bearer確立まで一括）
-%       - 5G: UE→gNB→AMF のRegistration手順 + PDU Session Establishment手順（分離）
-%       - 両者のタイミング差異を視覚化し、第5章のEarly S1 Setup方式との対比を明確にする
+図\ref{fig:standard_sequence_comparison}に，4Gと5Gにおけるネットワーク登録からU-Plane確立までの手順の比較を示す．4Gでは登録からデフォルトベアラ確立までが一括して行われるのに対し，5Gでは登録とU-Plane確立が明確に分離されている．この手順分離への対応は，第\ref{chap:design}章で述べるEarly S1 Setup方式の設計動機となっている．
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=0.72, transform shape, every node/.style={font=\small}]
+    % === 4G側（左） ===
+    \node[font=\small\bfseries] at (2.5,1) {4G（一括）};
+
+    % Nodes (4G)
+    \node (ue4) at (0,0) [draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, font=\scriptsize] {UE};
+    \node (enb4) at (2.5,0) [draw, rounded corners, fill=GoogleBlue!30, minimum width=1.2cm, font=\scriptsize] {eNB};
+    \node (mme4) at (5,0) [draw, rounded corners, fill=GoogleGreen!30, minimum width=1.2cm, font=\scriptsize] {MME};
+
+    % Lifelines (4G)
+    \draw [thick, dotted] (ue4) -- (0,-14.5);
+    \draw [thick, dotted] (enb4) -- (2.5,-14.5);
+    \draw [thick, dotted] (mme4) -- (5,-14.5);
+
+    % 4G Sequence
+    \draw [->, thick] (0,-0.8) -- (2.5,-0.8) node [midway, above, font=\scriptsize] {登録要求};
+    \draw [->, thick] (2.5,-1.3) -- (5,-1.3) node [midway, above, font=\scriptsize] {};
+
+    \draw [<-, thick] (2.5,-2.3) -- (5,-2.3) node [midway, above, font=\scriptsize] {認証要求};
+    \draw [<-, thick] (0,-2.8) -- (2.5,-2.8);
+    \draw [->, thick] (0,-3.5) -- (2.5,-3.5) node [midway, above, font=\scriptsize] {認証応答};
+    \draw [->, thick] (2.5,-4.0) -- (5,-4.0);
+
+    \draw [<-, thick] (2.5,-4.8) -- (5,-4.8) node [midway, above, font=\scriptsize] {暗号化設定};
+    \draw [<-, thick] (0,-5.3) -- (2.5,-5.3);
+    \draw [->, thick] (0,-6.0) -- (2.5,-6.0) node [midway, above, font=\scriptsize] {暗号化完了};
+    \draw [->, thick] (2.5,-6.5) -- (5,-6.5);
+
+    % 4G: Init Context Setup (Default Bearer確立含む)
+    \draw [<-, thick, GoogleRed] (2.5,-7.3) -- (5,-7.3) node [midway, above, font=\scriptsize] {コンテキスト設定};
+    \node [font=\tiny, text=GoogleRed, anchor=west] at (5.1,-7.6) {+登録承認};
+    \node [font=\tiny, text=GoogleRed, anchor=west] at (5.1,-7.95) {+ベアラ情報};
+    \draw [<-, thick, GoogleRed] (0,-7.8) -- (2.5,-7.8);
+    \draw [->, thick] (0,-8.5) -- (2.5,-8.5) node [midway, above, font=\scriptsize] {登録完了};
+    \draw [->, thick, GoogleRed] (2.5,-9.0) -- (5,-9.0) node [midway, above, font=\scriptsize] {コンテキスト応答};
+
+    % 4G bracket
+    \draw [decorate, decoration={brace, amplitude=5pt, mirror}, thick, GoogleRed]
+      (-0.5,-0.6) -- (-0.5,-9.2) node [midway, left, font=\scriptsize, xshift=-3pt, align=right] {登録+\\ベアラ\\一括};
+
+    % 4G 完了表示
+    \node [font=\scriptsize, align=center] at (2.5,-10) {U-Plane確立完了};
+    \draw [thick, dashed, gray] (-0.3,-9.5) -- (5.3,-9.5);
+
+    % === 5G側（右） ===
+    \node[font=\small\bfseries] at (10.5,1) {5G（分離）};
+
+    % Nodes (5G)
+    \node (ue5) at (8,0) [draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, font=\scriptsize] {UE};
+    \node (gnb5) at (10.5,0) [draw, rounded corners, fill=GoogleBlue!30, minimum width=1.2cm, font=\scriptsize] {gNB};
+    \node (amf5) at (13,0) [draw, rounded corners, fill=GoogleGreen!30, minimum width=1.2cm, font=\scriptsize] {AMF};
+
+    % Lifelines (5G)
+    \draw [thick, dotted] (ue5) -- (8,-14.5);
+    \draw [thick, dotted] (gnb5) -- (10.5,-14.5);
+    \draw [thick, dotted] (amf5) -- (13,-14.5);
+
+    % 5G Registration Sequence
+    \draw [->, thick] (8,-0.8) -- (10.5,-0.8) node [midway, above, font=\scriptsize] {登録要求};
+    \draw [->, thick] (10.5,-1.3) -- (13,-1.3) node [midway, above, font=\scriptsize] {};
+
+    \draw [<-, thick] (10.5,-2.3) -- (13,-2.3) node [midway, above, font=\scriptsize] {認証要求};
+    \draw [<-, thick] (8,-2.8) -- (10.5,-2.8);
+    \draw [->, thick] (8,-3.5) -- (10.5,-3.5) node [midway, above, font=\scriptsize] {認証応答};
+    \draw [->, thick] (10.5,-4.0) -- (13,-4.0);
+
+    \draw [<-, thick] (10.5,-4.8) -- (13,-4.8) node [midway, above, font=\scriptsize] {暗号化設定};
+    \draw [<-, thick] (8,-5.3) -- (10.5,-5.3);
+    \draw [->, thick] (8,-6.0) -- (10.5,-6.0) node [midway, above, font=\scriptsize] {暗号化完了};
+    \draw [->, thick] (10.5,-6.5) -- (13,-6.5);
+
+    % 5G: Registration Accept (Bearer確立なし)
+    \draw [<-, thick] (10.5,-7.3) -- (13,-7.3) node [midway, above, font=\scriptsize] {登録承認};
+    \draw [<-, thick] (8,-7.8) -- (10.5,-7.8);
+    \draw [->, thick] (8,-8.3) -- (10.5,-8.3) node [midway, above, font=\scriptsize] {登録完了};
+    \draw [->, thick] (10.5,-8.8) -- (13,-8.8);
+
+    % 5G bracket for Registration
+    \draw [decorate, decoration={brace, amplitude=5pt}, thick]
+      (13.5,-0.6) -- (13.5,-8.9) node [midway, right, font=\scriptsize, xshift=3pt] {登録};
+
+    % 5G Registration完了の区切り線
+    \draw [thick, dashed, gray] (7.7,-9.2) -- (13.3,-9.2);
+    \node [font=\scriptsize, gray] at (10.5,-9.5) {（登録完了，U-Planeなし）};
+
+    % 5G: PDU Session Establishment (完全なシーケンス)
+    \draw [->, thick, GoogleRed] (8,-10.2) -- (10.5,-10.2) node [midway, above, font=\scriptsize] {セッション確立要求};
+    \draw [->, thick, GoogleRed] (10.5,-10.7) -- (13,-10.7) node [midway, above, font=\scriptsize] {};
+
+    \draw [<-, thick, GoogleRed] (10.5,-11.5) -- (13,-11.5) node [midway, above, font=\scriptsize] {リソース設定要求};
+    \node [font=\tiny, text=GoogleRed, anchor=west] at (13.1,-12.1) {+セッション確立承認};
+    \draw [<-, thick, GoogleRed] (8,-12.0) -- (10.5,-12.0);
+
+    \draw [->, thick, GoogleRed] (10.5,-12.8) -- (13,-12.8) node [midway, above, font=\scriptsize] {リソース設定応答};
+
+    % 5G bracket for PDU Session
+    \draw [decorate, decoration={brace, amplitude=5pt}, thick, GoogleRed]
+      (13.5,-10.0) -- (13.5,-13.0) node [midway, right, font=\scriptsize, xshift=3pt, text=GoogleRed, align=left] {セッション\\確立};
+
+    % 5G 完了表示
+    \node [font=\scriptsize, align=center] at (10.5,-13.8) {U-Plane確立完了};
+    \draw [thick, dashed, gray] (7.7,-13.4) -- (13.3,-13.4);
+
+    % 凡例
+    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=3pt] at (6.5,-15.3) {
+      \begin{tabular}{@{}l@{\hspace{0.8em}}l@{\hspace{0.8em}}l@{}}
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray] (0,0) rectangle (0.15,0.15);\ UE &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.15,0.15);\ RAN &
+      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!30] (0,0) rectangle (0.15,0.15);\ CN \\
+      \multicolumn{3}{@{}l@{}}{\textcolor{GoogleRed}{赤}: U-Plane確立関連}
+      \end{tabular}
+    };
+
+  \end{tikzpicture}
+  \caption{4Gと5Gにおけるネットワーク登録からU-Plane確立までの手順の比較}
+  \label{fig:standard_sequence_comparison}
+\end{figure}
 
 加えて，5GCの特徴である\textbf{ネットワークスライシング}の\textbf{識別子（S-NSSAI）}を運搬するフィールドがS1-APには存在しない．ネットワークスライシングとは，図\ref{fig:network_slicing_concept}に示すように，単一の物理インフラ上に用途別の論理ネットワーク（スライス）を構築する機能である．
 
@@ -884,7 +1000,7 @@ UEとCNが直接通信するNAS（Non-Access Stratum）層においても，4G N
     % 説明
     \node[font=\scriptsize, align=center] at (14.5,-0.5) {1 PDU Session = 1 GTP-Uトンネル\\トンネル内に複数のQoSフロー（QFI）};
   \end{tikzpicture}
-  \caption{4Gと5GのQoSモデル比較（DRB対応の違いを併記）}
+  \caption{4Gと5GのQoSモデル比較}
   \label{fig:qos_model_comparison}
 \end{figure}
 
@@ -893,7 +1009,7 @@ eNBを無改修で5GCに接続する場合，5GのQoSフローID（QFI）と4G�
 さらに，5GCのN3インターフェースではQoS情報を運ぶ\textbf{GTP-U拡張ヘッダ（PDU Session Container）}の付与が必須となる．標準仕様のLTE eNBは未知の拡張ヘッダをドロップまたは無視する実装が多く，そのままではダウンリンクパケットが適切に処理されないリスクがある．拡張ヘッダを終端し，4G互換のGTP-Uに再封入する処理が求められる．
 
 \subsubsection{RRCステート管理の不整合}
-RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態はコアネットワーク層の接続管理状態（4GのECM-IDLE/CONNECTED，5GのCM-IDLE/CONNECTED）と連動している．5Gでは省電力と低遅延復帰を両立する\textbf{RRC Inactive}状態が導入されており，この状態ではRRC接続は解放されているがCM層ではCM-CONNECTEDとして扱われる．5GCはこの3状態モデルを前提にページングや状態遷移を制御するが，レガシーLTE eNBはIdle/Connectedの2状態モデルを前提としており，RRC Inactiveに相当する動作を実行できない．このステート管理の非対称性は，CN層の状態マッピングを行う変換ゲートウェイにおいて考慮すべき設計課題となり得る．
+RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態はコアネットワーク層の接続管理状態（4GのECM-IDLE/CONNECTED，5GのCM-IDLE/CONNECTED）と連動している．5Gでは省電力と低遅延復帰を両立する\textbf{RRC Inactive}状態が導入されており\cite{3GPP_TS38331}，この状態ではRRC接続は解放されているがCM層ではCM-CONNECTEDとして扱われる（CM-CONNECTED with RRC\_INACTIVE）．5GC自体はCM-IDLE/\allowbreak CM-CONNECTEDの2状態で動作するが，RAN側にはRRC\_CONNECTED/\allowbreak RRC\_INACTIVE/\allowbreak RRC\_IDLEの3状態構造があり，5GCはこれを前提にページングや状態遷移をRAN主導で協調制御している\cite{3GPP_TS23501_R15}．一方，レガシーLTE eNBはIdle/Connectedの2状態モデルを前提としており，RRC Inactiveに相当する動作を実行できない．このステート管理の非対称性は，CN層の状態マッピングを行う変換ゲートウェイにおいて考慮すべき設計課題となり得る．
 
 \section{本研究の目的}
 \label{sec:research_objective}
@@ -912,7 +1028,7 @@ RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態は�
 
 \begin{enumerate}
     \item \textbf{世代不変性に基づくプロトコルマッピングの体系化}:
-    前節で整理したプロトコル障壁（S1AP↔NGAP，NAS，GTP-U）に対し，4G/5Gの各プロトコル仕様を比較分析する．AAA，移動管理，ユーザデータ転送といった世代不変な機能要件が，各世代のプロトコル上でどのようなパラメータとして実装されているかを整理し，変換ルールとして体系化する．
+    前節で整理したプロトコル障壁（S1AP⇔NGAP，NAS，GTP-U）に対し，4G/5Gの各プロトコル仕様を比較分析する．AAA，Mobility Management，U-Planeといった世代不変な機能要件が，各世代のプロトコル上でどのようなパラメータとして実装されているかを整理し，変換ルールとして体系化する．
 
     \item \textbf{疎結合アーキテクチャの設計と実証}:
     体系化したプロトコルマッピングに基づき，S1インターフェースとNGインターフェースを相互変換するゲートウェイを設計・実装する．特に，4Gと5Gの接続シーケンスの差異（Attach手順とRegistration/PDU Session Establishment手順の違い）を吸収するシーケンス制御手法を導入し，レガシーRANから5GCへの透過的な接続が可能であることを実証する．
@@ -932,7 +1048,7 @@ RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態は�
         \item 4G/5G間の接続シーケンス差異（ベアラ確立タイミング等）の吸収
         \item 実機環境（sXGP基地局 + Open5GS）における基本動作（位置登録，データ通信）の検証
     \end{itemize}
-    \item \textbf{議論・考察対象}（実装対象外だが設計指針を示す）:
+    \item \textbf{議論・考察対象}:
     \begin{itemize}
         \item ネットワークスライシング等の5GC固有機能の適用アーキテクチャ
         \item ハンドオーバー等の移動管理機能への拡張性
@@ -946,7 +1062,7 @@ RRCは無線区間（UE--eNB間）のプロトコルであるが，RRC状態は�
 
 \begin{itemize}
     \item \textbf{アーキテクチャの刷新}: 5GCはNFV/SBAによりクラウドネイティブ化が進み，CN側の進化速度が加速している．一方，RANは物理的な電波設備を伴うため，更新サイクルが長い（表\ref{tab:4g5g_architecture_comparison}参照）．この非対称性が，「CN先行移行」への需要を生んでいる．
-    \item \textbf{移行シナリオの限界}: 3GPP標準のSA/NSA等の移行形態は，いずれもRANの更新（SA）または改修（NSA，DAPS）を前提としており，既存eNBを無改修のまま5GCへ接続する手段が規定されていない．
+    \item \textbf{移行シナリオの限界}: 3GPP標準のSA/NSA等の移行形態は，いずれもRANの更新（SA）または改修（NSA，ng-eNB）を前提としており，既存eNBを無改修のまま5GCへ接続する手段が規定されていない．
     \item \textbf{プロトコル障壁}: eNBを無改修で5GCに接続するには，C-Plane（S1AP↔NGAP：メッセージ体系・IE構造の差異），NAS（EPS-AKA↔5G-AKA：鍵導出階層の差異），U-Plane（GTP-U：QoSモデル・拡張ヘッダの差異）の各層でプロトコル変換が必要となる．
     \item \textbf{研究目的の設定}: これらの障壁を克服するため，eNBと5GCの間にプロトコル変換ゲートウェイを介在させ，既存4G RANを無改修で5GCに収容する「疎結合アーキテクチャ」の提案・実証を本研究の目的として設定した．
 \end{itemize}

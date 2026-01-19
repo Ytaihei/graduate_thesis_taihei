@@ -7,7 +7,7 @@
 第\ref{chap:proposal}章では，4G RANを無改修で5GCに収容するための疎結合アーキテクチャを提案し，以下の3つのアーキテクチャ要件（第\ref{subsec:architecture_requirements}節）を設定した．
 \begin{description}
     \item[R1: 透過的介在] 既存RANと5GCの間に透過的に介在し，双方に改修を要求しない
-    \item[R2: プロトコル相互変換] 世代不変な本質的機能（AAA，移動管理，U-Plane）を維持しつつ変換
+    \item[R2: プロトコル相互変換] 世代不変な本質的機能（AAA，Mobility Management，U-Plane）を維持しつつ変換
     \item[R3: 5GC固有機能の整合] スライシング等の拡張機能への対応を可能にする
 \end{description}
 
@@ -21,21 +21,21 @@
 \hline
 \textbf{要件} & \textbf{検証内容} & \textbf{評価シナリオ} \\
 \hline
-R1: 透過的介在 & eNB/5GCの無改修での接続成立 & シナリオ1（構成検証） \\
+R1: 透過的介在 & eNB/5GCの無改修での接続成立 & シナリオ1 \\
 \hline
-R2: プロトコル変換 & 世代共通機能（AAA，移動管理，U-Plane）の正常動作 & シナリオ1, 2 \\
+R2: プロトコル変換 & 世代共通機能（AAA，Mobility Management，U-Plane）の正常動作 & シナリオ1, 2 \\
 \hline
-R3: 5GC固有機能 & 固定値補完による最低限の整合 & 対象外（注） \\
+R3: 5GC固有機能 & S-NSSAIデフォルト割り当て，QoSマッピング & シナリオ1, 2（部分的） \\
 \hline
 \end{tabular}
 \end{table}
 
-（注）R3については，本プロトタイプがNetwork Slicing等の高度機能を固定値補完で実装しているため（第\ref{chap:design}章参照），機能検証は対象外とする．ただし，固定値補完によりNGAP必須IEを満たすことで接続が成立している点は，R1/R2の検証を通じて間接的に確認される．
+（注）R3については，本プロトタイプがNetwork Slicing等の高度機能を固定値補完で実装しているため（第\ref{chap:design}章参照），完全な機能検証は対象外とする．ただし，S-NSSAIのデフォルト割り当ておよびQCI/5QIのマッピングについては，接続成立を通じて部分的に検証する．
 
 実験の具体的な目的は以下の通りである．
 
 \begin{enumerate}
-    \item \textbf{機能検証（R1/R2の実証）}: 4G RAN（sXGP\footnote{shared eXtended Global Platform: 日本国内の1.9GHz帯で免許不要で利用可能なプライベートLTE規格．詳細は第\ref{subsubsec:sxgp}項を参照．}）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．具体的には，C-Planeにおける登録手順（Registration）とU-Planeにおけるデータ疎通（PDU Session）の成立を通じて，認証や移動管理といった「世代共通機能」がプロトコル変換を経ても正しく維持されることを検証する．
+    \item \textbf{機能検証（R1/R2の実証，R3の部分的実証）}: 4G RAN（sXGP\footnote{shared eXtended Global Platform: 日本国内の1.9GHz帯で免許不要で利用可能なプライベートLTE規格．詳細は第\ref{subsubsec:sxgp}項を参照．}）と5Gコア（Open5GS）が，提案ゲートウェイを介して正常に接続できることを確認する．具体的には，C-Planeにおける登録手順（Registration）とU-Planeにおけるデータ疎通（PDU Session）の成立を通じて，認証やMobility Managementといった「世代共通機能」がプロトコル変換を経ても正しく維持されることを検証する．また，S-NSSAIのデフォルト割り当てやQoSマッピング等，5GC固有機能の一部についても動作を確認する．
     \item \textbf{性能評価}: ゲートウェイの導入によるオーバーヘッド（遅延，スループット低下）を測定し，実用上の許容範囲内であることを確認する．
     \item \textbf{実機相互運用性}: シミュレータでは検証困難な，実際の無線機（sXGP）と商用スマートフォン（UE）を用いた環境において，プロトコルスタックが正常に動作することを実証する．
 \end{enumerate}
@@ -106,7 +106,7 @@ Open5GS\cite{open5gs}は，3GPP Release 16/17に準拠した5GC機能（AMF, SMF
 
 \subsubsection{sXGP採用理由と実機検証の意義}
 \label{subsubsec:sxgp}
-sXGP（shared eXtended Global Platform）\cite{ARIB_STD_T118}は，日本国内の1.9GHz帯（Band 39）で免許不要で利用可能なプライベートLTE規格であり，TD-LTE（時分割複信方式のLTE）に準拠している．標準的な4G端末およびS1インタフェースをそのまま使用できるため，本研究ではこのsXGPを4G RANとして採用する．
+sXGP（shared eXtended Global Platform）\cite{ARIB_STD_T118}は，日本国内の1.9GHz帯（Band 39）で免許不要で利用可能なプライベートLTE規格であり，TD-LTE（時分割複信方式のLTE）に準拠している．標準的な4G端末およびS1インターフェースをそのまま使用できるため，本研究ではこのsXGPを4G RANとして採用する．
 
 sXGPを採用する主目的は，評価を再現可能な形で継続実施できる実験基盤を確保することにある．免許不要帯のプライベートLTEを用いることで，周波数ライセンス取得に依存せずに試験を継続でき，構成を固定した反復計測を行いやすい．また，シミュレーションだけでなく実際の電波を用いることで，実環境特有の課題（無線区間の揺らぎ，処理遅延，商用チップセットの実装依存挙動など）を含めて評価できる．
 \begin{itemize}
@@ -228,13 +228,14 @@ U-plane & GTP-U (S1-U) & GTP-U (N3) & シナリオ2 \\
 \end{tabular}
 \end{table}
 
-\subsection{シナリオ1: C-Plane接続検証（R1/R2の検証）}
+\subsection{シナリオ1: C-Plane接続検証}
 UEの電源投入から，sXGP基地局への接続（RRC Connection），およびコアネットワークへの登録までのシーケンスを確認する．4G UEはAttach手順を実行するが，提案ゲートウェイによりこれが5GCのRegistration手順に変換される．
 
 本シナリオは，以下の要件を検証する．
 \begin{itemize}
-    \item \textbf{R1（透過的介在）}: sXGP基地局（無改修のS1インタフェース）とOpen5GS（標準のN2インタフェース）が，ゲートウェイを介して正常に接続できること．
+    \item \textbf{R1（透過的介在）}: sXGP基地局（無改修のS1インターフェース）とOpen5GS（標準のN2インターフェース）が，ゲートウェイを介して正常に接続できること．
     \item \textbf{R2（プロトコル変換）}: 世代共通機能のうち「AAA」および「Mobility Management」が正しく変換・維持されること．
+    \item \textbf{R3（5GC固有機能の整合）}: 登録手順においてS-NSSAI（スライス識別子）のデフォルト割り当てが正常に処理されること（部分的検証）．
 \end{itemize}
 \begin{itemize}
     \item \textbf{確認項目}:
@@ -254,12 +255,13 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
     \item \textbf{成功基準}: UE画面上でアンテナピクトが表示され，データ通信可能な状態（IPアドレス取得）となること．Open5GSのログにおいてエラーが発生していないこと．
 \end{itemize}
 
-\subsection{シナリオ2: U-Planeデータ転送性能の評価（R2の検証）}
+\subsection{シナリオ2: U-Planeデータ転送性能の評価}
 接続確立後，UEからコアネットワーク内のサーバ（またはインターネット上のホスト）に対してデータ通信を行い，パケットの到達性および転送性能を検証する．
 
 本シナリオは，以下の要件を検証する．
 \begin{itemize}
     \item \textbf{R2（プロトコル変換）}: 世代共通機能のうち「U-plane」（GTP-Uトンネリング）が正しく変換され，ユーザデータが透過的に転送されること．
+    \item \textbf{R3（5GC固有機能の整合）}: QoSパラメータ（QCI/5QI）のマッピングが正常に処理されること（部分的検証）．
 \end{itemize}
 
 また，変換処理が性能上のボトルネックとならないことを，ベースライン環境との比較により確認する．
@@ -283,7 +285,7 @@ UEの電源投入から，sXGP基地局への接続（RRC Connection），およ
 本章では，提案するS1-N2変換ゲートウェイを検証するための実験環境と評価手法を述べた．本章冒頭で設定した3つの実験目的に対応する評価体制を以下に要約する．
 
 \begin{itemize}
-    \item \textbf{機能検証（R1/R2の実証）}: sXGP基地局，商用端末（Pixel 8a），Open5GS 5GCを用いた実機環境を構築し，シナリオ1（C-Plane接続検証）においてpcapキャプチャとログ分析により変換規則の成立を確認する．
+    \item \textbf{機能検証（R1/R2の実証，R3の部分的実証）}: sXGP基地局，商用端末（Pixel 8a），Open5GS 5GCを用いた実機環境を構築し，シナリオ1（C-Plane接続検証）においてpcapキャプチャとログ分析により変換規則の成立を確認する．R3についてはS-NSSAIのデフォルト割り当ておよびQoSマッピングの動作を部分的に検証する．
     \item \textbf{性能評価}: シナリオ2（U-Planeデータ転送）において，irtt（遅延）およびiPerf3（スループット）を用いてゲートウェイ導入によるオーバーヘッドを測定し，ベースライン環境（LTE Native）と比較する．
     \item \textbf{実機相互運用性}: シミュレータではなく実際の無線機（sXGP）と商用スマートフォンを用いることで，プロトコルスタックの実環境での動作を検証する．
 \end{itemize}

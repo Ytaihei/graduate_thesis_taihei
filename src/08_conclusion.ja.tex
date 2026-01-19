@@ -25,7 +25,7 @@
 \subsection{G1: 世代不変性に基づくプロトコルマッピングの体系化}
 \label{subsec:g1}
 \paragraph{設計上の達成}
-第\ref{chap:proposal}章において，4G/5Gの各プロトコル仕様（S1AP/NGAP，NAS EPS/NAS 5GS，GTP-U）を比較分析し，AAA・移動管理・ユーザデータ転送という世代不変な機能要件に基づく変換規則を体系化した．具体的には，NAS変換規則（表\ref{tab:nas_conversion_ul}，表\ref{tab:nas_conversion_dl}），ID変換規則（表\ref{tab:id_conversion}），TEIDマッピング規則（表\ref{tab:teid_mapping}），QoSマッピング規則（表\ref{tab:qos_mapping}）として文書化した．
+第\ref{chap:proposal}章において，4G/5Gの各プロトコル仕様（S1AP/NGAP，NAS EPS/NAS 5GS，GTP-U）を比較分析し，AAA・Mobility Management・U-Planeという世代不変な機能要件に基づく変換規則を体系化した．具体的には，NAS変換規則（表\ref{tab:nas_conversion_ul}，表\ref{tab:nas_conversion_dl}），ID変換規則（表\ref{tab:id_conversion}），TEIDマッピング規則（表\ref{tab:teid_mapping}），QoSマッピング規則（表\ref{tab:qos_mapping}）として文書化した．
 
 \paragraph{PoCでの実証}
 実機検証において，Attach Request→Registration Request，Attach Accept→Registration Accept等のNAS変換，およびS1AP-ID↔NGAP-IDの変換が信号レベルで成立することを確認した．
@@ -54,7 +54,7 @@ sXGP基地局（eNB）とOpen5GS（5GC）を用いた実機環境において，
 本研究では，第\ref{sec:summary}節で述べた通り，S1/NGインターフェース間のプロトコル変換を行うゲートウェイを導入することで，RANとCNのライフサイクルを分離する「疎結合アーキテクチャ」を実現し，CN先行移行という新たなパスを確立した．
 
 \subsection{プロトコル差異の吸収}
-第\ref{chap:introduction}章で指摘した「世代間で不変な基本機能」と「プロトコル仕様の差異」の問題に対して，本研究は世代共通機能（AAA，移動管理，U-plane）に着目した変換規則を設計した．
+第\ref{chap:introduction}章で指摘した「世代間で不変な基本機能」と「プロトコル仕様の差異」の問題に対して，本研究は世代共通機能（AAA，Mobility Management，U-Plane）に着目した変換規則を設計した．
 
 第\ref{subsec:g1}項で述べた通り，実機検証によりNAS変換・ID変換・TEIDマッピング・QoSマッピングの各規則が信号レベルで成立することを確認した．この結果は，機能の共通性を利用してプロトコルの差異を吸収するというアプローチの有効性を実証するものである．
 

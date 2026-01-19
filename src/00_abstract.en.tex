@@ -16,7 +16,7 @@ When communication standards evolve to a new generation, both base stations and 
 
 % 2-3 sentences: Detailed background (for related fields)
 In the current transition from 4G to 5G, the control system can be rapidly updated due to advances in software-based implementation, while base stations require longer upgrade cycles due to physical antenna equipment and dedicated hardware constraints.
-International standards assume synchronized upgrades of base stations and control systems, and existing migration technologies also require either maintaining both old and new control systems or modifying base stations, leaving no standard method to upgrade only the control system to 5G while keeping existing 4G base stations unmodified.
+International standards assume synchronized upgrades of base stations and control systems, and existing migration technologies also require either maintaining both old and new control systems or modifying base stations, leaving no standard method for upgrading only the control system to 5G while keeping existing 4G base stations unmodified.
 
 % 1 sentence: Problem statement
 This study aims to accommodate existing 4G base stations into 5G control systems without any modifications, enabling control-system-first migration.
@@ -26,7 +26,7 @@ To achieve this goal, we propose an architecture that inserts protocol conversio
 
 % 2-3 sentences: Comparison with conventional understanding (theoretical contribution)
 This study first analyzes the essential functions common between 4G and 5G (authentication, mobility management, and data transfer) from multiple perspectives, revealing that these fundamental functions remain invariant across generations.
-Furthermore, by systematically organizing 5G-specific extended features and deriving response strategies according to each feature's characteristics, we establish the theoretical foundation that protocol conversion is fundamentally possible without modifying base stations.
+Furthermore, by systematically organizing 5G-specific extended features and deriving response strategies according to each feature's characteristics, we establish the theoretical foundation that protocol conversion is feasible in principle without modifying base stations.
 
 % 2-3 sentences: Implementation and verification (empirical contribution)
 Based on this theory, we designed and implemented conversion functionality that absorbs differences between 4G and 5G at the control signaling, user data, and authentication information layers.
