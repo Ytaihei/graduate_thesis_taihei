@@ -9,6 +9,7 @@
 \label{sec:detailed_design}
 
 \subsection{C-Plane変換ロジック}
+本節では，S1AP\cite{3GPP_TS36413}とNGAP\cite{3GPP_TS38413}間のメッセージ変換ロジックを述べる．
 
 \subsubsection{S1 Setupシーケンス（ID変換）}
 eNBの起動時に行われるS1 Setup手順において，ゲートウェイは以下のID変換を行う．
@@ -27,7 +28,7 @@ UEからのAttach Request（4G NAS）は，ゲートウェイによって5G NAS�
 \end{itemize}
 
 \subsubsection{NASメッセージ変換対応表}
-表\ref{tab:nas_conversion_ul}および表\ref{tab:nas_conversion_dl}に，主要なNASメッセージの変換対応を示す．
+表\ref{tab:nas_conversion_ul}および表\ref{tab:nas_conversion_dl}に，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}の主要なメッセージ変換対応を示す．
 
 \begin{table}[htbp]
 \centering
@@ -176,7 +177,7 @@ eKSI (3bit) & ngKSI (4bit, TSC=0) \\
 \end{figure}
 
 \subsection{U-Plane変換とTEIDマッピング}
-U-Planeでは，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインタフェースと5GのN3インタフェースは共にGTPv1-Uプロトコルを使用するため，プロトコル変換は不要であるが，TEIDと宛先IPアドレスの書き換えが必要となる．
+U-Planeでは，eNBとUPF間のユーザデータ転送を仲介する．4GのS1-Uインタフェースと5GのN3インタフェースは共にGTPv1-Uプロトコル\cite{3GPP_TS29281}を使用するため，プロトコル変換は不要であるが，TEIDと宛先IPアドレスの書き換えが必要となる．
 
 なお，実装によっては方向別（Uplink用／Downlink用）のマッピングテーブルを持ち，各テーブル内でTEIDが一意であることを前提として，GTP-Uヘッダ内のTEIDのみを検索キーとしてマッピングを行う方式も有効である．
 
@@ -462,7 +463,7 @@ TAU Acceptには，初期接続時にキャッシュしたTAC/PLMNから生成�
 
 \subsection{QoSパラメータのマッピング}
 \label{subsec:qos_mapping}
-4GのQCI（QoS Class Identifier，TS 23.203）と5GのQoS情報（5QI，TS 23.501）は，数値の定義範囲や付随パラメータが完全には一致しない．
+4GのQCI（QoS Class Identifier）\cite{3GPP_TS23203}と5GのQoS情報（5QI）\cite{3GPP_TS23501_R15}は，数値の定義範囲や付随パラメータが完全には一致しない．
 
 表\ref{tab:qos_mapping}にQCI/5QIの対応例を示す．変換器は，標準仕様においてQCIと5QIが1対1対応する範囲（1〜9）では同一値として扱い，それ以外はデフォルト値へフォールバックするロジックを採用する．
 
@@ -515,7 +516,7 @@ TAU Acceptには，初期接続時にキャッシュしたTAC/PLMNから生成�
 前節までに述べた設計を検証するため，本研究ではプロトタイプ実装を行った．本節では，実装の概要と，設計の検証を目的とした本プロトタイプにおける具体的な実装上の選択について述べる．
 
 \subsection{実装概要}
-本プロトタイプはC言語で実装し，約14,000行のソースコードから構成される．主要な外部ライブラリとして，S1AP/NGAPメッセージのASN.1エンコード・デコードにはlibasn1c（asn1c生成コード）を使用した．認証処理のMilenageアルゴリズムおよび鍵導出関数（KDF）の実装は，3GPP TS 35.206\cite{3GPP_TS35206}およびTS 33.501の仕様に基づき，Open5GS\cite{open5gs}の実装を参考にした．
+本プロトタイプはC言語で実装し，約14,000行のソースコードから構成される．主要な外部ライブラリとして，S1AP/NGAPメッセージのASN.1エンコード・デコードにはlibasn1c（asn1c生成コード）を使用した．認証処理のMilenageアルゴリズムおよび鍵導出関数（KDF）の実装は，3GPP TS 35.206\cite{3GPP_TS35206}およびTS 33.501\cite{3GPP_TS33501}の仕様に基づき，Open5GS\cite{open5gs}の実装を参考にした．
 
 表\ref{tab:module_structure}に主要モジュールの構成を示す．
 

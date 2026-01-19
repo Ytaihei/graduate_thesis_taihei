@@ -474,7 +474,7 @@ SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセス�
 
 \subsection{SA/NSAと移行Optionの位置づけ}
 \label{sec:sa_nsa_options}
-3GPPは，4G（LTE/EPC）から5G（NR/5GC）への段階的な移行を可能にするため，TR 38.801において複数の移行構成（Option 1〜7）を規定している．表\ref{tab:migration_options}にOption一覧を示す．ここで，末尾の「a」や「x」は，C-Plane・U-Planeの終端点やアンカー方式等の細部が異なる派生構成を表す．
+3GPPは，4G（LTE/EPC）から5G（NR/5GC）への段階的な移行を可能にするため，TR 38.801において複数の移行構成（Option 1〜7）を規定している\cite{3GPP_TR38801}．表\ref{tab:migration_options}にOption一覧を示す．ここで，末尾の「a」や「x」は，C-Plane・U-Planeの終端点やアンカー方式等の細部が異なる派生構成を表す．
 
 前節で述べた一般的な5G SA/NSAの分類との対応は以下の通りである：
 \begin{itemize}
@@ -644,7 +644,7 @@ SAは，LTE もしくは 5G NR のいずれか一つの独立したアクセス�
 
 前項で述べたスケーラビリティの問題に対し，3GPPが定義する移行手段を検討する．第\ref{sec:sa_nsa_options}節で述べた移行Optionのうち，Option 3系はCNがEPCのままであり5GC機能を利用できない．一方，5GCを利用するOption 4/5/7はいずれもng-eNBを前提としている．
 
-ng-eNBは，無線インターフェースはLTE（E-UTRA）のままであるが，CNとのインターフェースとしてNG-C（NGAP）およびNG-Uをサポートし，5GCに直接接続可能である．ng-eNBを用いた移行Optionとしては以下が規定されている：
+ng-eNBは，無線インターフェースはLTE（E-UTRA）のままであるが，CNとのインターフェースとしてNG-C（NGAP）およびNG-Uをサポートし，5GCに直接接続可能である\cite{3GPP_TS38300}．ng-eNBを用いた移行Optionとしては以下が規定されている：
 \begin{itemize}
   \item \textbf{Option 5}: ng-eNBが単独で5GCに接続する構成
   \item \textbf{Option 4/4a}: gNBが5GCに接続し，ng-eNBを副ノードとして追加する構成
@@ -727,6 +727,12 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
 4Gの制御プロトコルであるS1-APと，5GのNG-APは，共にASN.1で記述されているものの，メッセージ構造やパラメータ（IE：Information Element）が異なる．
 例えば，4Gではネットワークへの登録とU-Plane確立を一括して行う「Attach」手順が存在するが，5Gではネットワークへの登録を行う「Registration」とU-Planeの確立を行う「PDU Session Establishment」が分離されている．このステートマシンの違いを吸収しなければ，接続は確立できない．
 
+% TODO: 4G Attach手順と5G Registration/PDU Session Establishment手順の
+%       標準シーケンス比較図を追加する（fig:standard_sequence_comparison）
+%       - 4G: UE→eNB→MME のAttach手順（Default Bearer確立まで一括）
+%       - 5G: UE→gNB→AMF のRegistration手順 + PDU Session Establishment手順（分離）
+%       - 両者のタイミング差異を視覚化し、第5章のEarly S1 Setup方式との対比を明確にする
+
 加えて，5GCの特徴である\textbf{ネットワークスライシング}の\textbf{識別子（S-NSSAI）}を運搬するフィールドがS1-APには存在しない．ネットワークスライシングとは，図\ref{fig:network_slicing_concept}に示すように，単一の物理インフラ上に用途別の論理ネットワーク（スライス）を構築する機能である．
 
 \begin{figure}[htbp]
@@ -800,7 +806,7 @@ ng-eNBは，無線インターフェースはLTE（E-UTRA）のままである�
 \subsubsection{NAS: セキュリティと鍵管理の相違}
 UEとCNが直接通信するNAS（Non-Access Stratum）層においても，4G NAS\cite{3GPP_TS24301}と5G NAS\cite{3GPP_TS24501}はプロトコル仕様が異なる．前述のC-Planeの手順相違（Attach vs Registration/PDU Session Establishment）はNASメッセージ体系にも反映されており，NASレベルでも手順の変換が必要となる．
 
-特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4Gの鍵階層（K → CK/IK → KASME → KeNB）と5Gの鍵階層（K → CK'/IK' → KAUSF → KSEAF → KAMF → KgNB）は構造が異なり，相互に変換できない．4G UEは5Gの認証手順（5G AKA: Authentication and Key Agreement）を実行できないため，eNBを無改修で5GCに接続する場合，ゲートウェイ側で4G互換の認証ベクトルを生成するか，UEに代わって5GC向けの認証を代行する仕組みが必要となる．
+特にセキュリティアーキテクチャの変更は大きく，5Gでは鍵導出階層が刷新されている．4Gの鍵階層（K → CK/IK → KASME → KeNB）\cite{3GPP_TS33401}と5Gの鍵階層（K → CK'/IK' → KAUSF → KSEAF → KAMF → KgNB）\cite{3GPP_TS33501}は構造が異なり，相互に変換できない．4G UEは5Gの認証手順（5G AKA: Authentication and Key Agreement）を実行できないため，eNBを無改修で5GCに接続する場合，ゲートウェイ側で4G互換の認証ベクトルを生成するか，UEに代わって5GC向けの認証を代行する仕組みが必要となる．
 
 \subsubsection{GTP-U: QoSモデルの変革}
 ユーザデータ転送（GTP-U: GPRS Tunnelling Protocol - User Plane）\cite{3GPP_TS29281}自体は互換性が高いが，QoS（Quality of Service）モデルが大きく異なる．4Gは「ベアラ（Bearer: QoSを保証するデータ転送路の論理単位）」単位でQoSを管理するのに対し，5Gは「QoSフロー（QoS Flow: 同一のQoS処理を受けるパケット群を識別する論理単位）」単位で管理する．

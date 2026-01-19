@@ -10,7 +10,7 @@ RANは，ユーザ端末（User Equipment: UE）との無線通信を確立し�
 
 特に第5世代移動通信システム（5G）以降，これら2つのドメインの進化の在り方に大きな乖離が生じている．
 
-CN側では，ネットワーク機能の仮想化（Network Function Virtualization: NFV）\cite{ETSI_NFV002}やクラウドネイティブ化（Service Based Architecture: SBA）\cite{3GPP_TS23501_R15}が進展し，ソフトウェアアップデートによる迅速な機能拡張が可能となった．5Gコア（5G Core: 5GC）はSBAに基づく機能追加・更新の容易性や，制御面とユーザ面の分離（Control and User Plane Separation: CUPS）に基づく柔軟な配置・スケーリング等を特徴とし，データセンターやクラウド環境への柔軟なデプロイが可能である．
+CN側では，ネットワーク機能の仮想化（Network Function Virtualization: NFV）\cite{ETSI_NFV002}やクラウドネイティブ化（Service Based Architecture: SBA）\cite{3GPP_TS23501_R15}が進展し，ソフトウェアアップデートによる迅速な機能拡張が可能となった．5Gコア（5G Core: 5GC）はSBAに基づく機能追加・更新の容易性や，制御面とユーザ面の分離（Control and User Plane Separation: CUPS）\cite{3GPP_TS23214}に基づく柔軟な配置・スケーリング等を特徴とし，データセンターやクラウド環境への柔軟なデプロイが可能である．
 
 一方，RAN側は物理的な電波送受信を担うため，専用ハードウェアやアンテナ設備の物理的な展開を伴う．近年，vRAN\footnote{virtualized RAN: RANの機能をソフトウェアで実装し，汎用サーバ上で動作させる技術．}やO-RAN\footnote{Open RAN: RANの構成要素間のインターフェースをオープン化し，マルチベンダー構成を可能にする取り組み．}といったソフトウェア化の取り組みも進められているが\cite{ORAN_WhitePaper2018, Garcia_ORAN2021}，無線インターフェースの物理的な設置・更新が必要である点は変わらない．
 
@@ -21,7 +21,7 @@ CN側では，ネットワーク機能の仮想化（Network Function Virtualiza
 
 SA構成は，RANとCNの両方を5Gで構成する形態，すなわち5G基地局（gNodeB: gNB）と5GCによる構成であり，5GCの機能をフルに活用できる\cite{NTTDocomo_5GSA_2023}．
 
-一方，NSA構成は，異なる世代のRANとCNを組み合わせる過渡的な形態である．現在商用で広く採用されているOption 3系は，gNBを導入しつつCNには既存の4Gコア（Evolved Packet Core: EPC）を継続利用する構成である\cite{NGMN_5GDevices_SAMigration}．この構成ではLTE基地局（eNodeB: eNB）が制御信号のアンカー（Master Node）となり，gNBはeNBを経由してEPCに接続される．既存インフラへの投資を活かしつつ段階的に5Gサービスを開始できるが\cite{Ericsson_5GNSA_Bands2024}，CNがEPCのままであるため，5GCを前提とする機能（ネットワークスライシング\cite{3GPP_TS23501_R15}等）は利用できない\cite{GSMA_5GNSA_Option3}．
+一方，NSA構成は，異なる世代のRANとCNを組み合わせる過渡的な形態である．現在商用で広く採用されているOption 3系は，gNBを導入しつつCNには既存の4Gコア（Evolved Packet Core: EPC）を継続利用する構成である\cite{NGMN_5GDevices_SAMigration}．この構成ではLTE基地局（eNodeB: eNB）が制御信号のアンカー（Master Node）となり，gNBはeNBを経由してEPCに接続される．既存インフラへの投資を活かしつつ段階的に5Gサービスを開始できるが\cite{MIC_Whitepaper_R02}，CNがEPCのままであるため，5GCを前提とする機能（ネットワークスライシング\cite{3GPP_TS23501_R15}等）は利用できない\cite{GSMA_5GNSA_Option3}．
 
 また，3GPP\footnote{3rd Generation Partnership Project: 移動通信システムの国際標準化団体．}は，既存の4G RANを5GCに収容する次世代eNB（next generation eNodeB: ng-eNB）\cite{3GPP_TS38300}を用いた構成（Option 4/5/7）も規定している\cite{3GPP_TR38801}．これらはCNが5GCであるため5GC機能を利用できるが，基地局側でNGインターフェース（Next Generation interface: NG）を終端・処理する改修を前提とする\cite{3GPP_TS38300,3GPP_TS38413}．
 
@@ -39,7 +39,7 @@ SA構成は，RANとCNの両方を5Gで構成する形態，すなわち5G基地
 \subsection{問題の構造}
 この問題の背景には，モバイルシステムにおける「世代間で不変な基本機能」と「5GC固有の機能」の関係がある．
 
-モバイル通信には，AAA（Authentication, Authorization, Accounting），移動管理（Mobility Management），ユーザデータ転送といった基本機能が存在し，これらは世代を超えて本質的に不変である\cite{Watanabe_ADMobile2025}．しかし，これらの機能を実現する制御面（Control Plane: C-Plane）のプロトコル仕様（S1AP/NGAP）には互換性がなく，ユーザ面（User Plane: U-Plane）においても5G固有の拡張ヘッダ（PDU Session Container）を必要とする等の差異がある．
+モバイル通信には，AAA（Authentication, Authorization, Accounting），移動管理（Mobility Management），ユーザデータ転送といった基本機能が存在し，これらは世代を超えて本質的に不変である\cite{Watanabe_ADMobile2025}．しかし，これらの機能を実現する制御面（Control Plane: C-Plane）のプロトコル仕様（S1AP/NGAP）には互換性がなく\cite{3GPP_TS36413,3GPP_TS38413}，ユーザ面（User Plane: U-Plane）においても5G固有の拡張ヘッダ（PDU Session Container）\cite{3GPP_TS29281}を必要とする等の差異がある．
 
 一方，5GCはクラウドネイティブ環境への適応やマルチテナンシーといった新たな要件に対応するため，SBAに基づく柔軟なサービス連携やネットワークスライシング等の固有機能を導入している．これらの機能はNGインターフェースを前提として設計されており，S1インターフェースからは直接アクセスできない．
 

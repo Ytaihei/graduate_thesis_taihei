@@ -66,7 +66,7 @@ sXGP基地局（eNB）とOpen5GS（5GC）を用いた実機環境において，
 \subsection{スケーラビリティの向上}
 第\ref{chap:evaluation}章では，C-Plane/U-Plane分離配置による独立スケーリングの可能性を考察した．C-Plane変換の負荷はセッション数に比例し，U-Plane変換の負荷はスループットに比例するという特性の違いを活かした効率的なリソース配分が期待できる．
 
-ただし，本PoCでは分離配置の実装・検証は行っておらず，UEコンテキストの外部化に伴う複雑性・遅延の増加については未検証である．また，大規模トラフィックに対する性能最適化として，TEID変換テーブルの検索処理やパケットのコピー処理において，DPDK（Data Plane Development Kit）やeBPF（extended Berkeley Packet Filter）等の高速化技術を導入する余地がある．
+ただし，本PoCでは分離配置の実装・検証は行っておらず，UEコンテキストの外部化に伴う複雑性・遅延の増加については未検証である．また，大規模トラフィックに対する性能最適化として，TEID変換テーブルの検索処理やパケットのコピー処理において，DPDK（Data Plane Development Kit）\cite{dpdk}やeBPF（extended Berkeley Packet Filter）\cite{ebpf}等の高速化技術を導入する余地がある．
 
 \subsection{移動管理機能の拡張}
 第\ref{chap:evaluation}章で述べた通り，本PoCでは移動管理機能のうち初期登録（Attach/Registration）の変換規則が信号レベルで成立することを確認したが，ハンドオーバー等の移動管理機能は設計のみで実証は行っていない．実運用においては基地局間の移動が必須となるケースも存在するため，S1ハンドオーバー手順とN2ハンドオーバー手順の相互変換ロジックを実装し，移動透過性を確保することが次のステップとなる．
