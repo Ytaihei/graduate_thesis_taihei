@@ -41,9 +41,8 @@
 \usetikzlibrary{shapes, arrows.meta, positioning}
 
 % タイトル情報
-\title{レガシーRANの次世代CN収容を実現する\\S1-N2変換ゲートウェイの設計と実装}
-\subtitle{〜疎結合アーキテクチャによる異世代相互接続〜}
-\author{渡邉 泰平}
+\title{世代不変性に基づく疎結合なCN移行\\アーキテクチャ}
+\author{山口 泰平}
 \institute{慶應義塾大学 総合政策学部}
 \date{2025年度 卒業論文発表}
 
@@ -53,26 +52,159 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{目次}
-  \tableofcontents
+\begin{frame}{TEIDマッピングテーブルと処理}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \textbf{TEIDマッピングテーブル}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|l|}
+          \hline
+          方向 & 検索キー(TEID) & 出力 (宛先IP, TEID) \\
+          \hline
+          Uplink & S1N2 TEID & (UPF IP, N3 TEID) \\
+          \hline
+          Downlink & eNB downlink TEID & (eNB IP, 同TEID) \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{処理フロー}
+      \begin{itemize}
+        \item UL: S1-U受信→TEID検索→TEIDを書換えてUPFへ送出
+        \item DL: UPF受信→TEIDでUE特定→宛先IPのみeNBへ変更
+        \item エントリ生成: Early S1 Setup, eNB TEID取得, N3 TEID通知で完成
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-\section{はじめに}
-\begin{frame}{背景：CNの進化とRAN更新のギャップ}
-  \begin{itemize}
-    \item \textbf{コアネットワークの進化 (ソフトウェア化)}
+\begin{frame}{デュアルモード・セキュリティコンテキスト}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{5G側（AMF通信用）}
       \begin{itemize}
-        \item CNは5G以降でソフトウェア化されたため高速に進化
-        \item 6Gでも5Gコアをベースに継続的な機能拡張が予想される
+        \item KNASenc(5G), KNASint(5G)
+        \item NAS UL/DL COUNT(5G)
+        \item 選択アルゴリズム: NEA/NIA
       \end{itemize}
-    \item \textbf{現状のデプロイメントとその限界}
+      \vspace{0.3cm}
+      \textbf{4G側（eNB通信用）}
       \begin{itemize}
-        \item 5Gコア特有の新機能(スライシング等)を活用するには、SA (Standalone) 構成へ移行する必要がある
-        \item 現在はRANを先行更新するNSA (Non-Standalone)構成が主流だが、CNは4Gのままであり新機能が使えない
-        \item SA化には対応RANへの更新が必要だが、コストや物理的制約(例: NTN)により困難な場合がある
+        \item KNASenc(4G), KNASint(4G)
+        \item NAS UL/DL COUNT(4G)
+        \item 選択アルゴリズム: EEA/EIA
       \end{itemize}
-    $\Rightarrow$ \textbf{CNの進化速度に対し、RANの更新サイクルにギャップが生じる}
-  \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{鍵導出・整合の要点}
+      \begin{itemize}
+        \item MilenageでCK/IK導出、5G側でRES*生成
+        \item 4G互換の\texttt{KASME = KDF(CK||IK, SN\_id, SQN\(\oplus\)AK)}
+        \item 暗号化／完全性は5G→復号→4Gで再暗号化
+        \item SQN不整合はAUTS透過で再同期（AUSF）
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{概要}
+  \begin{block}{問題：スケーラビリティ}
+    \begin{itemize}
+      \item 1つのCN（集約配置）に対して、数百～数万のRAN（分散配置）が接続
+      \item \alert{RAN側の改修では、改修コストが累積してスケールしない}
+      \item 標準仕様は両者の世代同期を前提 → eNB無改修のまま5GCへ収容する標準手段がない
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{研究の本質：論理的基盤の構築}
+    \begin{itemize}
+      \item 4G/5G間で\textbf{不変な本質機能}（AAA・移動管理・U-Plane）を6つの観点から多角分析
+      \item 5GC固有機能を\textbf{3層モデル}で階層的に整理し、各層の対応方針を導出
+      \item プロトコル変換によるCN先行移行が\textbf{原理的に可能}であることを理論的に示す
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{実装・検証：理論の有効性を実証}
+    C言語プロトタイプを実装し、実機で接続成功を確認。\\
+    遅延増加3.4 ms、通信速度ベースライン同等 → 理論が実現可能であることを実証
+  \end{block}
+
+  \begin{block}{意義}
+    世代共通機能に基づいたスケーラブルな移行モデル。\\
+    将来の6G対応や衛星RAN統合に応用可能な汎用フレームワーク。
+  \end{block}
+\end{frame}
+
+%% ========================================
+%% 第1章：序論
+%% ========================================
+\section{背景と課題}
+\begin{frame}{背景：モバイルネットワークの基本構成}
+  \begin{center}
+    \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+      % UE
+      \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.2cm, minimum height=0.7cm] (ue) at (0,0) {\textbf{UE}};
+      % RAN
+      \node[draw, rounded corners, fill=GoogleBlue!40, minimum width=1.3cm, minimum height=0.7cm] (ran) at (2.5,0) {\textbf{RAN}};
+      % CN
+      \node[draw, rounded corners, fill=GoogleGreen!40, minimum width=1.3cm, minimum height=0.7cm] (cn) at (5,0) {\textbf{CN}};
+      % DN
+      \node[draw, cloud, cloud puffs=8, cloud ignores aspect, minimum width=1.5cm, minimum height=0.8cm, fill=GoogleLightGray!40] (dn) at (7.5,0) {\textbf{DN}};
+
+      % 接続線
+      \draw[->, very thick] (ue) -- (ran);
+      \draw[->, very thick] (ran) -- (cn);
+      \draw[->, very thick] (cn) -- (dn);
+    \end{tikzpicture}
+  \end{center}
+
+  \vspace{0.3cm}
+  \begin{columns}[T]
+    \begin{column}{0.23\textwidth}
+      \small\textbf{UE}\\無線端末
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \small\textbf{RAN}\\基地局群
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \small\textbf{CN}\\認証・移動管理
+    \end{column}
+    \begin{column}{0.23\textwidth}
+      \small\textbf{DN}\\インターネット等
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{背景：CNとRANの進化速度の乖離}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{コアネットワーク (CN)}
+      \begin{itemize}
+        \item NFV・SBAによるソフトウェア化
+        \item 迅速な機能拡張が可能
+        \item 5GC固有機能（スライシング等）
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{無線アクセス網 (RAN)}
+      \begin{itemize}
+        \item 物理的な電波送受信を担当
+        \item 専用HW・アンテナ設備が必要
+        \item 更新サイクルが長い
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.5cm}
+  \begin{block}{問題}
+    \begin{itemize}
+      \item 3GPP標準は「\alert{密結合モデル}」: RANとCNの世代が同期していることを前提
+      \item 既存eNBを改修せずに5GCへ収容する\alert{標準手段が存在しない}
+      \item CNを5GCへ移行したくても、RANの更新完了を待たざるを得ない
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{NSA構成とSA構成の比較}
@@ -123,97 +255,243 @@
     % 説明
     \node[text width=4cm, align=center] at (11,-0.5) {5G RANと5GCの組み合わせ\\新機能が利用可能};
   \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{課題：ギャップが問題になるケース}
+  \vspace{0.3cm}
   \begin{itemize}
-    \item \textbf{研究開発：新機能の先行検証}
-      \begin{itemize}
-        \item 次世代CN機能（スライシング、URLLC等）を検証したい
-        \item 対応RAN（5G gNB）は高価で免許取得も必要
-        \item $\Rightarrow$ \textbf{低コストかつ手軽に検証できる環境が必要}
-      \end{itemize}
-    \item \textbf{商用導入：マイグレーション戦略の柔軟性欠如}
-      \begin{itemize}
-        \item 商用網を前提にした場合、全RANを一斉に更新するのは現実的でない
-        \item 段階移行のためのOptionもあるが、移行期間中は旧RANエリアで新CN機能が利用できない
-        \item $\Rightarrow$ \textbf{RAN更新を伴わないCN先行移行パスが必要}
-      \end{itemize}
-    \item \textbf{運用維持：物理的に更新が難しいRAN}
-      \begin{itemize}
-        \item NTNでは衛星やHAPSを使用するため、一度配備すると地上局よりも物理的な更新が困難
-        \item 地上のCNが進化しても、空のRANは旧世代のまま残る
-        \item $\Rightarrow$ \textbf{新旧世代が共存可能な収容技術が必要}
-      \end{itemize}
+    \item \textbf{NSA}: 5G RANを追加するがCNは4G EPC $\Rightarrow$ 5GC固有機能は利用不可
+    \item \textbf{SA}: 5G RAN + 5GC $\Rightarrow$ スライシング等の新機能が利用可能
   \end{itemize}
 \end{frame}
 
-\begin{frame}{NTN (Non-Terrestrial Network) とは}
-  \centering
-  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
-    % 地上エリア
-    \fill[GoogleLightGray!50] (-0.5,-0.5) rectangle (12,0.8);
-    \node at (0.5,0.15) {\textbf{地上}};
+\begin{frame}{課題：プロトコル障壁}
+  \begin{table}
+    \tiny
+    \begin{tabular}{|l|l|l|p{3.5cm}|}
+      \hline
+      \textbf{層} & \textbf{4G} & \textbf{5G} & \textbf{障壁} \\
+      \hline
+      C-Plane & S1AP & NGAP & メッセージ構造・IE異なる \\
+      \hline
+      NAS & EMM/ESM & 5GMM/5GSM & 認証・鍵階層刷新 \\
+      \hline
+      U-Plane & GTP-U v1 & GTP-U拡張 & QoSモデル差異 \\
+      \hline
+    \end{tabular}
+  \end{table}
 
-    % 地上局/ゲートウェイ
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
-
-    % 地上のCore
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
-    \draw[->, thick] (gw) -- (core);
-
-    % 衛星（宇宙）
-    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.2cm] (sat) at (5,5) {衛星};
-    \node[above] at (5,5.7) {\textbf{宇宙}};
-    \node[below, text width=2cm, align=center] at (5,4.2) {\scriptsize 4G RAN搭載};
-
-    % HAPS（成層圏）
-    \node[draw, ellipse, fill=GoogleYellow!50, minimum width=1.8cm, minimum height=0.7cm] (haps) at (9,3.5) {HAPS};
-    \node[above] at (9,4.1) {\textbf{成層圏}};
-    \node[below, text width=2cm, align=center] at (9,2.9) {\scriptsize 4G RAN搭載};
-
-    % UE（地上）
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue1) at (5,0.15) {UE};
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue2) at (8,0.15) {UE};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat) -- (gw) node[midway, above, sloped] {\scriptsize Feeder};
-    \draw[->, thick] (sat) -- (ue1) node[midway, right] {\scriptsize Service};
-    \draw[->, thick] (haps) -- (ue2);
-    \draw[->, thick, dashed] (haps) -- (gw);
-
-    % 問題点（右側に配置）
-    \node[draw, rounded corners, fill=GoogleRed!20, text width=4cm, align=center, font=\small] at (10.5,1.5) {打ち上げ後はHW更新不可\\$\Rightarrow$ SW更新のみ対応可能};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{目的とアプローチ}
-  \begin{block}{目的}
-    物理的に更新困難なレガシーRANを、ハードウェア変更なしに次世代CNに収容し、段階的な移行と新機能利用を可能にするアーキテクチャを提案する。
+  \vspace{0.3cm}
+  \begin{block}{世代間の手順の違い}
+    \begin{itemize}
+      \item \textbf{4G（一括）}: 登録要求 → 認証 → 暗号化 → コンテキスト設定（+登録承認+ベアラ情報）→ U-Plane確立
+      \item \textbf{5G（分離）}: 登録要求 → 認証 → 暗号化 → 登録承認 → 登録完了 → \alert{その後に}セッション確立
+    \end{itemize}
+    $\Rightarrow$ 4Gでは登録とベアラ確立が一括、5Gでは\alert{明確に分離}
   \end{block}
+\end{frame}
+
+\begin{frame}{本研究の目的とアプローチ}
+  \begin{block}{目的}
+    既存4G RAN（eNB）を\alert{改修せず}に5GCへ収容し、\\
+    CN先行移行を可能にする「\textbf{疎結合アーキテクチャ}」を提案・実証
+  \end{block}
+
+  \vspace{0.3cm}
   \begin{itemize}
-    \item \textbf{アプローチ：プロトコル変換による疎結合化}
+    \item \textbf{アプローチ：プロトコル変換ゲートウェイ}
       \begin{itemize}
-        \item 変換ゲートウェイを介在させ、RANとCNの直接的な依存を排除
-        \item 世代間で不変な機能（AAA, Mobility Management, U-plane）を抽象化してマッピング
+        \item 世代間で不変な機能（AAA, 移動管理, U-Plane）に着目
+        \item S1AP $\leftrightarrow$ NGAP / GTP-U変換を行うゲートウェイを設計・実装
       \end{itemize}
-    \item \textbf{本研究のスコープ}
-      \begin{itemize}
-        \item 4G eNB (LTE) と 5Gコア (5GC) の異世代相互接続を実証
-      \end{itemize}
-    \item \textbf{期待される効果（課題への回答）}
-      \begin{itemize}
-        \item \textbf{R\&D:} 既存RANを用いた安価な次世代CN検証環境
-        \item \textbf{移行:} RAN更新を伴わない柔軟なCN先行移行
-        \item \textbf{運用:} NTNなど物理制約のあるインフラの延命と機能拡張
-      \end{itemize}
+    \item \textbf{達成目標}
+      \begin{enumerate}
+        \item 世代不変性に基づくプロトコルマッピングの体系化
+        \item 疎結合アーキテクチャの設計と実証
+        \item 5GC固有機能への拡張性の明確化
+      \end{enumerate}
   \end{itemize}
+\end{frame}
+
+%% ========================================
+%% 第3章：関連研究
+%% ========================================
+\section{関連研究との比較}
+\begin{frame}{異世代間接続技術の比較}
+  \begin{table}
+    \tiny
+    \begin{tabular}{|l|c|c|c|c|}
+      \hline
+      \textbf{技術} & \textbf{RAN改修} & \textbf{UE改修} & \textbf{CN先行移行} & \textbf{5GC機能} \\
+      \hline
+      N26 & 不要 & 不要 & \alert{不可} & 不可 \\
+      \hline
+      ng-eNB & \alert{必須} & 不要 & \alert{不可} & 可能 \\
+      \hline
+      N3IWF & 不要 & \alert{必須} & 可能 & 可能 \\
+      \hline
+      5G-Flow & \alert{必須} & \alert{必須} & 可能 & 可能 \\
+      \hline
+      Hybrid 5G & 不要 & 不要 & \alert{不可$^*$} & 可能 \\
+      \hline
+      \textbf{提案手法} & \textbf{\textbf{不要}} & \textbf{\textbf{不要}} & \textbf{\textbf{可能}} & \textbf{\textbf{可能}} \\
+      \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.2cm}
+  {\small $^*$MME・SGW を最小構成で維持する必要があり、EPC完全廃止は不可}
+\end{frame}
+
+\begin{frame}{標準技術の制約}
+  \begin{block}{N26 (CN間連携)}
+    \small
+    \begin{itemize}
+      \item EPC と 5GC の\textbf{並存が必須} → CN先行移行不可
+      \item 4G RAN配下では5GC機能が利用できない → スライシング等は5Gエリアのみ
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{ng-eNB (RAN更新)}
+    \small
+    \begin{itemize}
+      \item 基地局\textbf{ファームウェア/ハードウェア改修が必須}
+      \item RAN は数百～数万の基地局で構成 → 改修対象が多い
+      \item \alert{改修完了まで CN を5G化できない} → スケーラビリティ問題
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{N3IWF (非3GPPアクセス)}
+    \small
+    \begin{itemize}
+      \item S1インターフェース（S1AP/GTP-U）\textbf{非対応} → 既存 eNB 接続不可
+      \item UE 側に\textbf{IPsecクライアント機能要求} → 既存4G UE利用不可
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{学術研究の制約と本研究の差別化}
+  \begin{block}{5G-Flow (SDNベース)}
+    \small
+    RAN・UE\textbf{双方で OpenFlowスイッチとプロトコルスタック分割が必須}
+    → 既存機器の改修が必要
+  \end{block}
+
+  \begin{block}{Hybrid 5G Core (標準拡張)}
+    \small
+    MME・SGW を\textbf{最小構成で残存させる必要} → EPC完全廃止は不可
+
+    本研究との差異: 提案手法は\textbf{EPC完全廃止}を可能に
+  \end{block}
+
+  \begin{block}{提案手法の独自性}
+    \small
+    \begin{itemize}
+      \item RAN・UE完全無改修で、\textbf{CN側のみ}に変換ゲートウェイを配置
+      \item \textbf{スケーラブル}: 1台の変換GW で数百～数万の eNB に対応
+      \item \textbf{世代共通機能の体系化}により、4G/5Gプロトコル間の具体的対応を実装
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \section{提案手法}
+\begin{frame}{モバイル通信の本質的機能}
+  \begin{block}{}
+    世代を超えて不変な、統合的な\textbf{3つの本質的機能}:
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \textbf{AAA}\\\small
+      認証・認可・課金
+      \vspace{0.3cm}
+
+      事業者のビジネス\\モデルを成立
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \centering
+      \textbf{Mobility\\Management}\\\small
+      位置追跡・ルーティング
+      \vspace{0.3cm}
+
+      移動体通信の\\基本価値
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \centering
+      \textbf{U-Plane}\\\small
+      ユーザーデータ転送
+      \vspace{0.3cm}
+
+      通信サービス\\の本体
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4cm}
+  \begin{alertblock}{理論的基盤}
+    \centering
+    \small
+    4G(EPS) と 5G(5GS) は本質的に不変なこれら3つの機能を提供 \\
+    $\Rightarrow$ プロトコル表現が異なるだけ \\
+    $\Rightarrow$ 抽象化により相互変換が可能
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{理論的基盤：世代共通機能の多角的分析}
+  \begin{block}{アプローチ}
+    本質的機能の対応を\textbf{6つの観点}から体系的に分析
+  \end{block}
+
+  \begin{table}
+    \small
+    \begin{tabular}{|l|l|l|l|}
+      \hline
+      \textbf{観点} & \textbf{4G (EPS)} & \textbf{5G (5GS)} & \textbf{対応} \\
+      \hline
+      \textbf{機能} & AAA, 移動管理, U-Plane & \textbf{同左} & \alert{完全一致} \\
+      \hline
+      \textbf{ノード} & HSS, MME, S/P-GW & AUSF/UDM, AMF/SMF, UPF & 1対多分解 \\
+      \hline
+      \textbf{プロトコル} & IMSI, Attach, GTP-U & SUPI, Registration, GTP-U & 意味的等価 \\
+      \hline
+      \textbf{状態} & EMM/ECM状態 & 5GMM/CM状態 & 1対1対応 \\
+      \hline
+      \textbf{IF境界} & S1-MME, S1-U & N2, N3 & 機能的等価 \\
+      \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.2cm}
+  $\Rightarrow$ 6つの観点すべてで明確な対応関係 \\
+  $\Rightarrow$ \textbf{プロトコル変換が原理的に可能}
+\end{frame}
+
+\begin{frame}{5GC固有機能の階層分析（3層モデル）}
+  \begin{table}
+    \small
+    \begin{tabular}{|l|l|l|}
+      \hline
+      \textbf{層} & \textbf{機能例} & \textbf{対応方針} \\
+      \hline
+      基盤層 & SBA, CUPS, NFV & \textbf{隠蔽}（CN内部事情） \\
+      \hline
+      制御メカニズム層 & スライス選択, QoS Flow & \textbf{変換・整合}（主たる貢献） \\
+      \hline
+      応用サービス層 & Network Slicing, 5G LAN & \textbf{段階的提供} \\
+      \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.3cm}
+  \begin{block}{対応の階層戦略}
+    \begin{itemize}
+      \item \textbf{基盤層}: RAN側から不可視 $\Rightarrow$ 対応不要
+      \item \textbf{制御メカニズム層}: QCI$\leftrightarrow$5QI、APN$\rightarrow$S-NSSAIマッピング $\Rightarrow$ \alert{本研究の核心}
+      \item \textbf{応用サービス層}: メカニズム層の解決により享受可能
+    \end{itemize}
+  \end{block}
+\end{frame}
+
 \begin{frame}{提案アーキテクチャ：S1-N2/N3 変換ゲートウェイ}
   \centering
-  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
+  \begin{tikzpicture}[scale=0.95, every node/.style={font=\small}]
     % Nodes
     \node[draw, rounded corners, fill=GoogleBlue!20, minimum width=2cm, minimum height=1cm] (enb) at (0,0) {4G eNB};
     \node[draw, rounded corners, fill=GoogleGreen!20, minimum width=2cm, minimum height=1cm] (core) at (10,0) {5Gコア};
@@ -236,6 +514,15 @@
     \node[below=0.2cm of core, align=center, font=\scriptsize] {gNBだと思って\\接続};
     \node[below=1.4cm of conv, align=center, font=\scriptsize] {相互にエミュレーションを行い\\ギャップを吸収};
   \end{tikzpicture}
+
+  \vspace{0.3cm}
+  \begin{block}{アーキテクチャ要件}
+    \begin{itemize}
+      \item \textbf{R1}: 透過的介在（eNB/5GCに改修を要求しない）
+      \item \textbf{R2}: プロトコル相互変換（世代不変機能を維持）
+      \item \textbf{R3}: 5GC固有機能の整合（スライシング等への対応）
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{世代不変性に基づく疎結合化の原理}
@@ -251,17 +538,92 @@
     \item \textbf{U-Plane (データ転送): QoS抽象化}
       \begin{itemize}
         \item Bearer (4G) も QoS Flow (5G) も「優先度付きトンネル」という点で同一
-        \item GTP-U TEID とQoS識別子 (EBI $\leftrightarrow$ QFI) を付け替え
-      \end{itemize}
-    \item \textbf{NAS (端末-CN通信): 透過転送}
-      \begin{itemize}
-        \item \alert{NAS over LTE:} 5G NASを4GのNASコンテナに格納して運ぶ
-        \item これにより端末は4G無線上で5Gコアへ直接登録可能(技術的なブレイクスルー)
+        \item GTP-U TEID とQoS識別子 (QCI $\leftrightarrow$ 5QI) を変換
       \end{itemize}
   \end{itemize}
 \end{frame}
 
-\section{設計}
+%% ========================================
+%% 第5章：設計と実装
+%% ========================================
+\section{設計と実装}
+\begin{frame}{主要な設計課題と解決策}
+  \begin{table}
+    \small
+    \begin{tabular}{|l|p{8cm}|}
+      \hline
+      \textbf{課題} & \textbf{解決策} \\
+      \hline
+      手順タイミング不一致 & \textbf{Early S1 Setup方式}: 5GのRegistration Accept受信時に\\
+      & GWがeNBへ先行してS1ベアラを確立 \\
+      \hline
+      認証・鍵管理の分離 & GWがUEの秘密鍵(Ki/OPc)でMilenage処理を代行し、\\
+      & デュアルモードセキュリティコンテキストを維持 \\
+      \hline
+      QoSモデル差異 & QCI$\leftrightarrow$5QI の1対1マッピング（互換範囲）\\
+      \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{核心技術：Early S1 Setup方式}
+  \centering
+  \begin{tikzpicture}[scale=0.55, every node/.style={font=\tiny}]
+    % Actors
+    \node[font=\small\bfseries] at (0,9) {eNB};
+    \node[font=\small\bfseries] at (5,9) {S1N2 GW};
+    \node[font=\small\bfseries] at (10,9) {AMF};
+
+    % Lifelines
+    \draw[thick] (0,8.5) -- (0,0);
+    \draw[thick] (5,8.5) -- (5,0);
+    \draw[thick] (10,8.5) -- (10,0);
+
+    % Registration Accept from AMF
+    \draw[->, thick, GoogleGreen] (10,8) -- (5,7.8);
+    \node[above, font=\tiny] at (7.5,8) {Registration Accept};
+
+    % ★ Early S1 Setup ★
+    \node[draw, thick, fill=GoogleRed!20, text width=2.8cm, align=center, font=\tiny] at (5,7) {
+      \textbf{Early S1 Setup}\\
+      PDU Session前に\\
+      S1ベアラを先行確立
+    };
+
+    % Initial Context Setup to eNB
+    \draw[->, thick, GoogleBlue] (5,5.8) -- (0,5.6);
+    \node[above, font=\tiny] at (2.5,5.8) {InitialContextSetupReq + Attach Accept};
+
+    % eNB側処理
+    \node[draw, fill=GoogleBlue!10, font=\tiny] at (0,4.8) {S1-Uベアラ確立};
+
+    % Response from eNB
+    \draw[->, thick, GoogleBlue] (0,4) -- (5,3.8);
+    \node[above, font=\tiny] at (2.5,4) {InitialContextSetupRes (eNB TEID)};
+
+    % PDU Session Request
+    \draw[->, thick, GoogleGreen] (5,3) -- (10,2.8);
+    \node[above, font=\tiny] at (7.5,3) {PDU Session Est Req};
+
+    % PDU Session Response with UPF TEID
+    \draw[->, thick, GoogleGreen] (10,2) -- (5,1.8);
+    \node[above, font=\tiny] at (7.5,2) {PDU Session Est Acc (UPF TEID)};
+
+    % TEID Mapping完成
+    \node[draw, fill=GoogleYellow!30, text width=3cm, align=center, font=\tiny] at (5,0.8) {
+      TEID Mapping更新\\
+      S1-U TEID $\leftrightarrow$ N3 TEID
+    };
+  \end{tikzpicture}
+
+  \vspace{0.2cm}
+  \begin{block}{解決する問題}
+    \scriptsize
+    4GではAttach時にベアラ確立、5GではRegistration後 $\Rightarrow$ GWが先行してS1ベアラを確立することでタイミング差を吸収
+  \end{block}
+\end{frame}
+
+\iffalse  % 実装詳細とシーケンス図は論理基盤重視のため補遺扱い
 \begin{frame}{システム構成：プロトコルスタック}
   \centering
   \begin{tikzpicture}[scale=0.75, every node/.style={font=\small}]
@@ -316,6 +678,59 @@
   \end{tikzpicture}
 \end{frame}
 
+\begin{frame}{プロトタイプ実装}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{実装概要}
+      \begin{itemize}
+        \item 言語: C言語（約14,000行）
+        \item 外部ライブラリ: libasn1c
+        \item 認証: Milenage/KDF実装
+      \end{itemize}
+
+      \vspace{0.3cm}
+      \textbf{主要モジュール}
+      \begin{itemize}
+        \item core/ : メインループ、SCTP/UDP
+        \item ngap/ : NGAPメッセージ生成・解析
+        \item nas/ : NASメッセージ変換
+        \item auth/ : Milenage認証、鍵導出
+        \item context/ : UEコンテキスト管理
+        \item transport/ : GTP-U転送
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{PoCでの簡略化}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{項目} & \textbf{実装} \\
+          \hline
+          gNB-ID & 固定値 \\
+          \hline
+          APN & 環境変数 \\
+          \hline
+          QoS & QCI=9固定 \\
+          \hline
+          暗号 & NEA2/EEA2のみ \\
+          \hline
+          DL TEID & 透過転送 \\
+          \hline
+        \end{tabular}
+      \end{table}
+
+      \vspace{0.3cm}
+      \textbf{制約事項}
+      \begin{itemize}
+        \item ハンドオーバー未対応
+        \item スライシングは固定値
+        \item Multi-type PDUはIPのみ
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 \begin{frame}{UE接続シーケンス：S1 Setup}
   \centering
   \begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
@@ -355,7 +770,91 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{完全シーケンス(1/5)：Initial UE Message + NAS変換}
+\begin{frame}{NASメッセージ変換対応表}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{上り (UE → CN)}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G NAS} & \textbf{5G NAS} \\
+          \hline
+          Attach Request & Registration Request \\
+          \hline
+          Auth Response & Auth Response \\
+          (RES) & (RES*: HRES*計算) \\
+          \hline
+          Security Mode Cmp & Security Mode Cmp \\
+          \hline
+          Attach Complete & Registration Complete \\
+          + ESM情報 & + PDU Session Est Req \\
+          \hline
+        \end{tabular}
+      \end{table}
+
+      \vspace{0.3cm}
+      \textbf{ID変換}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G} & \textbf{5G} \\
+          \hline
+          IMSI & SUCI (NULL scheme) \\
+          \hline
+          GUTI & 5G-GUTI \\
+          \hline
+          eKSI (3bit) & ngKSI (4bit, TSC=0) \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{下り (CN → UE)}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{5G NAS} & \textbf{4G NAS} \\
+          \hline
+          Auth Request & Auth Request \\
+          (ngKSI) & (eKSI) \\
+          \hline
+          Security Mode Cmd & Security Mode Cmd \\
+          (NEA/NIA) & (EEA/EIA) \\
+          \hline
+          Registration Accept & Attach Accept \\
+          + 5G-GUTI & + GUTI \\
+          \hline
+          PDU Session Est Acc & Act Def EPS Bearer \\
+          (5QI, DNN) & (QCI, APN) \\
+          \hline
+        \end{tabular}
+      \end{table}
+
+      \vspace{0.3cm}
+      \textbf{セキュリティアルゴリズム}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{4G} & \textbf{5G} \\
+          \hline
+          EEA0/EIA0 & NEA0/NIA0 \\
+          EEA1/EIA1 & NEA1/NIA1 \\
+          EEA2/EIA2 & NEA2/NIA2 \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%% ========================================
+%% シーケンス 1/6: Initial UE Message
+%% ========================================
+\begin{frame}{完全シーケンス(1/6)：Initial UE Message + NAS変換}
   \centering
   \begin{tikzpicture}[scale=0.55, every node/.style={font=\tiny}]
     % Actors
@@ -381,35 +880,33 @@
     \draw[->, thick, GoogleBlue] (0.1,6.2) -- (3.9,6.2);
     \node[above, font=\tiny] at (2,6.3) {RRC Setup Cmp + Attach Req};
 
-    % NAS詳細 (4G) - 左側に配置
-    \node[draw, fill=GoogleBlue!10, text width=2.3cm, align=left, font=\tiny, anchor=north east] at (-0.3,5.9) {
-      \textbf{4G NAS: Attach Req}\\
+    % NAS詳細 (4G)
+    \node[draw, fill=GoogleBlue!10, text width=2cm, align=left, font=\tiny, anchor=north east] at (-0.3,5.9) {
+      \textbf{4G NAS}\\
       - IMSI\\
-      - UE Network Cap\\
-      - PDN Conn Req
+      - UE Cap
     };
 
     % 3. S1AP InitialUEMessage
-    \draw[->, thick, GoogleBlue] (4.1,4.2) -- (7.9,4.2);
-    \node[above, font=\tiny] at (6,4.3) {InitialUEMessage (S1AP)};
+    \draw[->, thick, GoogleBlue] (4.1,4.5) -- (7.9,4.5);
+    \node[above, font=\tiny] at (6,4.6) {InitialUEMessage (S1AP)};
 
-    % 4. NAS変換処理 - 中央下に配置
-    \node[draw, thick, fill=GoogleYellow!30, text width=2.6cm, align=center, font=\tiny, anchor=north] at (8,3.6) {
+    % 4. NAS変換処理
+    \node[draw, thick, fill=GoogleYellow!30, text width=2.5cm, align=center, font=\tiny] at (8,3.5) {
       \textbf{NAS変換}\\
       Attach → Registration\\
       IMSI → SUCI
     };
 
     % 5. NGAP InitialUEMessage
-    \draw[->, thick, GoogleGreen] (8.1,2.0) -- (11.9,2.0);
-    \node[above, font=\tiny] at (10,2.1) {InitialUEMessage (NGAP)};
+    \draw[->, thick, GoogleGreen] (8.1,2.2) -- (11.9,2.2);
+    \node[above, font=\tiny] at (10,2.3) {InitialUEMessage (NGAP)};
 
-    % NAS詳細 (5G) - 右側に配置
-    \node[draw, fill=GoogleGreen!10, text width=2.3cm, align=left, font=\tiny, anchor=north west] at (12.3,1.7) {
-      \textbf{5G NAS: Reg Req}\\
+    % NAS詳細 (5G)
+    \node[draw, fill=GoogleGreen!10, text width=2cm, align=left, font=\tiny, anchor=north west] at (12.3,2.0) {
+      \textbf{5G NAS}\\
       - SUCI\\
-      - UE Security Cap\\
-      - Requested NSSAI
+      - NSSAI
     };
   \end{tikzpicture}
   \vspace{-0.2cm}
@@ -423,9 +920,9 @@
 \end{frame}
 
 %% ========================================
-%% シーケンス 2/5: Authentication（詳細）
+%% シーケンス 2/6: Authentication（詳細）
 %% ========================================
-\begin{frame}{完全シーケンス(2/5)：Authentication}
+\begin{frame}{完全シーケンス(2/6)：Authentication}
   \centering
   \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
     % Actors
@@ -516,7 +1013,7 @@
 %% ========================================
 %% シーケンス 3/5: Security Mode（詳細）
 %% ========================================
-\begin{frame}{完全シーケンス(3/5)：Security Mode}
+\begin{frame}{完全シーケンス(3/6)：Security Mode}
   \centering
   \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
     % Actors
@@ -611,7 +1108,7 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{完全シーケンス(4/5)：Registration Accept + Early S1 Setup}
+\begin{frame}{完全シーケンス(4/6)：Registration Accept + Early S1 Setup}
   \centering
   \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
     % Actors
@@ -678,7 +1175,7 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{完全シーケンス(5/5)：PDU Session + TEID更新}
+\begin{frame}{完全シーケンス(5/6)：PDU Session + TEID更新}
   \centering
   \begin{tikzpicture}[scale=0.52, every node/.style={font=\tiny}]
     % Actors
@@ -757,7 +1254,7 @@
 
 \begin{frame}{完全シーケンス(6/6)：TAU (Tracking Area Update)}
   \centering
-  \begin{tikzpicture}[scale=0.6, every node/.style={font=\tiny}]
+  \begin{tikzpicture}[scale=0.65, every node/.style={font=\tiny}]
     % Actors
     \node[font=\small\bfseries] at (0,8) {UE};
     \node[font=\small\bfseries] at (4,8) {eNB};
@@ -849,87 +1346,6 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{NASメッセージ変換対応表}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \textbf{上り (UE → CN)}
-      \begin{table}
-        \tiny
-        \begin{tabular}{|l|l|}
-          \hline
-          \textbf{4G NAS} & \textbf{5G NAS} \\
-          \hline
-          Attach Request & Registration Request \\
-          \hline
-          Auth Response & Auth Response \\
-          (RES) & (RES*: HRES*計算) \\
-          \hline
-          Security Mode Cmp & Security Mode Cmp \\
-          \hline
-          Attach Complete & Registration Complete \\
-          + ESM情報 & + PDU Session Est Req \\
-          \hline
-        \end{tabular}
-      \end{table}
-
-      \vspace{0.3cm}
-      \textbf{ID変換}
-      \begin{table}
-        \tiny
-        \begin{tabular}{|l|l|}
-          \hline
-          \textbf{4G} & \textbf{5G} \\
-          \hline
-          IMSI & SUCI (NULL scheme) \\
-          \hline
-          GUTI & 5G-GUTI \\
-          \hline
-          eKSI (3bit) & ngKSI (4bit, TSC=0) \\
-          \hline
-        \end{tabular}
-      \end{table}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \textbf{下り (CN → UE)}
-      \begin{table}
-        \tiny
-        \begin{tabular}{|l|l|}
-          \hline
-          \textbf{5G NAS} & \textbf{4G NAS} \\
-          \hline
-          Auth Request & Auth Request \\
-          (ngKSI) & (eKSI) \\
-          \hline
-          Security Mode Cmd & Security Mode Cmd \\
-          (NEA/NIA) & (EEA/EIA) \\
-          \hline
-          Registration Accept & Attach Accept \\
-          + 5G-GUTI & + GUTI \\
-          \hline
-          PDU Session Est Acc & Act Def EPS Bearer \\
-          (5QI, DNN) & (QCI, APN) \\
-          \hline
-        \end{tabular}
-      \end{table}
-
-      \vspace{0.3cm}
-      \textbf{セキュリティアルゴリズム}
-      \begin{table}
-        \tiny
-        \begin{tabular}{|l|l|}
-          \hline
-          \textbf{4G} & \textbf{5G} \\
-          \hline
-          EEA0/EIA0 & NEA0/NIA0 \\
-          EEA1/EIA1 & NEA1/NIA1 \\
-          EEA2/EIA2 & NEA2/NIA2 \\
-          \hline
-        \end{tabular}
-      \end{table}
-    \end{column}
-  \end{columns}
-\end{frame}
-
 \begin{frame}{データプレーン：GTP-U TEID変換}
   \centering
   \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
@@ -958,11 +1374,9 @@
     \node[below, font=\scriptsize, align=center] at (3,1.6) {GTP-U\\S1-U TEID};
 
     % TEID Mapping Table
-    \node[draw, thick, fill=GoogleYellow!20, text width=4cm, align=left, font=\scriptsize] at (6,0.3) {
-      \textbf{TEID Mapping Table}\\
-      S1-U: 0x12345678\\
-      $\updownarrow$\\
-      N3: 0xABCDEF00
+    \node[draw, thick, fill=GoogleYellow!20, text width=3.5cm, align=center, font=\tiny] at (6,0.3) {
+      \textbf{TEID Mapping}\\[0.1cm]
+      S1-U TEID $\leftrightarrow$ N3 TEID
     };
   \end{tikzpicture}
 \end{frame}
@@ -1012,18 +1426,58 @@
   \end{block}
 \end{frame}
 
+\begin{frame}{QoSパラメータのマッピング}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \textbf{QCI $\leftrightarrow$ 5QI 対応例}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|c|c|l|l|}
+          \hline
+          QCI & 5QI & リソースタイプ & 用途例 \\
+          \hline
+          1 & 1 & GBR & 音声(VoLTE/VoNR) \\
+          5 & 5 & Non-GBR & IMSシグナリング \\
+          6 & 6 & Non-GBR & ビデオ(バッファ型) \\
+          9 & 9 & Non-GBR & デフォルト(ベストエフォート) \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \textbf{対応方針}
+      \begin{itemize}
+        \item QCI=1..9の\textbf{互換範囲は同値対応}
+        \item 非対応値はデフォルト(5QI=9)に\textbf{フォールバック}
+        \item QFIはコンテキストに保持し整合性維持
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\fi
+
+\begin{frame}{PoC概要と検証結果}
+  \begin{itemize}
+    \item 環境: sXGP eNB(4G) + Open5GS(5GC) + 商用UE(Pixel 8a) + C言語実装のS1-N2/N3ゲートウェイ
+    \item 目的: \alert{RAN無改修}で5GC接続を成立させ、手順差異はEarly S1 SetupとNAS/ID/TEIDマッピングで吸収
+    \item 成果: 位置登録・データ疎通成功。遅延増分\textbf{約3.4 ms}、DL/UL \textbf{15.9/5.6 Mbps}でベースラインと同等
+    \item 意義: CN先行移行の実用性を確認。スライス/6G拡張は論理基盤（世代不変性と階層対応方針）に従い段階的に追加可能
+  \end{itemize}
+\end{frame}
+
 \section{実験・評価}
 \begin{frame}{実験環境：sXGPとOpen5GSを用いた実機検証}
   \centering
-  \begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
+  \begin{tikzpicture}[scale=0.9, every node/.style={font=\small}]
     % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=0.8cm, align=center] (ue) at (0,0) {UE\\{\scriptsize Pixel}};
+    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1.8cm, minimum height=0.8cm, align=center] (ue) at (0,0) {UE\\{\scriptsize Pixel 8a}};
 
     % sXGP
     \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm, align=center] (sxgp) at (3.5,0) {sXGP AP\\{\scriptsize 1.9GHz}};
 
     % Gateway
-    \node[draw, thick, rounded corners, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=1cm, align=center] (gw) at (7.5,0) {Gateway\\{\scriptsize C++/Python}};
+    \node[draw, thick, rounded corners, fill=GoogleYellow!20, minimum width=2.5cm, minimum height=1cm, align=center] (gw) at (7.5,0) {S1N2 GW\\{\scriptsize C言語}};
 
     % Open5GS
     \node[draw, rounded corners, fill=GoogleGreen!30, minimum width=2cm, minimum height=0.8cm, align=center] (o5gs) at (11.5,0) {Open5GS\\{\scriptsize 5GC}};
@@ -1034,52 +1488,194 @@
     \draw[->, thick] (gw) -- (o5gs) node[midway, above] {\scriptsize N2/N3};
 
     % Annotations
-    \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {4G/5G\\Dual SIM};
+    \node[below=0.3cm of ue, text width=1.8cm, align=center, font=\tiny] {商用\\スマートフォン};
     \node[below=0.3cm of sxgp, text width=2cm, align=center, font=\tiny] {プライベートLTE\\(4G eNB)};
-    \node[below=0.5cm of gw, text width=2.5cm, align=center, font=\tiny] {提案実装\\疎結合変換層};
+    \node[below=0.5cm of gw, text width=2.5cm, align=center, font=\tiny] {提案実装\\約14,000行};
     \node[below=0.3cm of o5gs, text width=2cm, align=center, font=\tiny] {オープンソース\\5GC実装};
   \end{tikzpicture}
 
-  \vspace{0.5cm}
-  \begin{itemize}
-    \item \textbf{検証目的:} 4G無線経由で5GC登録とデータ通信が成立するか
-    \item \textbf{評価軸:} ①機能検証(定性)、②性能評価(定量)
-  \end{itemize}
+  \vspace{0.3cm}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{検証シナリオ}
+      \begin{itemize}
+        \item シナリオ1: C-Plane接続検証
+        \item シナリオ2: U-Plane性能評価
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{測定ツール}
+      \begin{itemize}
+        \item \texttt{irtt}: RTT測定（100回）
+        \item \texttt{iPerf3}: スループット（100秒）
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{評価方針と要件対応}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \textbf{アーキテクチャ要件と評価項目}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|p{4.2cm}|l|}
+          \hline
+          \textbf{要件} & \textbf{検証内容} & \textbf{シナリオ} \\
+          \hline
+          R1: 透過的介在 & eNB/5GCを無改修で接続成立 & 1 \\
+          \hline
+          R2: プロトコル変換 & AAA, Mobility, U-Planeの正常動作 & 1, 2 \\
+          \hline
+          R3: 5GC固有機能 & S-NSSAIデフォルト、QoSマッピング & 1, 2 \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \textbf{ベースライン環境}
+      \begin{itemize}
+        \item LTEネイティブ: eNB→EPC直結（Open5GS 4G）
+        \item 目的: 変換処理の\textbf{純粋なオーバーヘッド}比較
+        \item 測定: irtt(遅延), iPerf3(スループット)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.2cm}
+  \scriptsize 注）R3は本PoCで固定値補完のため完全検証対象外（部分的検証）
+\end{frame}
+
+\begin{frame}{実験環境の詳細構成}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{ハードウェア・ソフトウェア}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|l|l|}
+          \hline
+          \textbf{項目} & \textbf{仕様} \\
+          \hline
+          UE & Pixel 8a (4G/5G Dual SIM) \\
+          \hline
+          RAN & Baicells Nova430X \\
+          & TD-LTE 1.9GHz 10MHz \\
+          \hline
+          Server & Intel NUC7i7BNH \\
+          & Core i7, 16GB RAM \\
+          \hline
+          Gateway & C言語 (asn1c生成) \\
+          \hline
+          5GC & Open5GS v2.7.2 \\
+          \hline
+          OS & Ubuntu 22.04 + Docker \\
+          \hline
+        \end{tabular}
+      \end{table}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{ネットワーク構成}
+      \begin{itemize}
+        \scriptsize
+        \item Linuxブリッジ: \texttt{br-sXGP-5G}
+        \item サブネット: \texttt{172.24.0.0/16}
+        \item eNB: \texttt{172.24.0.111}
+        \item AMF: \texttt{172.24.0.12}
+        \item UPF: \texttt{172.24.0.21}
+        \item GW: \texttt{172.24.0.30}
+      \end{itemize}
+      \vspace{0.2cm}
+      \textbf{UE IPアドレス帯}
+      \begin{itemize}
+        \scriptsize
+        \item 提案手法: \texttt{172.25.0.0/24}
+        \item ベースライン: \texttt{192.168.100.0/24}
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \begin{frame}{評価結果(1)：C-Plane接続検証}
-  \begin{itemize}
-    \item \textbf{結果：Registration成功}
-      \begin{itemize}
-        \item 4G経由で送られた \texttt{Attach Request} 内の5G NASメッセージを抽出・転送
-        \item 5GC側で正常に \texttt{Registration Accept} が発行され、PDU Sessionが確立
-      \end{itemize}
-    \item \textbf{検証の意義 (定性評価)}
-      \begin{itemize}
-        \item \textbf{依存の排除:} ゲートウェイが差異を吸収し、直接接続不可なRAN-CN間の接続を実現
-        \item \textbf{機能の抽象化:} 世代共通のAAA/RM(Registration Management)機能を維持したままマッピングに成功
-      \end{itemize}
-  \end{itemize}
+  \begin{table}
+    \tiny
+    \begin{tabular}{|l|p{5.5cm}|}
+      \hline
+      \textbf{確認項目} & \textbf{結果} \\
+      \hline
+      S1/NG Setup & eNB-AMF間接続確立、ID変換正常 \\
+      \hline
+      NAS変換 & Attach Req → Reg Req 成功 \\
+      \hline
+      認証・Security & 5G-AKA成功、Mode完了 \\
+      \hline
+      PDU Session & Early S1 Setup方式で正常確立 \\
+      \hline
+      IP付与 & Open5GS から UE へ割当完了 \\
+      \hline
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.3cm}
+  \begin{block}{定性的評価}
+    \begin{itemize}
+      \item \textbf{C-Plane変換処理時間}: 1 ms未満（LTE登録の数秒に対して十分小さい）
+      \item \textbf{設計妥当性}: pcapおよびログでNAS種別対応、ID束整合、AAA機能成立、TEIDマッピング成立を確認
+      \item \textbf{結論}: 第5章で定義した変換規則が実際の信号レベルで成立
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{評価結果(2)：U-Plane性能評価}
-  \begin{itemize}
-    \item \textbf{測定の狙い}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{遅延（RTT）測定結果}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|c|c|c|}
+          \hline
+          \textbf{環境} & \textbf{平均} & \textbf{標準偏差} \\
+          \hline
+          提案 & 81.1 ms & 4.8 ms \\
+          \hline
+          Base & 77.7 ms & 16.7 ms \\
+          \hline
+        \end{tabular}
+      \end{table}
       \begin{itemize}
-        \item \textbf{相互接続の実証:} Ping/iPerfの疎通成功により、プロトコル変換の正常性を証明
-        \item \textbf{実用性の評価:} ゲートウェイ有無(既存LTE vs 提案方式)の比較によりオーバーヘッドを検証
+        \scriptsize
+        \item 差分: 約3.4 ms
+        \item 無線区間遅延(70〜80ms)に対して\\十分小さい
+        \item GTP-Uヘッダ書換え: 0.1 ms未満
       \end{itemize}
-    \item \textbf{結果概要}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{スループット測定結果}
+      \begin{table}
+        \tiny
+        \begin{tabular}{|c|c|c|}
+          \hline
+          \textbf{方向} & \textbf{提案} & \textbf{Base} \\
+          \hline
+          DL & 15.9 & 15.5 \\
+          \hline
+          UL & 5.6 & 5.5 \\
+          \hline
+        \end{tabular}
+      \end{table}
       \begin{itemize}
-        \item \textbf{遅延:} 処理による追加遅延は数ms程度
-        \item \textbf{スループット:} 4G無線区間の帯域がボトルネックとなり、変換処理による低下は軽微
+        \scriptsize
+        \item sXGP理論上限: DL 37Mbps / UL 14Mbps
+        \item 有意な性能差なし
+        \item GWがボトルネックになっていない
       \end{itemize}
-    \item \textbf{考察}
-      \begin{itemize}
-        \item 変換処理のオーバーヘッドは無線区間の遅延・帯域に対して十分小さい
-        \item $\Rightarrow$ \textbf{異世代相互接続は性能面でも実用可能}であることを確認
-      \end{itemize}
-  \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.3cm}
+  \begin{alertblock}{結論}
+    \centering
+    ゲートウェイ変換処理による追加遅延・スループット低下は\\
+    \textbf{実用上無視できるレベル} → 異世代相互接続は性能面でも実用可能
+  \end{alertblock}
 \end{frame}
 
 \begin{frame}{考察：デプロイメント戦略（1/2）}
@@ -1163,45 +1759,86 @@
 \end{frame}
 
 \section{結論}
-\begin{frame}{本研究の成果}
-  \begin{block}{達成事項}
+\begin{frame}{本研究の成果：理論的基盤と実証（その1）}
+  \begin{block}{\textbf{G1}: 世代不変性に基づくプロトコルマッピングの体系化}
+    4G/5Gプロトコル（S1AP↔NGAP、NAS EPS↔NAS 5GS、GTP-U）を比較分析。\\
+    \textbf{世代共通機能}（AAA・移動管理・U-Plane）に基づく変換規則を体系化：
     \begin{itemize}
-      \item \textbf{疎結合アーキテクチャの確立}: RANとCNのライフサイクルを分離し、RAN側の改修なしに5GCへの接続が可能であることを実証
-      \item \textbf{Early S1 Setup方式の考案}: 4G/5Gのベアラ確立タイミングの差異を吸収するシーケンスを設計・実装
-      \item \textbf{実用性の実証}: sXGP実機による検証で、変換オーバーヘッドが実運用上許容範囲であることを確認
+      \small
+      \item NAS変換規則、ID変換規則、TEIDマッピング、QoSマッピングを設計
+      \item 実機検証で信号レベルでの成立を確認 → 理論の有効性を実証
     \end{itemize}
   \end{block}
-  \begin{block}{3つの課題への貢献}
+
+  \begin{block}{\textbf{G2}: 疎結合アーキテクチャの設計と実証}
+    S1/NGインターフェース相互変換ゲートウェイを設計・実装。\\
+    Early S1 Setup方式により、4G/5Gのシーケンス差異を吸収：
     \begin{itemize}
-      \item \textbf{R\&D:} sXGP + Open5GSによる低コストな5GC検証環境を実現
-      \item \textbf{商用導入:} eNBの改修なしに5GCへ接続可能な「CN先行移行」戦略を提示
-      \item \textbf{NTN:} 地上ゲートウェイのみで衛星/HAPS上RANの5GC収容が可能
+      \small
+      \item 実機環境（sXGP + Open5GS + 商用UE）で検証
+      \item 遅延増加3.4 ms、スループット同等 → 実運用上の実用性を確認
     \end{itemize}
   \end{block}
 \end{frame}
 
-\begin{frame}{今後の展望と未実装機能}
-  \begin{itemize}
-    \item \textbf{スケーラビリティの向上}
+\begin{frame}{本研究の成果：拡張性と応用（その2）}
+  \begin{block}{\textbf{G3}: 5GC固有機能への拡張性の明確化}
+    5GC固有機能を\textbf{3層モデル}で階層的に分類し、層ごとの対応方針を設計：
+    \begin{itemize}
+      \small
+      \item 基盤層（透過）、制御メカニズム層（マッピング）、応用サービス層（スタブ）
+      \item スライシング等への拡張が既存設計の延長線上で可能であることを示す
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{研究の位置づけと応用}
+    \begin{itemize}
+      \small
+      \item 低コスト5GC検証環境（sXGP + Open5GS）
+      \item CN先行移行戦略（eNB無改修）
+      \item NTN適用の可能性（衛星・HAPS RAN の5G化）
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{今後の展望}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{スケーラビリティの向上}
       \begin{itemize}
-        \item DPDK（Data Plane Development Kit）やeBPF（extended Berkeley Packet Filter）等の高速化技術導入
-        \item TEID変換テーブルの検索処理・パケットコピー処理の最適化
+        \item DPDK/eBPF等の高速化技術
+        \item TEID変換処理の最適化
       \end{itemize}
-    \item \textbf{移動管理機能の拡張}
+
+      \vspace{0.3cm}
+      \textbf{移動管理機能の拡張}
       \begin{itemize}
-        \item S1ハンドオーバー $\leftrightarrow$ N2ハンドオーバー変換
-        \item Paging (Idleモードからの着信・復帰)
+        \item S1↔N2ハンドオーバー変換
+        \item Paging（Idle復帰）対応
       \end{itemize}
-    \item \textbf{NTN環境での実証実験}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{NTN環境での実証}
       \begin{itemize}
-        \item 衛星回線エミュレータを用いた高遅延条件（長RTT）での検証
-        \item 実際の衛星回線を用いたフィールド実験
+        \item 衛星回線エミュレータ検証
+        \item 高遅延条件（長RTT）対応
       \end{itemize}
-    \item \textbf{6Gコアへの拡張}
+
+      \vspace{0.3cm}
+      \textbf{6Gコアへの拡張}
       \begin{itemize}
-        \item 5G RAN と 6Gコアの相互接続（N2-N2'変換等）への適用可能性検討
+        \item 5G RAN↔6Gコア接続
+        \item 将来世代への適用検討
       \end{itemize}
-  \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.5cm}
+  \begin{alertblock}{まとめ}
+    \centering
+    世代共通機能に基づいた疎結合アーキテクチャの確立と3層モデルの設計指針により、\\
+    \textbf{RAN改修なしでの5GC接続}を実現 → RANとCNの独立進化を可能に
+  \end{alertblock}
 \end{frame}
 
 \end{document}
