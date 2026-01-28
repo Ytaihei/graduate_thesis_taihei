@@ -77,51 +77,87 @@ UEからコアネットワーク内のサーバへの往復遅延（RTT）を\te
 加えて，ゲートウェイ内部ログに基づく計測では，ユーザ面のGTP-Uヘッダ書き換え処理は0.1 ms未満であった．
 
 \paragraph{スループット}
-iPerf3を用いたTCPスループット測定を行った（100秒間の連続転送）．
-% sXGP 10MHz帯域の理論限界はDL約37Mbps / UL約14Mbps
-図\ref{fig:throughput_comparison}に，提案手法とベースライン環境におけるスループットの比較を示す．
+iPerf3を用いたUDPスループット測定を行った（100秒間転送）．UDPを選択した理由は，TCPの輻輳制御アルゴリズムの影響を排除し，純粋なU-Plane転送性能を評価するためである．
+下り方向（DL）は5, 10, 15, 16, 20 Mbps，上り方向（UL）は3, 5, 10 Mbpsの帯域設定で測定を実施した．
+図\ref{fig:throughput_dl}および図\ref{fig:throughput_ul}に，提案手法とベースライン環境におけるスループットの比較を示す．
 
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}
     \begin{axis}[
-      ybar,
-      bar width=0.8cm,
       width=12cm,
-      height=6cm,
-      ylabel={スループット (Mbps)},
-      symbolic x coords={DL（提案）, DL（ベース）, UL（提案）, UL（ベース）},
-      xtick=data,
-      ymin=0,
-      ymax=45,
-      nodes near coords,
-      every node near coord/.append style={font=\small},
-      enlarge x limits=0.3,
-      legend style={at={(0.5,-0.2)}, anchor=north, legend columns=2},
+      height=7cm,
+      xlabel={設定帯域 (Mbps)},
+      ylabel={測定スループット (Mbps)},
+      xmin=0, xmax=22,
+      ymin=0, ymax=22,
+      xtick={5, 10, 15, 16, 20},
+      ytick={0, 5, 10, 15, 20},
+      legend style={at={(0.02,0.98)}, anchor=north west},
+      grid=major,
+      mark size=3pt,
     ]
-    \addplot[fill=GoogleBlue!60] coordinates {(DL（提案）, 15.9) (DL（ベース）, 15.5) (UL（提案）, 5.6) (UL（ベース）, 5.5)};
-    \addlegendimage{ybar, fill=GoogleBlue!60}
-    \addlegendentry{測定値}
-    \addlegendimage{dashed, thick, GoogleRed}
-    \addlegendentry{DL理論限界}
-    \addlegendimage{dashed, thick, GoogleGreen}
-    \addlegendentry{UL理論限界}
-    % 理論限界線
-    \draw[dashed, thick, GoogleRed] (axis cs:DL（提案）, 37) -- (axis cs:DL（ベース）, 37);
-    \draw[dashed, thick, GoogleGreen] (axis cs:UL（提案）, 14) -- (axis cs:UL（ベース）, 14);
+    % 理想線（設定帯域=測定スループット）
+    \addplot[dashed, thick, black!50, domain=0:22] {x};
+    \addlegendentry{理想値}
+    % 提案手法（GW経由）
+    \addplot[mark=square*, thick, GoogleBlue] coordinates {
+      (5, 5.00) (10, 10.00) (15, 15.00) (16, 15.57) (20, 16.43)
+    };
+    \addlegendentry{提案手法}
+    % ベースライン（4Gネイティブ）
+    \addplot[mark=triangle*, thick, GoogleRed] coordinates {
+      (5, 5.00) (10, 10.00) (15, 15.00) (16, 16.00) (20, 14.42)
+    };
+    \addlegendentry{ベースライン}
     \end{axis}
   \end{tikzpicture}
-  \caption{TCPスループットの比較（iPerf3，100秒間転送）}
-  \label{fig:throughput_comparison}
+  \caption{下り方向（DL）UDPスループットの比較}
+  \label{fig:throughput_dl}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=12cm,
+      height=7cm,
+      xlabel={設定帯域 (Mbps)},
+      ylabel={測定スループット (Mbps)},
+      xmin=0, xmax=12,
+      ymin=0, ymax=12,
+      xtick={3, 5, 10},
+      ytick={0, 2, 4, 6, 8, 10},
+      legend style={at={(0.02,0.98)}, anchor=north west},
+      grid=major,
+      mark size=3pt,
+    ]
+    % 理想線（設定帯域=測定スループット）
+    \addplot[dashed, thick, black!50, domain=0:12] {x};
+    \addlegendentry{理想値}
+    % 提案手法（GW経由）
+    \addplot[mark=square*, thick, GoogleBlue] coordinates {
+      (3, 3.00) (5, 4.31) (10, 4.31)
+    };
+    \addlegendentry{提案手法}
+    % ベースライン（4Gネイティブ）
+    \addplot[mark=triangle*, thick, GoogleRed] coordinates {
+      (3, 3.00) (5, 4.29) (10, 4.28)
+    };
+    \addlegendentry{ベースライン}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{上り方向（UL）UDPスループットの比較}
+  \label{fig:throughput_ul}
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{下り（Downlink）}: 提案手法 15.9 Mbps／ベースライン 15.5 Mbps
-    \item \textbf{上り（Uplink）}: 提案手法 5.6 Mbps／ベースライン 5.5 Mbps
+    \item \textbf{下り（Downlink）}: 15 Mbpsまでは両環境とも設定帯域を達成（パケットロス 0\%）．16 Mbps以上では提案手法が15.6〜16.4 Mbps，ベースラインが16.0〜14.4 Mbpsとなり，両環境とも飽和傾向を示すが有意な差はない．
+    \item \textbf{上り（Uplink）}: 3 Mbpsでは両環境とも設定帯域を達成．5 Mbps以上では両環境とも約4.3 Mbpsで飽和し，有意な差はない．
 \end{itemize}
-測定値はsXGP APのカタログスペック（DL約37Mbps／UL約14Mbps）を下回っているが，これはカタログ値が理想条件（電波環境，変調方式，リソースブロック割当）における理論上限であることに起因する．実環境では，無線区間の電波品質，TCP輻輳制御，およびプロトコルオーバーヘッド等により，実効スループットは理論値の40〜50\%程度となることが一般的である．
+下り方向において15 Mbpsまで両環境で差がないことから，通常の利用帯域ではゲートウェイ処理がボトルネックにならないことが確認された．16 Mbps以上では両環境とも飽和傾向を示すが，これはLTE無線区間の下り方向スケジューリング特性や実験環境固有の要因に起因するものと考えられる．上り方向のスループットが約4.3 Mbpsで飽和するのは，LTE無線区間のアップリンクスケジューリング特性（Grant遅延，バッファ管理等）に起因するものであり，両環境で同様の傾向を示すことからゲートウェイ処理とは無関係である．
 
-重要な点は，提案手法とベースライン環境の間で有意な性能差が見られないことである．両環境でほぼ同等のスループットが得られたことから，ゲートウェイの変換処理が通信のボトルネックとなっていないことが確認された．
+重要な点は，実用的な帯域範囲（下り15 Mbps以下，上り3 Mbps）において，提案手法とベースライン環境の間で有意な性能差が見られないことである．この範囲ではパケットロス率も0\%であり，ゲートウェイのGTP-Uヘッダ変換処理が通信のボトルネックとなっていないことが確認された．
 
 \section{考察}
 
@@ -137,7 +173,7 @@ iPerf3を用いたTCPスループット測定を行った（100秒間の連続�
 \end{itemize}
 
 \paragraph{U-Plane設計の妥当性}
-RTTおよびスループットの測定結果から，提案手法とベースライン環境の間に有意な性能差がないことを確認した．これは，ゲートウェイのGTP-Uヘッダ書き換え処理が通信のボトルネックとなっていないことを示している．したがって，Hybrid Proxy設計（上り方向のTEID変換＋下り方向の透過転送）は，性能オーバーヘッドを抑えつつ機能要件を満たす設計として妥当であったと言える．
+RTTおよびUDPスループットの測定結果から，実用的な帯域範囲において提案手法とベースライン環境の間に有意な性能差がないことを確認した．特にUDP測定では，下り方向で15 Mbpsまで設定帯域を100\%達成し，パケットロスも0\%であった．これは，ゲートウェイのGTP-Uヘッダ書き換え処理が通常の利用帯域において通信のボトルネックとなっていないことを示している．したがって，Hybrid Proxy設計（上り方向のTEID変換＋下り方向の透過転送）は，性能オーバーヘッドを抑えつつ機能要件を満たす設計として妥当であったと言える．
 
 \paragraph{実験の限界}
 本実験は単一UEでの基本動作検証であり，以下の点は未検証である．
@@ -320,147 +356,81 @@ eNBのハードウェア改修なしに5GCへ接続可能であることから�
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
-    % 地上エリア
-    \fill[GoogleLightGray!50] (-0.5,-0.5) rectangle (12,0.8);
-    \node at (0.5,0.15) {\textbf{地上}};
+  \begin{tikzpicture}[scale=0.75, every node/.style={font=\small},
+    platform/.style={draw, fill=GoogleYellow!50},
+    ground/.style={draw, rounded corners, minimum width=1.5cm, minimum height=0.6cm}]
 
-    % 地上局/ゲートウェイ
-    \node[draw, rounded corners, fill=GoogleBlue!50, minimum width=1.8cm, minimum height=0.7cm] (gw) at (1,1.8) {地上局};
+    % 地上局・CN
+    \node[ground, fill=GoogleBlue!40] (gw) at (0,1.5) {地上局};
+    \node[ground, fill=GoogleGreen!40] (core) at (0,0) {5GC};
+    \draw[<->, thick] (gw) -- (core);
 
-    % 地上のCN
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.8cm, minimum height=0.7cm] (core) at (1,3.1) {5GC/6GC};
-    \draw[->, thick] (gw) -- (core);
+    % 衛星
+    \node[platform, circle, minimum size=1.2cm] (sat) at (5,4) {衛星};
+    \node[above, font=\scriptsize] at (5,4.8) {(eNB/gNB)};
 
-    % 衛星（宇宙）
-    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.2cm] (sat) at (5,5) {衛星};
-    \node[above] at (5,5.7) {\textbf{宇宙}};
-    \node[below, text width=2cm, align=center] at (5,4.2) {\scriptsize 4G RAN搭載};
+    % HAPS
+    \node[platform, ellipse, minimum width=1.6cm, minimum height=0.6cm] (haps) at (10,3) {HAPS};
+    \node[above, font=\scriptsize] at (10,3.5) {(eNB/gNB)};
 
-    % HAPS（成層圏）
-    \node[draw, ellipse, fill=GoogleYellow!50, minimum width=1.8cm, minimum height=0.7cm] (haps) at (9,3.5) {HAPS};
-    \node[above] at (9,4.1) {\textbf{成層圏}};
-    \node[below, text width=2cm, align=center] at (9,2.9) {\scriptsize 4G RAN搭載};
-
-    % UE（地上）
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue1) at (5,0.15) {UE};
-    \node[draw, rounded corners, fill=white, minimum width=1.2cm, minimum height=0.5cm] (ue2) at (8,0.15) {UE};
+    % UE
+    \node[ground, fill=GoogleLightGray] (ue1) at (5,0) {UE};
+    \node[ground, fill=GoogleLightGray] (ue2) at (10,0) {UE};
 
     % 接続線
-    \draw[->, thick, dashed] (sat) -- (gw) node[midway, above, sloped] {\scriptsize Feeder};
-    \draw[->, thick] (sat) -- (ue1) node[midway, right] {\scriptsize Service};
-    \draw[->, thick] (haps) -- (ue2);
-    \draw[->, thick, dashed] (haps) -- (gw);
+    \draw[<->, thick, dashed] (sat) -- (gw) node[midway, above, sloped, font=\scriptsize] {Feeder};
+    \draw[<->, thick] (sat) -- (ue1) node[midway, right, font=\scriptsize] {Service};
+    \draw[<->, thick, dashed] (haps) -- (gw);
+    \draw[<->, thick] (haps) -- (ue2);
 
-    % 凡例（下部中央）
-    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
-      \begin{tabular}{@{}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{}}
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ 地上 &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!50] (0,0) rectangle (0.18,0.18);\ 地上局 &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ CN &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ 衛星/HAPS &
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.4,0);\ Feeder &
-      \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.4,0);\ Service
-      \end{tabular}
-    };
   \end{tikzpicture}
   \caption{NTN（非地上系ネットワーク）の概念構成}
   \label{fig:ntn_architecture}
 \end{figure}
 
-NTNのアーキテクチャには，衛星が単なる中継器（ベントパイプ）として動作する「トランスペアレント（Transparent）型」と，衛星上で基地局機能（ベースバンド処理やL2/L3制御）を実行する「再生（Regenerative）型」が存在する．
+NTNのアーキテクチャには，衛星が単なる中継器（ベントパイプ）として動作する「トランスペアレント（Transparent）型」と，衛星上で基地局機能を実行する「再生（Regenerative）型」が存在する．
 図\ref{fig:ntn_payload_comparison}に両アーキテクチャの比較を示す．
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[scale=0.72, every node/.style={font=\small}]
-    % ========== トランスペアレント型（左側）==========
-    \node[font=\normalsize\bfseries] at (3,7) {Transparent型};
+  \begin{tikzpicture}[scale=0.8, every node/.style={font=\small},
+    sat/.style={draw, circle, minimum size=1.4cm},
+    ground/.style={draw, rounded corners, minimum width=1.6cm, minimum height=0.7cm},
+    core/.style={draw, rounded corners, minimum width=1.4cm, minimum height=0.6cm, fill=GoogleGreen!40}]
 
-    % 衛星（ベントパイプ）
-    \node[draw, circle, fill=GoogleLightGray!50, minimum size=1.6cm] (sat-t) at (3,4.8) {};
-    \node[align=center, font=\scriptsize] at (3,4.8) {衛星\\(中継のみ)};
-    \node[above, font=\scriptsize] at (3,5.8) {RF増幅・周波数変換};
+    % ========== Transparent型（左側）==========
+    \node[font=\bfseries] at (2.5,5.5) {Transparent型};
 
-    % 地上局（gNB設置）
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=2cm, minimum height=0.8cm] (gw-t) at (0.8,2) {gNB};
-    \node[below, font=\scriptsize] at (0.8,1.4) {地上局};
+    \node[sat, fill=GoogleLightGray!40] (sat-t) at (2.5,3.8) {衛星};
+    \node[ground, fill=GoogleBlue!30] (gw-t) at (0.5,1.8) {gNB};
+    \node[core] (core-t) at (0.5,0.3) {5GC};
+    \node[ground, fill=GoogleLightGray] (ue-t) at (4.5,0.3) {UE};
 
-    % 5GC
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-t) at (0.8,0.3) {5GC};
-
-    % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-t) at (5.2,0.3) {UE};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat-t) -- (gw-t) node[midway, left, font=\scriptsize] {Feeder Link};
-    \draw[->, thick] (sat-t) -- (ue-t) node[midway, right, font=\scriptsize] {Service Link};
-    \draw[<->, thick] (gw-t) -- (core-t) node[midway, left, font=\scriptsize] {N2/N3};
-
-    % 特徴（下部）
-    \node[draw, rounded corners, fill=GoogleGreen!10, text width=4.5cm, align=left, font=\scriptsize] at (3,-1.3) {
-      \textbf{特徴:}\\
-      • gNBは地上に設置\\
-      • 地上設備の更新で世代交代可能\\
-      • 遅延: Feeder + Service
-    };
+    \draw[<->, thick] (sat-t) -- (gw-t) node[midway, left, font=\scriptsize] {Feeder};
+    \draw[<->, thick] (sat-t) -- (ue-t) node[midway, right, font=\scriptsize] {Service};
+    \draw[<->, thick] (gw-t) -- (core-t);
 
     % ========== 区切り線 ==========
-    \draw[thick, dashed, gray] (7.5,7.5) -- (7.5,-2.5);
+    \draw[dashed, gray] (6.5,6) -- (6.5,-0.5);
 
-    % ========== 再生型（右側）==========
-    \node[font=\normalsize\bfseries] at (12,7) {Regenerative型};
+    % ========== Regenerative型（右側）==========
+    \node[font=\bfseries] at (10,5.5) {Regenerative型};
 
-    % 衛星（gNB搭載）
-    \node[draw, circle, fill=GoogleYellow!50, minimum size=1.8cm] (sat-r) at (12,4.8) {};
-    \node[align=center, font=\scriptsize] at (12,4.8) {衛星\\(gNB搭載)};
-    \node[above, font=\scriptsize, text width=3cm, align=center] at (12,5.9) {ベースバンド処理\\L2/L3制御};
+    \node[sat, fill=GoogleYellow!50] (sat-r) at (10,3.8) {gNB};
+    \node[ground, fill=GoogleBlue!30] (gw-r) at (8,1.8) {GW};
+    \node[core] (core-r) at (8,0.3) {5GC};
+    \node[ground, fill=GoogleLightGray] (ue-r) at (12,0.3) {UE};
 
-    % 地上局（GWのみ）
-    \node[draw, rounded corners, fill=GoogleBlue!30, minimum width=2cm, minimum height=0.8cm] (gw-r) at (9.5,2) {Gateway};
-    \node[below, font=\scriptsize] at (9.5,1.4) {地上局};
+    \draw[<->, thick] (sat-r) -- (gw-r) node[midway, left, font=\scriptsize] {Feeder};
+    \draw[<->, thick] (sat-r) -- (ue-r) node[midway, right, font=\scriptsize] {Service};
+    \draw[<->, thick] (gw-r) -- (core-r);
 
-    % 5GC
-    \node[draw, rounded corners, fill=GoogleGreen!50, minimum width=1.5cm, minimum height=0.6cm] (core-r) at (9.5,0.3) {5GC};
-
-    % UE
-    \node[draw, rounded corners, fill=GoogleLightGray, minimum width=1cm, minimum height=0.5cm] (ue-r) at (14.5,0.3) {UE};
-
-    % ISL（衛星間リンク）オプション
-    \node[draw, circle, fill=GoogleYellow!30, minimum size=1.1cm, font=\scriptsize] (sat-r2) at (15.5,4.2) {衛星};
-    \draw[<->, thick, dotted, GoogleBlue] (sat-r) -- (sat-r2) node[midway, above, font=\scriptsize, text width=1.2cm, align=center] {ISL\\{\tiny (衛星間)}};
-
-    % 接続線
-    \draw[->, thick, dashed] (sat-r) -- (gw-r) node[midway, left, font=\scriptsize] {Feeder};
-    \draw[->, thick] (sat-r) -- (ue-r) node[midway, right, font=\scriptsize] {Service};
-    \draw[<->, thick] (gw-r) -- (core-r) node[midway, left, font=\scriptsize] {N2/N3};
-
-    % 特徴（下部）
-    \node[draw, rounded corners, fill=GoogleRed!10, text width=5cm, align=left, font=\scriptsize] at (12,-1.3) {
-      \textbf{特徴:}\\
-      • gNBは衛星上に搭載\\
-      • \textcolor{GoogleRed}{\textbf{打ち上げ後のHW更新不可}}\\
-      • 遅延: Service Linkのみ\\
-      • ISLによるメッシュ構築可能
-    };
-
-    % 凡例（下部中央・2行）
-    \node[draw, fill=white, anchor=north, font=\scriptsize, inner sep=4pt] at ([yshift=-8pt]current bounding box.south) {
-      \begin{tabular}{@{}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{}}
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleLightGray!50] (0,0) rectangle (0.18,0.18);\ Transparent &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleYellow!50] (0,0) rectangle (0.18,0.18);\ Regenerative &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleGreen!50] (0,0) rectangle (0.18,0.18);\ 地上側 &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleBlue!30] (0,0) rectangle (0.18,0.18);\ 地上局/ISL &
-      \csname tikz\endcsname[baseline=-0.6ex]\fill[GoogleRed!10] (0,0) rectangle (0.18,0.18);\ 注意点 \\
-      \multicolumn{5}{@{}c@{}}{\csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dashed] (0,0) -- (0.4,0);\ Feeder \hspace{0.8em} \csname tikz\endcsname[baseline=-0.6ex]\draw[thick] (0,0) -- (0.4,0);\ Service \hspace{0.8em} \csname tikz\endcsname[baseline=-0.6ex]\draw[thick, dotted, GoogleBlue] (0,0) -- (0.4,0);\ ISL}
-      \end{tabular}
-    };
   \end{tikzpicture}
   \caption{NTNペイロードアーキテクチャの比較（TR 38.821\cite{3GPP_TR38821}に基づく）}
   \label{fig:ntn_payload_comparison}
 \end{figure}
 
-トランスペアレント型であれば，地上のゲートウェイ局（GW）に設置された基地局設備を更新することで世代交代が可能である．一方，再生型アーキテクチャでは，衛星自体にeNB/gNB機能がハードウェアとして搭載されているため，打ち上げ後にこれを最新世代のハードウェア（例えば4G用プロセッサから5G/6G用プロセッサへ）に交換することは事実上不可能である．
+Transparent型では，衛星はRF信号の増幅・周波数変換のみを行い，gNBは地上局に設置される．このため，地上設備の更新によって世代交代が可能である．一方，Regenerative型では，衛星上にgNB機能（ベースバンド処理，L2/L3制御）が搭載されるため，打ち上げ後にハードウェアを交換することは事実上不可能である．
 
 現在運用中あるいは開発中の多くのNTNプラットフォームは，技術的に成熟した4G LTE（eNB）をベースとしている．地上のネットワークが5G，そして6Gへと進化した際，これら「非地上系ネットワーク上のレガシーRAN」をどのように次世代CNへ収容するかが課題となる．
 
